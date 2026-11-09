@@ -1,8 +1,8 @@
 {
 	"$schema": "https://www.raycast.com/schemas/extension.json",
-	"name": "ableton-project-manager",
-	"title": "Ableton Project Manager",
-	"description": "Browse, organize, and listen to your Ableton Live projects",
+	"name": "logic-project-manager",
+	"title": "Logic Project Manager",
+	"description": "Browse, organize, and listen to your Logic Pro projects",
 	"icon": "icon.png",
 	"author": "iyek",
 	"platforms": [
@@ -17,7 +17,7 @@
 		{
 			"name": "projectsFolder",
 			"title": "Projects Folder",
-			"description": "The folder containing your Ableton Live projects.",
+			"description": "The folder containing your Logic Pro projects.",
 			"type": "directory",
 			"required": true
 		},
@@ -149,13 +149,13 @@
 		{
 			"name": "search-projects",
 			"title": "Search Projects",
-			"description": "Search, play, and organize your Ableton Live projects and collections",
+			"description": "Search, play, and organize your Logic Pro projects and collections",
 			"mode": "view",
-			"subtitle": "Ableton Live",
+			"subtitle": "Logic Pro",
 			"keywords": [
-				"ableton",
-				"ableton live",
-				"als",
+				"logic",
+				"logic pro",
+				"logicx",
 				"daw",
 				"music",
 				"music production",
@@ -170,10 +170,10 @@
 			"title": "Manage Tags",
 			"description": "Create and manage Stages, Genres, and Track Roles",
 			"mode": "view",
-			"subtitle": "Ableton Live",
+			"subtitle": "Logic Pro",
 			"keywords": [
-				"ableton",
-				"ableton live",
+				"logic",
+				"logic pro",
 				"tags",
 				"stages",
 				"genres",
