@@ -10,7 +10,7 @@ export const PACKAGE_EXTENSION = ".logicx";
 const PACKAGE_EXTENSION_PATTERN = /\.logicx$/i;
 // Alternatives/000、001……：文件夹名的数字就是 ProjectInformation.plist 里 Alternative 的编号。
 const ALTERNATIVE_INDEX_PATTERN = /^\d+$/;
-const PROJECT_NAME_TOKEN = "{PROJECT_NAME}";
+export const PROJECT_NAME_TOKEN = "{PROJECT_NAME}";
 
 // Logic 只用升号存根音（选 A♭ 小调，存的是 "G#"），统一成 Ableton 的写法；降号写法也认，以防别的版本这样存。
 const ROOT_NOTES: Record<string, string> = {
@@ -165,14 +165,15 @@ export const logicAdapter: DawAdapter = {
       const metadataFile = path.join(alternativePath, "MetaData.plist");
       try {
         if (!fs.statSync(metadataFile).isFile()) continue;
-        // 时间看 ProjectData（工程本体），不看 MetaData.plist。
+        // 修改时间看 ProjectData（工程本体）。创建时间看编号文件夹：Logic 每次保存都会重新生成 ProjectData，它的创建时间等于最后保存时间。
         const stats = fs.statSync(path.join(alternativePath, "ProjectData"));
+        const folderStats = fs.statSync(alternativePath);
         sets.push({
           name: names.get(index) ?? entry,
           // Logic 只能整个包打开（打开的是当前 Active 的 Alternative），所以都指向包。
           path: packagePath,
           metadataFile,
-          createdAt: stats.birthtimeMs,
+          createdAt: folderStats.birthtimeMs,
           modifiedAt: stats.mtimeMs,
           active: index === active,
         });

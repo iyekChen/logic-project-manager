@@ -5,6 +5,8 @@ import type { DawSet } from "@/daws";
 export function findLatestSet(sets: DawSet[]): DawSet | null {
   const active = sets.find((set) => set.active);
   if (active) return active;
+  // DAW 记录了当前版本，却一个都对不上（工程被手动改坏了）：不猜，免得显示的和 DAW 实际打开的不一样。
+  if (sets.some((set) => set.active !== undefined)) return null;
   let latest: DawSet | null = null;
   for (const set of sets) {
     if (!latest || set.modifiedAt > latest.modifiedAt) latest = set;

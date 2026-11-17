@@ -480,13 +480,15 @@ export default function Command() {
 
   // 和打开 Set 的其他入口一样：打开后关掉 Raycast 窗口。
   const openLatestSet = useCallback(async (project: Project) => {
-    const set = findLatestSet(daw.listSets(project));
-    if (!set) {
+    const sets = daw.listSets(project);
+    const set = findLatestSet(sets);
+    if (sets.length === 0) {
       await showToast({ style: Toast.Style.Failure, title: labels.noSets });
       return;
     }
     try {
-      await openWithDaw(set.path);
+      // 找不到当前版本时（工程被手动改坏），直接打开项目，交给 DAW 自己挑。Logic 的每个 Set 都指向同一个包；Ableton 有 Set 就一定有最新的，走不到这里。
+      await openWithDaw((set ?? sets[0]).path);
       await closeMainWindow();
     } catch (error) {
       await showFailure(labels.openSetFailed, error);
