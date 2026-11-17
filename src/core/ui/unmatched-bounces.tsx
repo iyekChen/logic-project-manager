@@ -128,9 +128,9 @@ function AssignBounce({
     const project = projects.find((p) => p.id === projectId);
     if (!project) return;
     try {
-      await clearExclusion(project);
       if (mode === "file") {
         await addExternalBounceFile(project.id, bounce.path);
+        await clearExclusion(project);
         await showToast({ style: Toast.Style.Success, title: t.bounceAssigned, message: project.title });
         onAssigned(project.title, { file: bounce.path });
       } else {
@@ -142,6 +142,7 @@ function AssignBounce({
         const value = alias.trim();
         const current = (await getProjectMetadata(project.id)).bounceAliases;
         await setBounceAliases(project.id, [...current, value]);
+        await clearExclusion(project);
         await showToast({
           style: Toast.Style.Success,
           title: t.bounceAliasAdded,

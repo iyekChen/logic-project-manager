@@ -18,6 +18,15 @@ import { getSettings } from "@/settings";
 const settings = getSettings();
 const t = getTranslations(settings.language);
 
+// 旧名字的日期按本地时间显示成 YYYY-MM-DD。
+function formatDate(ms: number): string {
+  const date = new Date(ms);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 // 别名一栏用逗号分隔。
 const parseAliases = (text: string) =>
   text
@@ -140,7 +149,7 @@ export function ManageExternalBounces({
             <Form.TagPicker.Item
               key={previous.name}
               value={previous.name}
-              title={`${previous.name} (before ${new Date(previous.before).toLocaleDateString()})`}
+              title={`${previous.name} (before ${formatDate(previous.before)})`}
             />
           ))}
         </Form.TagPicker>
