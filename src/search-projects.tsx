@@ -29,8 +29,11 @@ import {
   deleteProjectMetadata,
   getAllProjectMetadata,
   movePinnedProject,
+  replaceExternalBounceFiles,
+  setExternalBounces,
   setProjectPinned,
 } from "@/core/metadata/project-metadata";
+import { findMovedBounceFiles } from "@/core/projects/external-bounce-repair";
 import { removeProjectFromAllOrders } from "@/core/metadata/collection-order";
 import { removeProjectFromAllRoles } from "@/core/metadata/collection-roles";
 import { getTranslations } from "./i18n";
@@ -206,7 +209,32 @@ export default function Command() {
   }, []);
 
   const applyMetadata = useCallback(async () => {
-    const metadataStore = await getAllProjectMetadata();
+    let metadataStore = await getAllProjectMetadata();
+    // 手动登记的外部文件在 Finder 里改名或移动后，登记路径会失效：按大小和修改时间找回，再往下算。
+    const sharedFolder = resolveSharedBouncesFolder();
+    let repaired = false;
+    for (const project of baseProjectsRef.current) {
+      const metadata = metadataStore[project.id];
+      if (!metadata || metadata.externalBounceFiles.length === 0) continue;
+      const moves = findMovedBounceFiles(
+        metadata.externalBounceFiles,
+        metadata.externalBounceFingerprints ?? {},
+        sharedFolder,
+      );
+      if (moves.size === 0) continue;
+      await replaceExternalBounceFiles(project.id, moves);
+      repaired = true;
+    }
+    if (repaired) metadataStore = await getAllProjectMetadata();
+    // 这个提交之前登记的文件还没有指纹：补记一次，下次改名才找得回来。一个项目只写一次。
+    for (const project of baseProjectsRef.current) {
+      const metadata = metadataStore[project.id];
+      if (!metadata || metadata.externalBounceFiles.length === 0) continue;
+      const fingerprints = metadata.externalBounceFingerprints ?? {};
+      if (metadata.externalBounceFiles.every((file) => file in fingerprints)) continue;
+      await setExternalBounces(project.id, metadata.externalBounceFolders, metadata.externalBounceFiles);
+      metadataStore = await getAllProjectMetadata();
+    }
     // 别名、改名前的名字、排除的文件都存在元数据里：先登记给共享文件夹的分配，再算各项目的 bounce 数。
     const bounceAliases: Record<string, string[]> = {};
     const previousNames: Record<string, PreviousBounceName[]> = {};

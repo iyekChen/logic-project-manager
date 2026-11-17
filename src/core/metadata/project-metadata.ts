@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import { assertWritable, readJson, updateJson } from "@/core/fs/storage";
 
 export type ProjectMetadata = {
@@ -16,6 +17,8 @@ export type ProjectMetadata = {
   previousBounceNames: { name: string; before: number }[];
   // 共享文件夹里被标成「不属于这个项目」的文件名（Not This Project）。文件改了名，就按新名字重新配对。
   excludedSharedBounces: string[];
+  // 手动登记的外部文件的指纹（路径 → 大小和修改时间），文件在 Finder 里改名或移动后用来找回。
+  externalBounceFingerprints: Record<string, { size: number; mtimeMs: number }>;
 };
 
 const PROJECT_METADATA_STORAGE_KEY = "project-metadata";
@@ -34,6 +37,7 @@ const EMPTY_PROJECT_METADATA: ProjectMetadata = {
   bounceAliases: [],
   previousBounceNames: [],
   excludedSharedBounces: [],
+  externalBounceFingerprints: {},
 };
 
 function parseStore(value: unknown): ProjectMetadataStore {
@@ -89,17 +93,35 @@ export async function restoreProjectMetadata(projectId: string, metadata: Projec
 // 去重、去空白。
 const dedupePaths = (paths: string[]) => Array.from(new Set(paths.map((p) => p.trim()).filter((p) => p !== "")));
 
+// 读一个文件的指纹；读不到（不存在、没权限）时返回 null，不记也不报错。
+function fingerprintOf(file: string): { size: number; mtimeMs: number } | null {
+  try {
+    const stats = fs.statSync(file);
+    return { size: stats.size, mtimeMs: stats.mtimeMs };
+  } catch {
+    return null;
+  }
+}
+
 // 覆盖式写入某项目的外部 bounce 来源（去重、去空白）。随 ProjectMetadata 一起在改名/移动时迁移。
 export async function setExternalBounces(
   projectId: string,
   externalBounceFolders: string[],
   externalBounceFiles: string[],
 ): Promise<void> {
+  const files = dedupePaths(externalBounceFiles);
+  // 只留列表里还在的路径的指纹：移除来源后旧指纹没有用了。
+  const fingerprints: Record<string, { size: number; mtimeMs: number }> = {};
+  for (const file of files) {
+    const fingerprint = fingerprintOf(file);
+    if (fingerprint) fingerprints[file] = fingerprint;
+  }
   await updateStore((store) => {
     store[projectId] = {
       ...withDefaults(store[projectId]),
       externalBounceFolders: dedupePaths(externalBounceFolders),
-      externalBounceFiles: dedupePaths(externalBounceFiles),
+      externalBounceFiles: files,
+      externalBounceFingerprints: fingerprints,
     };
     return store;
   });
@@ -107,10 +129,33 @@ export async function setExternalBounces(
 
 // 给某项目加一个外部 bounce 文件（已登记过的不重复加）。Unmatched Bounces 里「只这一个文件」用。
 export async function addExternalBounceFile(projectId: string, file: string): Promise<void> {
+  const fingerprint = fingerprintOf(file);
   await updateStore((store) => {
     const meta = withDefaults(store[projectId]);
     if (meta.externalBounceFiles.includes(file)) return null;
-    store[projectId] = { ...meta, externalBounceFiles: dedupePaths([...meta.externalBounceFiles, file]) };
+    store[projectId] = {
+      ...meta,
+      externalBounceFiles: dedupePaths([...meta.externalBounceFiles, file]),
+      externalBounceFingerprints: fingerprint
+        ? { ...meta.externalBounceFingerprints, [file]: fingerprint }
+        : meta.externalBounceFingerprints,
+    };
+    return store;
+  });
+}
+
+// 把登记的外部文件路径换成找回后的新路径，指纹跟着挪过去并重新读一次。
+export async function replaceExternalBounceFiles(projectId: string, moves: Map<string, string>): Promise<void> {
+  if (moves.size === 0) return;
+  await updateStore((store) => {
+    const meta = withDefaults(store[projectId]);
+    const files = meta.externalBounceFiles.map((file) => moves.get(file) ?? file);
+    const fingerprints: Record<string, { size: number; mtimeMs: number }> = {};
+    for (const file of files) {
+      const fingerprint = fingerprintOf(file);
+      if (fingerprint) fingerprints[file] = fingerprint;
+    }
+    store[projectId] = { ...meta, externalBounceFiles: files, externalBounceFingerprints: fingerprints };
     return store;
   });
 }
