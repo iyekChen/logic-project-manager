@@ -24,7 +24,7 @@ const strings: Record<Language, AlternativesViewStrings> = {
   en: {
     searchAlternatives: "Search Alternatives",
     openInDaw: "Open in Logic Pro",
-    activeAlternative: "Active",
+    activeAlternative: "Active Alternative",
     copyAlternativeName: "Copy Alternative Name",
     setActive: "Set as Active Alternative",
     activeChanged: "Active Alternative Changed",

@@ -295,9 +295,16 @@ export function AlternativesView({ project }: { project: Project }) {
                   ? { source: alternative.windowImage, mask: Image.Mask.RoundedRectangle }
                   : Icon.Layers
               }
-              title={alternative.name}
+              title={{ value: alternative.name, tooltip: alternative.name }}
               accessories={
-                alternative.active ? [{ tag: { value: alternativesText.activeAlternative, color: Color.Green } }] : []
+                alternative.active
+                  ? [
+                      {
+                        icon: { source: Icon.CheckCircle, tintColor: Color.Green },
+                        tooltip: alternativesText.activeAlternative,
+                      },
+                    ]
+                  : []
               }
               detail={
                 <List.Item.Detail
@@ -305,12 +312,10 @@ export function AlternativesView({ project }: { project: Project }) {
                   metadata={
                     <List.Item.Detail.Metadata>
                       {alternative.active ? (
-                        <List.Item.Detail.Metadata.TagList title={alternativesText.activeAlternative}>
-                          <List.Item.Detail.Metadata.TagList.Item
-                            text={alternativesText.activeAlternative}
-                            color={Color.Green}
-                          />
-                        </List.Item.Detail.Metadata.TagList>
+                        <List.Item.Detail.Metadata.Label
+                          title={alternativesText.activeAlternative}
+                          icon={{ source: Icon.CheckCircle, tintColor: Color.Green }}
+                        />
                       ) : (
                         <List.Item.Detail.Metadata.Label title={alternativesText.activeAlternative} text="" />
                       )}
