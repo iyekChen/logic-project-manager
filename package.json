@@ -15,13 +15,6 @@
 	"license": "MIT",
 	"preferences": [
 		{
-			"name": "projectsFolder",
-			"title": "Projects Folder",
-			"description": "The folder containing your Logic Pro projects.",
-			"type": "directory",
-			"required": true
-		},
-		{
 			"name": "dawApp",
 			"title": "Logic Pro Version",
 			"description": "Which Logic Pro opens your projects.",
@@ -40,19 +33,26 @@
 			]
 		},
 		{
-			"name": "bouncesFolderName",
-			"title": "Bounces Subfolder",
-			"description": "The subfolder inside each project where bounces are saved (e.g. Bounces). Leave empty to look directly in each project folder.",
-			"type": "textfield",
-			"required": false,
-			"placeholder": "e.g. Bounces"
+			"name": "projectsFolder",
+			"title": "Projects Folder",
+			"description": "The folder containing your Logic Pro projects.",
+			"type": "directory",
+			"required": true
 		},
 		{
 			"name": "sharedBouncesFolder",
 			"title": "Shared Bounces Folder",
-			"description": "A folder where you export bounces from all projects (handy for Package projects, which have no Bounces subfolder). Bounces whose file name starts with a project's name show up with that project.",
+			"description": "One folder for bounces from all your projects. Files are matched to projects by name.",
 			"type": "directory",
 			"required": false
+		},
+		{
+			"name": "bouncesFolderName",
+			"title": "Bounces Subfolder",
+			"description": "The subfolder inside each project folder that holds its bounces. Leave empty to use the project folder itself.",
+			"type": "textfield",
+			"required": false,
+			"placeholder": "e.g. Bounces"
 		},
 		{
 			"name": "notesFolder",
