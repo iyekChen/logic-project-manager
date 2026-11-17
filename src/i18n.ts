@@ -203,6 +203,25 @@ type TranslationKeys = {
   sourceProjectFolder: string;
   sourceExternal: string;
   sourceSharedFolder: string;
+  unmatchedBounces: string;
+  searchUnmatchedBounces: string;
+  noUnmatchedBounces: string;
+  noUnmatchedBouncesHint: string;
+  assignToProject: string;
+  assignProjectField: string;
+  assignMatchField: string;
+  assignByAlias: string;
+  assignThisFileOnly: string;
+  aliasField: string;
+  aliasFieldInfo: string;
+  aliasEmpty: string;
+  aliasTaken: string;
+  aliasNotMatchingFile: string;
+  bounceAssigned: string;
+  bounceAliasAdded: string;
+  assignBounceFailed: string;
+  bounceAliasesField: string;
+  bounceAliasesInfo: string;
   unavailable: string;
   renameBounce: string;
   bounceRenamed: string;
@@ -441,6 +460,27 @@ const translations: Record<Language, TranslationKeys> = {
     sourceProjectFolder: "Project Folder",
     sourceExternal: "External",
     sourceSharedFolder: "Shared Folder",
+    unmatchedBounces: "Unmatched Bounces",
+    searchUnmatchedBounces: "Search Unmatched Bounces",
+    noUnmatchedBounces: "No Unmatched Bounces",
+    noUnmatchedBouncesHint: "Every bounce in the shared bounces folder belongs to a project.",
+    assignToProject: "Assign to Project",
+    assignProjectField: "Project",
+    assignMatchField: "Match",
+    assignByAlias: "All Files Starting With…",
+    assignThisFileOnly: "This File Only",
+    aliasField: "Starts With",
+    aliasFieldInfo:
+      "Bounces in the shared folder whose file name starts with this (followed by a space, -, _ or .) go to this project.",
+    aliasEmpty: "Enter a name",
+    aliasTaken: "Already used by {project}",
+    aliasNotMatchingFile: "This file doesn't start with it",
+    bounceAssigned: "Bounce Assigned",
+    bounceAliasAdded: "Alias Added",
+    assignBounceFailed: "Couldn't Assign Bounce",
+    bounceAliasesField: "Bounce Aliases",
+    bounceAliasesInfo:
+      "Separated by commas. Bounces in the shared folder that start with one of these belong to this project.",
     unavailable: "Unavailable",
     renameBounce: "Rename Bounce",
     bounceRenamed: "Bounce Renamed",

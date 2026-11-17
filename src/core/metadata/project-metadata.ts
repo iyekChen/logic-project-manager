@@ -10,6 +10,8 @@ export type ProjectMetadata = {
   // 外部 bounce 来源（绝对路径）：叠加在默认 Bounces 文件夹之上，不替换它。
   externalBounceFolders: string[];
   externalBounceFiles: string[];
+  // 共享 Bounces 文件夹里认这个项目的别名：文件名以别名开头的 bounce 也归它（规则和项目名一样）。
+  bounceAliases: string[];
 };
 
 const PROJECT_METADATA_STORAGE_KEY = "project-metadata";
@@ -25,6 +27,7 @@ const EMPTY_PROJECT_METADATA: ProjectMetadata = {
   notes: "",
   externalBounceFolders: [],
   externalBounceFiles: [],
+  bounceAliases: [],
 };
 
 function parseStore(value: unknown): ProjectMetadataStore {
@@ -77,19 +80,48 @@ export async function restoreProjectMetadata(projectId: string, metadata: Projec
   });
 }
 
+// 去重、去空白。
+const dedupePaths = (paths: string[]) => Array.from(new Set(paths.map((p) => p.trim()).filter((p) => p !== "")));
+
 // 覆盖式写入某项目的外部 bounce 来源（去重、去空白）。随 ProjectMetadata 一起在改名/移动时迁移。
 export async function setExternalBounces(
   projectId: string,
   externalBounceFolders: string[],
   externalBounceFiles: string[],
 ): Promise<void> {
-  const dedupe = (paths: string[]) => Array.from(new Set(paths.map((p) => p.trim()).filter((p) => p !== "")));
   await updateStore((store) => {
     store[projectId] = {
       ...withDefaults(store[projectId]),
-      externalBounceFolders: dedupe(externalBounceFolders),
-      externalBounceFiles: dedupe(externalBounceFiles),
+      externalBounceFolders: dedupePaths(externalBounceFolders),
+      externalBounceFiles: dedupePaths(externalBounceFiles),
     };
+    return store;
+  });
+}
+
+// 给某项目加一个外部 bounce 文件（已登记过的不重复加）。Unmatched Bounces 里「只这一个文件」用。
+export async function addExternalBounceFile(projectId: string, file: string): Promise<void> {
+  await updateStore((store) => {
+    const meta = withDefaults(store[projectId]);
+    if (meta.externalBounceFiles.includes(file)) return null;
+    store[projectId] = { ...meta, externalBounceFiles: dedupePaths([...meta.externalBounceFiles, file]) };
+    return store;
+  });
+}
+
+// 覆盖式写入某项目的 bounce 别名（去空白；不区分大小写去重，保留第一次出现的写法）。
+export async function setBounceAliases(projectId: string, aliases: string[]): Promise<void> {
+  const seen = new Set<string>();
+  const cleaned = aliases
+    .map((alias) => alias.trim())
+    .filter((alias) => {
+      const key = alias.toLowerCase();
+      if (alias === "" || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  await updateStore((store) => {
+    store[projectId] = { ...withDefaults(store[projectId]), bounceAliases: cleaned };
     return store;
   });
 }

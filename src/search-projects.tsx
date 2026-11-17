@@ -53,7 +53,13 @@ import { DuplicateProject } from "@/core/ui/components/project/duplicate-project
 import { ManageExternalBounces } from "@/core/ui/components/project/manage-external-bounces";
 import type { Project } from "@/core/projects/types";
 import { loadProjects } from "@/core/projects/load-projects";
-import { countProjectBounces, findLatestProjectBounce } from "@/core/projects/bounces";
+import {
+  countProjectBounces,
+  findLatestProjectBounce,
+  resolveSharedBouncesFolder,
+  setSharedBounceAliases,
+} from "@/core/projects/bounces";
+import { UnmatchedBounces } from "@/core/ui/unmatched-bounces";
 import { viewPrefs } from "@/core/ui/view-prefs";
 import { daw, type DawSet, type ProjectFileMetadata } from "@/daws";
 import {
@@ -189,6 +195,14 @@ export default function Command() {
 
   const applyMetadata = useCallback(async () => {
     const metadataStore = await getAllProjectMetadata();
+    // 别名存在元数据里：先登记给共享文件夹的分配，再算各项目的 bounce 数。
+    const bounceAliases: Record<string, string[]> = {};
+    for (const project of baseProjectsRef.current) {
+      const aliases = metadataStore[project.id]?.bounceAliases ?? [];
+      if (aliases.length > 0) bounceAliases[project.title] = aliases;
+    }
+    setSharedBounceAliases(bounceAliases);
+    const hasShared = resolveSharedBouncesFolder() !== null;
     const updatedProjects = baseProjectsRef.current.map((project) => {
       const metadata = metadataStore[project.id];
       // 笔记和歌词都总是读：applyMetadata 只在挂载时创建一次，按 showDetail 判断会锁死首帧的值，切到 Detail 时内容为空。
@@ -199,14 +213,15 @@ export default function Command() {
       // 无外部来源时复用 loadProjects 已算好的默认文件夹计数，省去重复扫描；
       // 有外部来源才走聚合器（默认文件夹 + 外部来源，去重、排除不可用）。
       const hasExternal = externalBounceFolders.length > 0 || externalBounceFiles.length > 0;
-      const bouncesCount = hasExternal
-        ? countProjectBounces({
-            title: project.title,
-            folderPath: project.folderPath,
-            externalBounceFolders,
-            externalBounceFiles,
-          })
-        : project.bouncesCount;
+      const bouncesCount =
+        hasExternal || hasShared
+          ? countProjectBounces({
+              title: project.title,
+              folderPath: project.folderPath,
+              externalBounceFolders,
+              externalBounceFiles,
+            })
+          : project.bouncesCount;
       return {
         ...project,
         stageId: metadata?.stageId ?? null,
@@ -850,6 +865,13 @@ export default function Command() {
                   />
                 }
               />
+              {resolveSharedBouncesFolder() !== null && (
+                <Action.Push
+                  title={t.unmatchedBounces}
+                  icon={Icon.QuestionMarkCircle}
+                  target={<UnmatchedBounces projects={projects} onChanged={() => void reloadProjects()} />}
+                />
+              )}
             </ActionPanel.Section>
             <ActionPanel.Section title={t.sectionCopy}>
               {item.bouncesCount > 0 && (

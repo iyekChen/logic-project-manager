@@ -1,11 +1,24 @@
 import { Action, ActionPanel, Form, Icon, showToast, Toast, useNavigation } from "@raycast/api";
-import { useState } from "react";
-import { setExternalBounces } from "@/core/metadata/project-metadata";
+import { useEffect, useState } from "react";
+import { getProjectMetadata, setBounceAliases, setExternalBounces } from "@/core/metadata/project-metadata";
+import {
+  checkBounceAlias,
+  getSharedBounceAliases,
+  getSharedBounceTitles,
+  resolveSharedBouncesFolder,
+} from "@/core/projects/bounces";
 import { getTranslations } from "@/i18n";
 import { getSettings } from "@/settings";
 
 const settings = getSettings();
 const t = getTranslations(settings.language);
+
+// 别名一栏用逗号分隔。
+const parseAliases = (text: string) =>
+  text
+    .split(",")
+    .map((alias) => alias.trim())
+    .filter((alias) => alias !== "");
 
 export function ManageExternalBounces({
   projectId,
@@ -23,8 +36,33 @@ export function ManageExternalBounces({
   const { pop } = useNavigation();
   const [folders, setFolders] = useState<string[]>(externalFolders);
   const [files, setFiles] = useState<string[]>(externalFiles);
+  // 别名只在设了共享 Bounces 文件夹时有用，没设时不显示这一栏。
+  const showAliases = resolveSharedBouncesFolder() !== null;
+  const [aliasText, setAliasText] = useState("");
+  const [aliasError, setAliasError] = useState<string | undefined>();
+
+  useEffect(() => {
+    if (!showAliases) return;
+    void getProjectMetadata(projectId).then((metadata) => setAliasText(metadata.bounceAliases.join(", ")));
+  }, [projectId, showAliases]);
+
+  function validateAliases(text: string): string | undefined {
+    for (const alias of parseAliases(text)) {
+      const problem = checkBounceAlias(alias, projectTitle, getSharedBounceTitles(), getSharedBounceAliases());
+      if (problem && problem !== "empty") return t.aliasTaken.replace("{project}", problem.taken);
+    }
+    return undefined;
+  }
 
   async function handleSubmit() {
+    if (showAliases) {
+      const error = validateAliases(aliasText);
+      if (error) {
+        setAliasError(error);
+        return;
+      }
+      await setBounceAliases(projectId, parseAliases(aliasText));
+    }
     await setExternalBounces(projectId, folders, files);
     await showToast({ style: Toast.Style.Success, title: t.externalBounceSaved });
     onSaved(folders, files);
@@ -59,6 +97,20 @@ export function ManageExternalBounces({
         canChooseFiles
         allowMultipleSelection
       />
+      {showAliases && (
+        <Form.TextField
+          id="aliases"
+          title={t.bounceAliasesField}
+          info={t.bounceAliasesInfo}
+          value={aliasText}
+          error={aliasError}
+          onChange={(value) => {
+            setAliasText(value);
+            if (aliasError) setAliasError(validateAliases(value));
+          }}
+          onBlur={() => setAliasError(validateAliases(aliasText))}
+        />
+      )}
     </Form>
   );
 }

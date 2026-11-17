@@ -100,15 +100,25 @@ export function bounceMatchesTitle(fileName: string, title: string): boolean {
 
 /**
  * 把共享文件夹里的文件名分给项目，返回 项目名 → 文件名列表。
- * 一个文件同时对上好几个项目时，归名字最长的那个："Demo Package v2.wav" 归 "Demo Package"，不归 "Demo"。
+ * aliases 是 项目名 → 别名列表：文件名以别名开头时，同样归这个项目（规则和项目名一样）。
+ * 一个文件同时对上好几个名字时，归最长的那个："Demo Package v2.wav" 归 "Demo Package"，不归 "Demo"。
  * 对不上任何项目的文件不出现在结果里。
  */
-export function assignSharedBounces(fileNames: string[], titles: string[]): Map<string, string[]> {
-  const byLength = [...new Set(titles)].sort((a, b) => b.length - a.length);
+export function assignSharedBounces(
+  fileNames: string[],
+  titles: string[],
+  aliases: Record<string, string[]> = {},
+): Map<string, string[]> {
+  const names: { name: string; owner: string }[] = [];
+  for (const title of new Set(titles)) {
+    names.push({ name: title, owner: title });
+    for (const alias of aliases[title] ?? []) names.push({ name: alias, owner: title });
+  }
+  names.sort((a, b) => b.name.length - a.name.length);
   const result = new Map<string, string[]>();
   for (const fileName of fileNames) {
     if (!isAudioFile(fileName)) continue;
-    const owner = byLength.find((title) => bounceMatchesTitle(fileName, title));
+    const owner = names.find(({ name }) => bounceMatchesTitle(fileName, name))?.owner;
     if (owner === undefined) continue;
     const files = result.get(owner) ?? [];
     files.push(fileName);
@@ -119,15 +129,43 @@ export function assignSharedBounces(fileNames: string[], titles: string[]): Map<
 
 // 当前所有项目的名字。loadProjects 每次加载后更新；判断「名字最长的那个」要知道全部项目。
 let sharedBounceTitles: string[] = [];
+// 项目名 → 别名。别名存在项目元数据里（异步读取），套用元数据时更新；和项目名分开存，
+// 这样别处再调 loadProjects 只会刷新项目名，不会把别名清掉。
+let sharedBounceAliases: Record<string, string[]> = {};
 
 export function setSharedBounceTitles(titles: string[]): void {
   sharedBounceTitles = titles;
   sharedAssignment = null;
 }
 
+export function setSharedBounceAliases(aliases: Record<string, string[]>): void {
+  sharedBounceAliases = aliases;
+  sharedAssignment = null;
+}
+
+export function getSharedBounceAliases(): Record<string, string[]> {
+  return sharedBounceAliases;
+}
+
+export function getSharedBounceTitles(): string[] {
+  return sharedBounceTitles;
+}
+
 // 共享文件夹的分配结果，按文件夹路径 + mtime 缓存：增删、改名文件会改 mtime，届时重新读目录。
 // 同名覆盖导出不改文件夹 mtime，但只影响文件的修改时间，不影响分配；修改时间在 listBounces 时实时读取。
 let sharedAssignment: { key: string; byTitle: Map<string, string[]> } | null = null;
+
+// 按当前项目名和别名分配（带缓存）。读不到文件夹时抛出，由调用方处理。
+function currentAssignment(folder: string): Map<string, string[]> {
+  const key = `${folder}:${fs.statSync(folder).mtimeMs}`;
+  if (sharedAssignment?.key !== key) {
+    sharedAssignment = {
+      key,
+      byTitle: assignSharedBounces(fs.readdirSync(folder), sharedBounceTitles, sharedBounceAliases),
+    };
+  }
+  return sharedAssignment.byTitle;
+}
 
 /** 共享文件夹里归这个项目的 bounce 的完整路径。没设共享文件夹或读不到时为空。 */
 export function sharedBounceFilesFor(title: string): string[] {
@@ -138,17 +176,59 @@ export function sharedBounceFilesFor(title: string): string[] {
   try {
     // 项目不在已知名单里（还没加载过项目，或刚改名）：只按这一个名字分配，不写缓存，免得缓存里缺了别的项目。
     if (!sharedBounceTitles.includes(title)) {
-      return toPaths(assignSharedBounces(fs.readdirSync(folder), [title]));
+      return toPaths(assignSharedBounces(fs.readdirSync(folder), [title], sharedBounceAliases));
     }
-    const key = `${folder}:${fs.statSync(folder).mtimeMs}`;
-    if (sharedAssignment?.key !== key) {
-      sharedAssignment = { key, byTitle: assignSharedBounces(fs.readdirSync(folder), sharedBounceTitles) };
-    }
-    return toPaths(sharedAssignment.byTitle);
+    return toPaths(currentAssignment(folder));
   } catch {
     // 文件夹不存在或读不到（外接盘没接上等）：当作没有共享 bounce。
     return [];
   }
+}
+
+/**
+ * 共享文件夹顶层里没归到任何项目的 bounce，最近修改的在前。
+ * claimedFiles：各项目手动登记的外部文件（Assign to Project 选「只这一个文件」写进去的），这些也算已配对。
+ */
+export function unmatchedSharedBounces(claimedFiles: string[]): Bounce[] {
+  const folder = resolveSharedBouncesFolder();
+  if (!folder) return [];
+  try {
+    const assigned = new Set([...currentAssignment(folder).values()].flat());
+    const claimed = new Set(claimedFiles.map(canonicalPath));
+    return listBounces(folder)
+      .filter((bounce) => !assigned.has(bounce.name) && !claimed.has(canonicalPath(bounce.path)))
+      .sort((a, b) => b.modifiedAt - a.modifiedAt);
+  } catch {
+    return [];
+  }
+}
+
+/** 从文件名猜一个别名：取第一个空格、-、_、. 之前的部分。"SC v2.wav" → "SC"。 */
+export function guessAliasFromFileName(fileName: string): string {
+  const stem = fileName.slice(0, fileName.length - path.extname(fileName).length);
+  const cut = stem.search(/[ \-_.]/);
+  return (cut > 0 ? stem.slice(0, cut) : stem).trim();
+}
+
+/**
+ * 检查别名能不能给这个项目用，能用时返回 null，否则返回原因：
+ * - "empty"：空的；
+ * - { taken: 项目名 }：和另一个项目的名字或别名一样（不区分大小写），会分不清归谁。
+ */
+export function checkBounceAlias(
+  alias: string,
+  projectTitle: string,
+  titles: string[],
+  aliases: Record<string, string[]>,
+): "empty" | { taken: string } | null {
+  const name = alias.trim().toLowerCase();
+  if (name === "") return "empty";
+  for (const title of titles) {
+    if (title === projectTitle) continue;
+    if (title.toLowerCase() === name) return { taken: title };
+    if ((aliases[title] ?? []).some((other) => other.toLowerCase() === name)) return { taken: title };
+  }
+  return null;
 }
 
 // ───────────────── 外部 bounce 来源聚合 ─────────────────
