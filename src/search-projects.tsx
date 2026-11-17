@@ -824,12 +824,21 @@ export default function Command() {
               />
             </ActionPanel.Section>
             <ActionPanel.Section title={t.sectionFile}>
-              <Action.Open
-                title={t.openInFinder}
-                icon={Icon.Finder}
-                shortcut={{ modifiers: ["cmd", "opt"], key: "o" }}
-                target={item.folderPath}
-              />
+              {/* 包（如 .logicx）用「打开」会交给 DAW，所以改成在 Finder 里选中它；普通文件夹照旧在 Finder 里打开。 */}
+              {item.kind === "package" ? (
+                <Action.ShowInFinder
+                  path={item.folderPath}
+                  title={t.showInFinder}
+                  shortcut={{ modifiers: ["cmd", "opt"], key: "o" }}
+                />
+              ) : (
+                <Action.Open
+                  title={t.openInFinder}
+                  icon={Icon.Finder}
+                  shortcut={{ modifiers: ["cmd", "opt"], key: "o" }}
+                  target={item.folderPath}
+                />
+              )}
               <Action
                 title={labels.newProjectFile}
                 icon={Icon.NewDocument}
