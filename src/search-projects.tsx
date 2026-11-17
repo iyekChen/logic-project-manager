@@ -7,6 +7,8 @@ import {
   Icon,
   Keyboard,
   List,
+  LocalStorage,
+  environment,
   open,
   showToast,
   Toast,
@@ -57,6 +59,7 @@ import {
   findLatestProjectBounce,
   resolveSharedBouncesFolder,
   setSharedBounceAliases,
+  unmatchedSharedBounces,
 } from "@/core/projects/bounces";
 import { UnmatchedBounces } from "@/core/ui/unmatched-bounces";
 import { viewPrefs } from "@/core/ui/view-prefs";
@@ -82,6 +85,9 @@ const PROJECTS_ROOT = settings.projectsFolder;
 const SORT_STORAGE_KEY = "project-sort-option";
 const GROUP_STORAGE_KEY = "project-group-option";
 const VIEW_MODE_STORAGE_KEY = "view-mode:projects";
+// 首次使用引导：问过共享文件夹没有；上次弹「未匹配」提示时用的共享文件夹路径。
+const ONBOARDING_ASKED_KEY = "onboarding:shared-bounces-asked";
+const ONBOARDING_UNMATCHED_KEY = "onboarding:unmatched-shown-for";
 const DETAIL_DOC_STORAGE_KEY = "detail-doc:projects";
 const PLAYER_PATH = ensureAudioPlayerBinary();
 const SEEK_STEP_SECONDS = 5;
@@ -148,8 +154,13 @@ export default function Command() {
   // 每次读取编号：新一轮开始后，旧一轮的结果不再写入。
   const latestSetsRunRef = useRef(0);
   const baseProjectsRef = useRef<Project[]>([]);
+  // 每次渲染都更新：load() 的闭包里拿不到最新的 projects state。
+  const projectsRef = useRef<Project[]>(projects);
+  projectsRef.current = projects;
   // 残留数据提示每次打开只弹一次（fs.watch 触发的重载不再重复提示）。
   const leftoverToastShownRef = useRef(false);
+  // 首次使用引导每次打开最多弹一个。
+  const onboardingShownRef = useRef(false);
 
   // 外部编辑器改了笔记 / 歌词：只重读那一份，详情面板马上跟着变。
   useDocWatcher(PROJECTS_ROOT, (file) => setProjects((prev) => refreshDocFile(prev, file)));
@@ -377,6 +388,43 @@ export default function Command() {
     return promise;
   }, [runReload]);
 
+  // 首次使用引导：没设共享文件夹时问一次；换了共享文件夹时，有未匹配的 bounce 就提示一次。
+  const runOnboarding = useCallback(async () => {
+    if (onboardingShownRef.current) return;
+    const folder = resolveSharedBouncesFolder();
+    if (folder === null) {
+      if ((await LocalStorage.getItem<string>(ONBOARDING_ASKED_KEY)) === "true") return;
+      onboardingShownRef.current = true;
+      await confirmAlert({
+        title: t.onboardingSharedTitle,
+        message: t.onboardingSharedMessage,
+        primaryAction: { title: t.openPreferences, onAction: () => void openExtensionPreferences() },
+        dismissAction: { title: t.skip },
+      });
+      await LocalStorage.setItem(ONBOARDING_ASKED_KEY, "true");
+      return;
+    }
+
+    if ((await LocalStorage.getItem<string>(ONBOARDING_UNMATCHED_KEY)) === folder) return;
+    // 先记下这个文件夹：没有未匹配的也算判断过，换文件夹前不再重复检查。
+    await LocalStorage.setItem(ONBOARDING_UNMATCHED_KEY, folder);
+    const metadataStore = await getAllProjectMetadata();
+    const claimed = Object.values(metadataStore).flatMap((metadata) => metadata.externalBounceFiles);
+    const count = unmatchedSharedBounces(claimed).length;
+    if (count === 0) return;
+    onboardingShownRef.current = true;
+    await confirmAlert({
+      title: t.onboardingUnmatchedTitle.replace("{count}", String(count)),
+      message: t.onboardingUnmatchedMessage,
+      primaryAction: {
+        title: t.review,
+        onAction: () =>
+          push(<UnmatchedBounces projects={projectsRef.current} onChanged={() => void reloadProjects()} />),
+      },
+      dismissAction: { title: t.skip },
+    });
+  }, [push, reloadProjects]);
+
   useEffect(() => {
     async function load() {
       const orphans = await reloadProjects();
@@ -393,9 +441,10 @@ export default function Command() {
           },
         });
       }
+      await runOnboarding();
     }
     void load();
-  }, [reloadProjects, push]);
+  }, [reloadProjects, push, runOnboarding]);
 
   // 监听项目根目录（fs.watch 为 Node 内置，底层走 FSEvents）：Finder 里新建、删除、改名或从废纸篓放回项目时自动重载。
   // 去抖 0.5 秒，合并 Finder 连续触发的多次事件。
@@ -968,6 +1017,19 @@ export default function Command() {
                 onAction={() => handleTrashProject(item)}
               />
             </ActionPanel.Section>
+            {environment.isDevelopment && (
+              <ActionPanel.Section>
+                <Action
+                  title="Reset Onboarding (Dev)"
+                  icon={Icon.ArrowCounterClockwise}
+                  onAction={async () => {
+                    await LocalStorage.removeItem(ONBOARDING_ASKED_KEY);
+                    await LocalStorage.removeItem(ONBOARDING_UNMATCHED_KEY);
+                    await showToast({ style: Toast.Style.Success, title: "Onboarding Reset" });
+                  }}
+                />
+              </ActionPanel.Section>
+            )}
           </ActionPanel>
         }
       />

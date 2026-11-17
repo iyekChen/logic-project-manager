@@ -243,6 +243,12 @@ type TranslationKeys = {
   deleteRoleInUse: string;
   templateMissing: string;
   analyzing: string;
+  onboardingSharedTitle: string;
+  onboardingSharedMessage: string;
+  onboardingUnmatchedTitle: string;
+  onboardingUnmatchedMessage: string;
+  skip: string;
+  review: string;
 };
 
 const translations: Record<Language, TranslationKeys> = {
@@ -504,6 +510,14 @@ const translations: Record<Language, TranslationKeys> = {
     deleteRoleInUse: "{count} track(s) in your collections use this role. It will be cleared from them.",
     templateMissing: "Template not found — started empty",
     analyzing: "Analyzing",
+    onboardingSharedTitle: "Set Up a Shared Bounces Folder?",
+    onboardingSharedMessage:
+      "If you export bounces from all your projects into one folder, choose it in Preferences. Bounces whose names start with a project's name will show up with that project.",
+    onboardingUnmatchedTitle: "{count} Bounces Didn't Match a Project",
+    onboardingUnmatchedMessage:
+      "Assign each one to a project. You can open Unmatched Bounces anytime from a project's actions.",
+    skip: "Skip",
+    review: "Review",
   },
 };
 
