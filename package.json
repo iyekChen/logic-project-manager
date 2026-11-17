@@ -30,6 +30,13 @@
 			"placeholder": "e.g. Bounces"
 		},
 		{
+			"name": "sharedBouncesFolder",
+			"title": "Shared Bounces Folder",
+			"description": "A folder where you export bounces from all projects (handy for Package projects, which have no Bounces subfolder). Bounces whose file name starts with a project's name show up with that project.",
+			"type": "directory",
+			"required": false
+		},
+		{
 			"name": "notesFolder",
 			"title": "Notes Folder",
 			"description": "The folder where notes are saved as .md files (e.g. an Obsidian vault). Leave empty to save Notes.md in each project folder.",

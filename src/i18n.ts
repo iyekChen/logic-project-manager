@@ -202,6 +202,7 @@ type TranslationKeys = {
   groupBySource: string;
   sourceProjectFolder: string;
   sourceExternal: string;
+  sourceSharedFolder: string;
   unavailable: string;
   renameBounce: string;
   bounceRenamed: string;
@@ -439,6 +440,7 @@ const translations: Record<Language, TranslationKeys> = {
     groupBySource: "Source",
     sourceProjectFolder: "Project Folder",
     sourceExternal: "External",
+    sourceSharedFolder: "Shared Folder",
     unavailable: "Unavailable",
     renameBounce: "Rename Bounce",
     bounceRenamed: "Bounce Renamed",

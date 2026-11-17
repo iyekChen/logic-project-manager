@@ -200,7 +200,12 @@ export default function Command() {
       // 有外部来源才走聚合器（默认文件夹 + 外部来源，去重、排除不可用）。
       const hasExternal = externalBounceFolders.length > 0 || externalBounceFiles.length > 0;
       const bouncesCount = hasExternal
-        ? countProjectBounces({ folderPath: project.folderPath, externalBounceFolders, externalBounceFiles })
+        ? countProjectBounces({
+            title: project.title,
+            folderPath: project.folderPath,
+            externalBounceFolders,
+            externalBounceFiles,
+          })
         : project.bouncesCount;
       return {
         ...project,
