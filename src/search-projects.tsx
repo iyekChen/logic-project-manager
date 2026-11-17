@@ -59,7 +59,10 @@ import {
   findLatestProjectBounce,
   resolveSharedBouncesFolder,
   setSharedBounceAliases,
+  setSharedBounceExclusions,
+  setSharedBouncePreviousNames,
   unmatchedSharedBounces,
+  type PreviousBounceName,
 } from "@/core/projects/bounces";
 import { UnmatchedBounces } from "@/core/ui/unmatched-bounces";
 import { viewPrefs } from "@/core/ui/view-prefs";
@@ -204,13 +207,22 @@ export default function Command() {
 
   const applyMetadata = useCallback(async () => {
     const metadataStore = await getAllProjectMetadata();
-    // 别名存在元数据里：先登记给共享文件夹的分配，再算各项目的 bounce 数。
+    // 别名、改名前的名字、排除的文件都存在元数据里：先登记给共享文件夹的分配，再算各项目的 bounce 数。
     const bounceAliases: Record<string, string[]> = {};
+    const previousNames: Record<string, PreviousBounceName[]> = {};
+    const exclusions: Record<string, string[]> = {};
     for (const project of baseProjectsRef.current) {
-      const aliases = metadataStore[project.id]?.bounceAliases ?? [];
+      const metadata = metadataStore[project.id];
+      const aliases = metadata?.bounceAliases ?? [];
       if (aliases.length > 0) bounceAliases[project.title] = aliases;
+      const previous = metadata?.previousBounceNames ?? [];
+      if (previous.length > 0) previousNames[project.title] = previous;
+      const excluded = metadata?.excludedSharedBounces ?? [];
+      if (excluded.length > 0) exclusions[project.title] = excluded;
     }
     setSharedBounceAliases(bounceAliases);
+    setSharedBouncePreviousNames(previousNames);
+    setSharedBounceExclusions(exclusions);
     const hasShared = resolveSharedBouncesFolder() !== null;
     const updatedProjects = baseProjectsRef.current.map((project) => {
       const metadata = metadataStore[project.id];

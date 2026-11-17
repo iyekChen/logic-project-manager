@@ -102,27 +102,47 @@ export function bounceMatchesTitle(fileName: string, title: string): boolean {
  * 把共享文件夹里的文件名分给项目，返回 项目名 → 文件名列表。
  * aliases 是 项目名 → 别名列表：文件名以别名开头时，同样归这个项目（规则和项目名一样）。
  * 一个文件同时对上好几个名字时，归最长的那个："Demo Package v2.wav" 归 "Demo Package"，不归 "Demo"。
+ * 旧名字只认 before 之前创建的文件；被排除的文件不归这个项目，也不转给别的项目，留给 Unmatched。
  * 对不上任何项目的文件不出现在结果里。
  */
+export type AssignOptions = {
+  previousNames?: Record<string, PreviousBounceName[]>;
+  exclusions?: Record<string, string[]>;
+  // 文件的创建时间（毫秒）。只在对上旧名字时才调用；不给时，旧名字一律不认。
+  createdAtOf?: (fileName: string) => number;
+};
+
 export function assignSharedBounces(
   fileNames: string[],
   titles: string[],
   aliases: Record<string, string[]> = {},
+  options: AssignOptions = {},
 ): Map<string, string[]> {
-  const names: { name: string; owner: string }[] = [];
+  const names: { name: string; owner: string; before?: number }[] = [];
   for (const title of new Set(titles)) {
     names.push({ name: title, owner: title });
     for (const alias of aliases[title] ?? []) names.push({ name: alias, owner: title });
+    for (const previous of options.previousNames?.[title] ?? []) {
+      names.push({ name: previous.name, owner: title, before: previous.before });
+    }
   }
-  names.sort((a, b) => b.name.length - a.name.length);
+  // 长的优先；一样长时，项目名和别名排在旧名字前面（旧名字和别的项目现在的名字相同时，归现在叫这个名字的项目）。
+  names.sort(
+    (a, b) => b.name.length - a.name.length || Number(a.before !== undefined) - Number(b.before !== undefined),
+  );
   const result = new Map<string, string[]>();
   for (const fileName of fileNames) {
     if (!isAudioFile(fileName)) continue;
-    const owner = names.find(({ name }) => bounceMatchesTitle(fileName, name))?.owner;
-    if (owner === undefined) continue;
-    const files = result.get(owner) ?? [];
+    const match = names.find(
+      ({ name, before }) =>
+        bounceMatchesTitle(fileName, name) &&
+        (before === undefined || (options.createdAtOf?.(fileName) ?? Number.POSITIVE_INFINITY) < before),
+    );
+    if (match === undefined) continue;
+    if (options.exclusions?.[match.owner]?.includes(fileName)) continue;
+    const files = result.get(match.owner) ?? [];
     files.push(fileName);
-    result.set(owner, files);
+    result.set(match.owner, files);
   }
   return result;
 }
@@ -132,6 +152,26 @@ let sharedBounceTitles: string[] = [];
 // 项目名 → 别名。别名存在项目元数据里（异步读取），套用元数据时更新；和项目名分开存，
 // 这样别处再调 loadProjects 只会刷新项目名，不会把别名清掉。
 let sharedBounceAliases: Record<string, string[]> = {};
+
+export type PreviousBounceName = { name: string; before: number };
+// 项目名 → 改名前的名字。和别名一样，在套用元数据时更新。
+let sharedBouncePreviousNames: Record<string, PreviousBounceName[]> = {};
+// 项目名 → 被标成「不属于这个项目」的文件名。
+let sharedBounceExclusions: Record<string, string[]> = {};
+
+export function setSharedBouncePreviousNames(previousNames: Record<string, PreviousBounceName[]>): void {
+  sharedBouncePreviousNames = previousNames;
+  sharedAssignment = null;
+}
+
+export function setSharedBounceExclusions(exclusions: Record<string, string[]>): void {
+  sharedBounceExclusions = exclusions;
+  sharedAssignment = null;
+}
+
+export function getSharedBounceExclusions(): Record<string, string[]> {
+  return sharedBounceExclusions;
+}
 
 export function setSharedBounceTitles(titles: string[]): void {
   sharedBounceTitles = titles;
@@ -155,13 +195,35 @@ export function getSharedBounceTitles(): string[] {
 // 同名覆盖导出不改文件夹 mtime，但只影响文件的修改时间，不影响分配；修改时间在 listBounces 时实时读取。
 let sharedAssignment: { key: string; byTitle: Map<string, string[]> } | null = null;
 
+// 共享文件夹里某个文件的创建时间；读不到时当作「很新」，旧名字就不会认它。
+function sharedCreatedAt(folder: string, fileName: string): number {
+  try {
+    return fs.statSync(path.join(folder, fileName)).birthtimeMs;
+  } catch {
+    return Number.POSITIVE_INFINITY;
+  }
+}
+
+function sharedAssignOptions(folder: string): AssignOptions {
+  return {
+    previousNames: sharedBouncePreviousNames,
+    exclusions: sharedBounceExclusions,
+    createdAtOf: (fileName) => sharedCreatedAt(folder, fileName),
+  };
+}
+
 // 按当前项目名和别名分配（带缓存）。读不到文件夹时抛出，由调用方处理。
 function currentAssignment(folder: string): Map<string, string[]> {
   const key = `${folder}:${fs.statSync(folder).mtimeMs}`;
   if (sharedAssignment?.key !== key) {
     sharedAssignment = {
       key,
-      byTitle: assignSharedBounces(fs.readdirSync(folder), sharedBounceTitles, sharedBounceAliases),
+      byTitle: assignSharedBounces(
+        fs.readdirSync(folder),
+        sharedBounceTitles,
+        sharedBounceAliases,
+        sharedAssignOptions(folder),
+      ),
     };
   }
   return sharedAssignment.byTitle;
@@ -176,7 +238,9 @@ export function sharedBounceFilesFor(title: string): string[] {
   try {
     // 项目不在已知名单里（还没加载过项目，或刚改名）：只按这一个名字分配，不写缓存，免得缓存里缺了别的项目。
     if (!sharedBounceTitles.includes(title)) {
-      return toPaths(assignSharedBounces(fs.readdirSync(folder), [title], sharedBounceAliases));
+      return toPaths(
+        assignSharedBounces(fs.readdirSync(folder), [title], sharedBounceAliases, sharedAssignOptions(folder)),
+      );
     }
     return toPaths(currentAssignment(folder));
   } catch {

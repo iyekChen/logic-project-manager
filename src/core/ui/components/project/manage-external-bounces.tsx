@@ -1,6 +1,11 @@
 import { Action, ActionPanel, Form, Icon, showToast, Toast, useNavigation } from "@raycast/api";
 import { useEffect, useState } from "react";
-import { getProjectMetadata, setBounceAliases, setExternalBounces } from "@/core/metadata/project-metadata";
+import {
+  getProjectMetadata,
+  setBounceAliases,
+  setExternalBounces,
+  setPreviousBounceNames,
+} from "@/core/metadata/project-metadata";
 import {
   checkBounceAlias,
   getSharedBounceAliases,
@@ -40,10 +45,17 @@ export function ManageExternalBounces({
   const showAliases = resolveSharedBouncesFolder() !== null;
   const [aliasText, setAliasText] = useState("");
   const [aliasError, setAliasError] = useState<string | undefined>();
+  // 改名前的名字：默认全选，取消勾选表示删掉。
+  const [previousNames, setPreviousNames] = useState<{ name: string; before: number }[]>([]);
+  const [selectedPreviousNames, setSelectedPreviousNames] = useState<string[]>([]);
 
   useEffect(() => {
     if (!showAliases) return;
-    void getProjectMetadata(projectId).then((metadata) => setAliasText(metadata.bounceAliases.join(", ")));
+    void getProjectMetadata(projectId).then((metadata) => {
+      setAliasText(metadata.bounceAliases.join(", "));
+      setPreviousNames(metadata.previousBounceNames);
+      setSelectedPreviousNames(metadata.previousBounceNames.map((previous) => previous.name));
+    });
   }, [projectId, showAliases]);
 
   function validateAliases(text: string): string | undefined {
@@ -62,6 +74,11 @@ export function ManageExternalBounces({
         return;
       }
       await setBounceAliases(projectId, parseAliases(aliasText));
+      // 只写回还勾着的，before 保持原值。
+      await setPreviousBounceNames(
+        projectId,
+        previousNames.filter((previous) => selectedPreviousNames.includes(previous.name)),
+      );
     }
     await setExternalBounces(projectId, folders, files);
     await showToast({ style: Toast.Style.Success, title: t.externalBounceSaved });
@@ -110,6 +127,23 @@ export function ManageExternalBounces({
           }}
           onBlur={() => setAliasError(validateAliases(aliasText))}
         />
+      )}
+      {showAliases && previousNames.length > 0 && (
+        <Form.TagPicker
+          id="previousNames"
+          title={t.previousNamesField}
+          info={t.previousNamesInfo}
+          value={selectedPreviousNames}
+          onChange={setSelectedPreviousNames}
+        >
+          {previousNames.map((previous) => (
+            <Form.TagPicker.Item
+              key={previous.name}
+              value={previous.name}
+              title={`${previous.name} (before ${new Date(previous.before).toLocaleDateString()})`}
+            />
+          ))}
+        </Form.TagPicker>
       )}
     </Form>
   );

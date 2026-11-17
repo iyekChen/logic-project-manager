@@ -12,6 +12,10 @@ export type ProjectMetadata = {
   externalBounceFiles: string[];
   // 共享 Bounces 文件夹里认这个项目的别名：文件名以别名开头的 bounce 也归它（规则和项目名一样）。
   bounceAliases: string[];
+  // 项目改名前的名字：共享文件夹里以它开头、并且在 before（毫秒时间戳）之前创建的 bounce 仍归这个项目。
+  previousBounceNames: { name: string; before: number }[];
+  // 共享文件夹里被标成「不属于这个项目」的文件名（Not This Project）。文件改了名，就按新名字重新配对。
+  excludedSharedBounces: string[];
 };
 
 const PROJECT_METADATA_STORAGE_KEY = "project-metadata";
@@ -28,6 +32,8 @@ const EMPTY_PROJECT_METADATA: ProjectMetadata = {
   externalBounceFolders: [],
   externalBounceFiles: [],
   bounceAliases: [],
+  previousBounceNames: [],
+  excludedSharedBounces: [],
 };
 
 function parseStore(value: unknown): ProjectMetadataStore {
@@ -122,6 +128,28 @@ export async function setBounceAliases(projectId: string, aliases: string[]): Pr
     });
   await updateStore((store) => {
     store[projectId] = { ...withDefaults(store[projectId]), bounceAliases: cleaned };
+    return store;
+  });
+}
+
+// 记一个改名前的名字。同名（不区分大小写）的旧记录换成新的时间；和当前名字相同时不记。
+export async function addPreviousBounceName(projectId: string, name: string, before: number): Promise<void> {
+  if (name === projectId) return;
+  await updateStore((store) => {
+    const meta = withDefaults(store[projectId]);
+    const rest = meta.previousBounceNames.filter((previous) => previous.name.toLowerCase() !== name.toLowerCase());
+    store[projectId] = { ...meta, previousBounceNames: [...rest, { name, before }] };
+    return store;
+  });
+}
+
+// 覆盖式写入改名前的名字（Manage External Bounce 里取消勾选时用）。
+export async function setPreviousBounceNames(
+  projectId: string,
+  names: { name: string; before: number }[],
+): Promise<void> {
+  await updateStore((store) => {
+    store[projectId] = { ...withDefaults(store[projectId]), previousBounceNames: names };
     return store;
   });
 }
