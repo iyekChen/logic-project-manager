@@ -1,4 +1,7 @@
 import { ActionPanel, Action, Color, getApplications, Icon, Keyboard, List, type Application } from "@raycast/api";
+import fs from "node:fs";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { useEffect, useState } from "react";
 import type { DawSet, ProjectFileMetadata } from "@/daws";
 import { logicAdapter } from "./adapter";
@@ -18,7 +21,24 @@ const settings = getSettings();
 const t = getTranslations(settings.language);
 const alternativesText = getAlternativesViewStrings(settings.language);
 
-type ProjectAlternative = DawSet & ProjectFileMetadata;
+// windowImage：Logic 保存时截下的工程窗口缩略图（Alternatives/NNN/WindowImage.jpg），没有时为 null。
+type ProjectAlternative = DawSet & ProjectFileMetadata & { windowImage: string | null };
+
+function findWindowImage(set: DawSet): string | null {
+  const image = path.join(path.dirname(set.metadataFile), "WindowImage.jpg");
+  return fs.existsSync(image) ? image : null;
+}
+
+// 详情顶部放缩略图；不是 Active 的再加一句说明，因为 Logic 按路径打开时总是打开 Active 的那个。
+// 路径转成 file:// URL，空格、# 这类字符才不会打断 Markdown。
+function detailMarkdown(alternative: ProjectAlternative, activeName: string | undefined): string {
+  const parts: string[] = [];
+  if (alternative.windowImage) parts.push(`![](${pathToFileURL(alternative.windowImage).href})`);
+  if (!alternative.active && activeName) {
+    parts.push(alternativesText.logicOpensActiveAlternative.replace("{name}", activeName));
+  }
+  return parts.join("\n\n");
+}
 
 // Logic 项目的 Alternatives：只读。改名、复制、删除要动 .logicx 包内部，交给 Logic 自己做。
 export function AlternativesView({ project }: { project: Project }) {
@@ -55,7 +75,7 @@ export function AlternativesView({ project }: { project: Project }) {
             }
           }
           if (cancelled) return;
-          items.push({ ...set, ...metadata });
+          items.push({ ...set, ...metadata, windowImage: findWindowImage(set) });
         }
         setAlternatives(items);
       } catch (error) {
@@ -88,18 +108,14 @@ export function AlternativesView({ project }: { project: Project }) {
       {alternatives.map((alternative) => (
         <List.Item
           key={alternative.metadataFile}
-          icon={Icon.Layers}
+          icon={alternative.windowImage ? { source: alternative.windowImage } : Icon.Layers}
           title={alternative.name}
           accessories={
             alternative.active ? [{ tag: { value: alternativesText.activeAlternative, color: Color.Green } }] : []
           }
           detail={
             <List.Item.Detail
-              markdown={
-                !alternative.active && activeName
-                  ? alternativesText.logicOpensActiveAlternative.replace("{name}", activeName)
-                  : ""
-              }
+              markdown={detailMarkdown(alternative, activeName)}
               metadata={
                 <List.Item.Detail.Metadata>
                   {alternative.active ? (
