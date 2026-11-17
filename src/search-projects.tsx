@@ -487,7 +487,7 @@ export default function Command() {
       return;
     }
     try {
-      // 找不到当前版本时（工程被手动改坏），直接打开项目，交给 DAW 自己挑。Logic 的每个 Set 都指向同一个包；Ableton 有 Set 就一定有最新的，走不到这里。
+      // 找不到当前版本时（工程被手动改坏），打开任意一个，交给 DAW 自己决定打开哪个。只有记录了当前版本的 DAW 会走到这里。
       await openWithDaw((set ?? sets[0]).path);
       await closeMainWindow();
     } catch (error) {
@@ -691,7 +691,12 @@ export default function Command() {
         actions={
           <ActionPanel>
             <ActionPanel.Section>
-              <Action.Push title={labels.viewSets} icon={Icon.Document} target={<SetsView project={item} />} />
+              <Action.Push
+                title={labels.viewSets}
+                icon={Icon.Document}
+                target={<SetsView project={item} />}
+                onPop={() => void reloadProjects()}
+              />
               <Action
                 title={toggleTitle}
                 icon={toggleIcon}
@@ -824,7 +829,7 @@ export default function Command() {
               />
             </ActionPanel.Section>
             <ActionPanel.Section title={t.sectionFile}>
-              {/* 包（如 .logicx）用「打开」会交给 DAW，所以改成在 Finder 里选中它；普通文件夹照旧在 Finder 里打开。 */}
+              {/* 包用「打开」会交给 DAW，所以改成在 Finder 里选中它；普通文件夹照旧在 Finder 里打开。 */}
               {item.kind === "package" ? (
                 <Action.ShowInFinder
                   path={item.folderPath}

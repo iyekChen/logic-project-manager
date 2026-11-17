@@ -1,12 +1,18 @@
 import {
   ActionPanel,
   Action,
+  Alert,
   closeMainWindow,
   Color,
+  confirmAlert,
+  Form,
   Icon,
   Image,
   Keyboard,
   List,
+  showToast,
+  Toast,
+  useNavigation,
   type Application,
 } from "@raycast/api";
 import fs from "node:fs";
@@ -32,6 +38,8 @@ import { getDawLabels } from "@/daws/labels";
 import { SortBySubmenu, sortItems, sortOptionTitle, useSortOption } from "@/core/ui/sorting";
 import type { SortOption } from "@/core/ui/sorting";
 import { GroupBySubmenu, groupItems, useGroupOption } from "@/core/ui/grouping";
+import { alternativeIndex, duplicateName } from "./alternative-rules";
+import { duplicateAlternative, renameAlternative, setActiveAlternative, trashAlternative } from "./alternative-edits";
 
 const settings = getSettings();
 const t = getTranslations(settings.language);
@@ -63,13 +71,63 @@ function detailMarkdown(alternative: ProjectAlternative): string {
   return alternative.windowImage ? `![](${pathToFileURL(alternative.windowImage).href})` : "";
 }
 
-// Logic 项目的 Alternatives：只读。改名、复制、删除要动 .logicx 包内部，交给 Logic 自己做。
+function RenameAlternativeForm({ alternative, onRenamed }: { alternative: ProjectAlternative; onRenamed: () => void }) {
+  const { pop } = useNavigation();
+  const [name, setName] = useState(alternative.name);
+
+  async function handleSubmit() {
+    const trimmed = name.trim();
+    if (trimmed === "" || trimmed === alternative.name) {
+      pop();
+      return;
+    }
+    if (trimmed.includes("/") || trimmed.includes(":")) {
+      await showToast({ style: Toast.Style.Failure, title: t.invalidName });
+      return;
+    }
+
+    const confirmed = await confirmAlert({
+      icon: { source: Icon.Warning, tintColor: Color.Yellow },
+      title: alternativesText.changeConfirmTitle,
+      message: alternativesText.changeConfirmMessage,
+      primaryAction: { title: t.rename, style: Alert.ActionStyle.Default },
+    });
+    if (!confirmed) return;
+
+    try {
+      await renameAlternative(alternative.path, alternative, trimmed);
+    } catch (error) {
+      await showFailure(t.renameFailed, error);
+      return;
+    }
+
+    onRenamed();
+    await showToast({ style: Toast.Style.Success, title: alternativesText.alternativeRenamed, message: trimmed });
+    pop();
+  }
+
+  return (
+    <Form
+      navigationTitle={`${alternativesText.renameAlternative} — ${alternative.name}`}
+      actions={
+        <ActionPanel>
+          <Action.SubmitForm title={t.save} onSubmit={handleSubmit} />
+        </ActionPanel>
+      }
+    >
+      <Form.TextField id="name" title={t.name} value={name} onChange={setName} />
+    </Form>
+  );
+}
+
+// Logic 项目的 Alternatives：改名、复制、删除都要动 .logicx 包内部，改之前先确认项目没在 Logic 里开着。
 export function AlternativesView({ project }: { project: Project }) {
   const [alternatives, setAlternatives] = useState<ProjectAlternative[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [logicApp, setLogicApp] = useState<Application | null>(null);
   const [sortBy, setSortBy] = useSortOption(ALTERNATIVES_SORT_STORAGE_KEY, ALTERNATIVES_SORT_OPTIONS, "created-desc");
   const [groupBy, setGroupBy] = useGroupOption(ALTERNATIVES_GROUP_STORAGE_KEY, "created");
+  const [reloadToken, setReloadToken] = useState(0);
 
   // 解析 Logic Pro，用于 Open in Logic Pro 的图标：偏好设置里选了版本就用那个版本。
   useEffect(() => {
@@ -116,7 +174,98 @@ export function AlternativesView({ project }: { project: Project }) {
     return () => {
       cancelled = true;
     };
-  }, [project.folderPath, project.kind]);
+  }, [project.folderPath, project.kind, reloadToken]);
+
+  const reload = () => setReloadToken((n) => n + 1);
+
+  // 所有会改文件的操作都先确认：项目在 Logic 里开着时，Logic 下次保存会盖掉这些改动。
+  const confirmChange = (title: string, message: string, actionTitle: string) =>
+    confirmAlert({
+      icon: { source: Icon.Warning, tintColor: Color.Yellow },
+      title,
+      message,
+      primaryAction: { title: actionTitle, style: Alert.ActionStyle.Default },
+    });
+
+  const handleOpen = async (alternative: ProjectAlternative) => {
+    try {
+      if (!alternative.active) {
+        const confirmed = await confirmChange(
+          alternativesText.changeConfirmTitle,
+          alternativesText.changeConfirmMessage,
+          alternativesText.openInDaw,
+        );
+        if (!confirmed) return;
+        await setActiveAlternative(alternative.path, alternativeIndex(alternative));
+      }
+      await openWithDaw(alternative.path);
+      await closeMainWindow();
+    } catch (error) {
+      await showFailure(labels.openSetFailed, error);
+    }
+  };
+
+  const handleSetActive = async (alternative: ProjectAlternative) => {
+    const confirmed = await confirmChange(
+      alternativesText.changeConfirmTitle,
+      alternativesText.changeConfirmMessage,
+      alternativesText.setActive,
+    );
+    if (!confirmed) return;
+    try {
+      await setActiveAlternative(alternative.path, alternativeIndex(alternative));
+      reload();
+      await showToast({ style: Toast.Style.Success, title: alternativesText.activeChanged, message: alternative.name });
+    } catch (error) {
+      await showFailure(alternativesText.changeFailed, error);
+    }
+  };
+
+  const handleDuplicate = async (alternative: ProjectAlternative) => {
+    const name = duplicateName(
+      alternative.name,
+      alternatives.map((item) => item.name),
+    );
+    const confirmed = await confirmChange(
+      alternativesText.changeConfirmTitle,
+      alternativesText.changeConfirmMessage,
+      alternativesText.duplicateAlternative,
+    );
+    if (!confirmed) return;
+    try {
+      await duplicateAlternative(alternative.path, alternative, alternatives.map(alternativeIndex), name);
+      reload();
+      await showToast({ style: Toast.Style.Success, title: alternativesText.alternativeDuplicated, message: name });
+    } catch (error) {
+      await showFailure(t.duplicateFailed, error);
+    }
+  };
+
+  const handleTrash = async (alternative: ProjectAlternative) => {
+    if (alternatives.length <= 1) {
+      await showToast({ style: Toast.Style.Failure, title: alternativesText.lastAlternative });
+      return;
+    }
+    const confirmed = await confirmAlert({
+      title: t.moveToTrash,
+      icon: Icon.Trash,
+      message: `${alternativesText.trashAlternativeHint}\n${alternative.name}\n\n${alternativesText.changeConfirmMessage}`,
+      primaryAction: { title: t.moveToTrash, style: Alert.ActionStyle.Destructive },
+    });
+    if (!confirmed) return;
+    try {
+      await trashAlternative(
+        alternative.path,
+        alternative,
+        alternatives.map(alternativeIndex),
+        alternative.active === true,
+      );
+      reload();
+      await showToast({ style: Toast.Style.Success, title: t.movedToTrash, message: alternative.name });
+    } catch (error) {
+      await showFailure(t.trashFailed, error);
+    }
+  };
 
   const sortedAlternatives = sortItems(alternatives, sortBy, (alternative) => ({
     created: alternative.createdAt,
@@ -182,19 +331,31 @@ export function AlternativesView({ project }: { project: Project }) {
                     <Action
                       title={alternativesText.openInDaw}
                       icon={logicApp ? { fileIcon: logicApp.path } : Icon.Document}
-                      onAction={async () => {
-                        try {
-                          await openWithDaw(alternative.path);
-                          await closeMainWindow();
-                        } catch (error) {
-                          await showFailure(labels.openSetFailed, error);
-                        }
-                      }}
+                      onAction={() => handleOpen(alternative)}
                     />
+                    {!alternative.active && (
+                      <Action
+                        title={alternativesText.setActive}
+                        icon={Icon.CheckCircle}
+                        onAction={() => handleSetActive(alternative)}
+                      />
+                    )}
                     <Action.ShowInFinder
                       path={path.dirname(alternative.metadataFile)}
                       title={t.showInFinder}
                       shortcut={{ modifiers: ["cmd", "opt"], key: "o" }}
+                    />
+                    <Action.Push
+                      title={alternativesText.renameAlternative}
+                      icon={Icon.Pencil}
+                      shortcut={Keyboard.Shortcut.Common.Edit}
+                      target={<RenameAlternativeForm alternative={alternative} onRenamed={reload} />}
+                    />
+                    <Action
+                      title={alternativesText.duplicateAlternative}
+                      icon={Icon.Duplicate}
+                      shortcut={Keyboard.Shortcut.Common.Duplicate}
+                      onAction={() => handleDuplicate(alternative)}
                     />
                   </ActionPanel.Section>
                   <ActionPanel.Section title={t.sectionCopy}>
@@ -214,6 +375,15 @@ export function AlternativesView({ project }: { project: Project }) {
                   <ActionPanel.Section title={t.sectionArrange}>
                     <GroupBySubmenu allowed={["modified", "created"]} value={groupBy} onChange={setGroupBy} />
                     <SortBySubmenu allowed={ALTERNATIVES_SORT_OPTIONS} value={sortBy} onChange={setSortBy} />
+                  </ActionPanel.Section>
+                  <ActionPanel.Section title={t.sectionDangerZone}>
+                    <Action
+                      title={t.moveToTrash}
+                      icon={Icon.Trash}
+                      style={Action.Style.Destructive}
+                      shortcut={Keyboard.Shortcut.Common.Remove}
+                      onAction={() => handleTrash(alternative)}
+                    />
                   </ActionPanel.Section>
                 </ActionPanel>
               }
