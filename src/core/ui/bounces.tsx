@@ -23,9 +23,14 @@ import { getTranslations } from "@/i18n";
 import { SortBySubmenu, sortItems, sortOptionTitle, useSortOption } from "@/core/ui/sorting";
 import type { SortOption } from "@/core/ui/sorting";
 import { groupItems } from "@/core/ui/grouping";
-import { collectBounces, projectBounceSources } from "@/core/projects/bounces";
+import {
+  collectBounces,
+  getSharedBounceExclusions,
+  projectBounceSources,
+  setSharedBounceExclusions,
+} from "@/core/projects/bounces";
 import type { BounceWithSource } from "@/core/projects/bounces";
-import { setExternalBounces } from "@/core/metadata/project-metadata";
+import { addExcludedSharedBounce, setExternalBounces } from "@/core/metadata/project-metadata";
 import { ManageExternalBounces } from "@/core/ui/components/project/manage-external-bounces";
 import { showFailure } from "@/core/ui/toast";
 
@@ -219,6 +224,19 @@ export function Bounces(props: {
     await showToast({ style: Toast.Style.Success, title: t.bounceRenamed, message: finalName });
   };
 
+  // 共享文件夹里配错的文件：标成不属于这个项目，退回 Unmatched Bounces。
+  const handleNotThisProject = async (bounce: BounceWithSource) => {
+    await addExcludedSharedBounce(props.projectId, bounce.name);
+    const exclusions = getSharedBounceExclusions();
+    setSharedBounceExclusions({
+      ...exclusions,
+      [props.projectName]: [...(exclusions[props.projectName] ?? []), bounce.name],
+    });
+    setReloadToken((n) => n + 1);
+    props.onChanged?.();
+    await showToast({ style: Toast.Style.Success, title: t.movedToUnmatched, message: bounce.name });
+  };
+
   const removeSource = async (sourcePath: string) => {
     const confirmed = await confirmAlert({
       icon: Icon.MinusCircle,
@@ -333,6 +351,13 @@ export function Bounces(props: {
                             />
                           }
                         />
+                        {b.source === "shared" && (
+                          <Action
+                            title={t.notThisProject}
+                            icon={Icon.XMarkCircle}
+                            onAction={() => handleNotThisProject(b)}
+                          />
+                        )}
                       </ActionPanel.Section>
                     ) : (
                       <ActionPanel.Section>

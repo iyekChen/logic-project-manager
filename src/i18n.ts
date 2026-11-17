@@ -224,6 +224,8 @@ type TranslationKeys = {
   bounceAliasesInfo: string;
   previousNamesField: string;
   previousNamesInfo: string;
+  notThisProject: string;
+  movedToUnmatched: string;
   unavailable: string;
   renameBounce: string;
   bounceRenamed: string;
@@ -491,6 +493,8 @@ const translations: Record<Language, TranslationKeys> = {
       "Separated by commas. Bounces in the shared folder that start with one of these belong to this project.",
     previousNamesField: "Previous Names",
     previousNamesInfo: "Bounces made before the project was renamed. Deselect a name to stop matching it.",
+    notThisProject: "Not This Project",
+    movedToUnmatched: "Moved to Unmatched Bounces",
     unavailable: "Unavailable",
     renameBounce: "Rename Bounce",
     bounceRenamed: "Bounce Renamed",

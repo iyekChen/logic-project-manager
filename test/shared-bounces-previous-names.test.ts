@@ -40,3 +40,20 @@ describe("assignSharedBounces 的旧名字", () => {
     expect(result.get("Demo")).toBeUndefined();
   });
 });
+
+describe("assignSharedBounces 的 exclusions", () => {
+  it("被排除的文件不归这个项目", () => {
+    const result = assignSharedBounces(["Demo Package v1.wav"], ["Demo Package"], {}, {
+      exclusions: { "Demo Package": ["Demo Package v1.wav"] },
+    });
+    expect(result.get("Demo Package")).toBeUndefined();
+  });
+
+  it("被排除的文件也不会转给名字更短、同样能对上的另一个项目", () => {
+    const result = assignSharedBounces(["Demo Package v1.wav"], ["Demo", "Demo Package"], {}, {
+      exclusions: { "Demo Package": ["Demo Package v1.wav"] },
+    });
+    expect(result.get("Demo Package")).toBeUndefined();
+    expect(result.get("Demo")).toBeUndefined();
+  });
+});

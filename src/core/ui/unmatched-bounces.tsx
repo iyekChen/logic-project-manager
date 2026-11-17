@@ -1,13 +1,20 @@
 import { Action, ActionPanel, Form, Icon, Keyboard, List, showToast, Toast, useNavigation } from "@raycast/api";
 import { useState } from "react";
-import { addExternalBounceFile, getProjectMetadata, setBounceAliases } from "@/core/metadata/project-metadata";
+import {
+  addExternalBounceFile,
+  getProjectMetadata,
+  removeExcludedSharedBounce,
+  setBounceAliases,
+} from "@/core/metadata/project-metadata";
 import {
   bounceMatchesTitle,
   checkBounceAlias,
   getSharedBounceAliases,
+  getSharedBounceExclusions,
   getSharedBounceTitles,
   guessAliasFromFileName,
   setSharedBounceAliases,
+  setSharedBounceExclusions,
   unmatchedSharedBounces,
   type Bounce,
 } from "@/core/projects/bounces";
@@ -109,10 +116,19 @@ function AssignBounce({
     return undefined;
   }
 
+  // 之前标过「不属于这个项目」的，现在又指回来：撤销标记，否则它还是不会归这个项目。
+  async function clearExclusion(project: Project) {
+    await removeExcludedSharedBounce(project.id, bounce.name);
+    const exclusions = getSharedBounceExclusions();
+    const rest = (exclusions[project.title] ?? []).filter((name) => name !== bounce.name);
+    setSharedBounceExclusions({ ...exclusions, [project.title]: rest });
+  }
+
   async function handleSubmit() {
     const project = projects.find((p) => p.id === projectId);
     if (!project) return;
     try {
+      await clearExclusion(project);
       if (mode === "file") {
         await addExternalBounceFile(project.id, bounce.path);
         await showToast({ style: Toast.Style.Success, title: t.bounceAssigned, message: project.title });

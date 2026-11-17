@@ -154,6 +154,29 @@ export async function setPreviousBounceNames(
   });
 }
 
+// 把共享文件夹里的一个文件标成「不属于这个项目」（Not This Project）。
+export async function addExcludedSharedBounce(projectId: string, fileName: string): Promise<void> {
+  await updateStore((store) => {
+    const meta = withDefaults(store[projectId]);
+    if (meta.excludedSharedBounces.includes(fileName)) return null;
+    store[projectId] = { ...meta, excludedSharedBounces: [...meta.excludedSharedBounces, fileName] };
+    return store;
+  });
+}
+
+// 撤销上面的标记（在 Unmatched Bounces 里又把它指回这个项目时用）。
+export async function removeExcludedSharedBounce(projectId: string, fileName: string): Promise<void> {
+  await updateStore((store) => {
+    const meta = withDefaults(store[projectId]);
+    if (!meta.excludedSharedBounces.includes(fileName)) return null;
+    store[projectId] = {
+      ...meta,
+      excludedSharedBounces: meta.excludedSharedBounces.filter((name) => name !== fileName),
+    };
+    return store;
+  });
+}
+
 // 删除某项目的元数据（移到废纸篓时清理，避免重建同名项目复活旧标签）。
 export async function deleteProjectMetadata(projectId: string): Promise<void> {
   await updateStore((store) => {
