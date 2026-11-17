@@ -1,4 +1,4 @@
-import { ActionPanel, Action, Color, getApplications, Icon, Keyboard, List, type Application } from "@raycast/api";
+import { ActionPanel, Action, closeMainWindow, Color, Icon, Keyboard, List, type Application } from "@raycast/api";
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -16,10 +16,14 @@ import { getTranslations } from "@/i18n";
 import type { Project } from "@/core/projects/types";
 import { LOG_PREFIX } from "@/core/log";
 import { getAlternativesViewStrings } from "./strings";
+import { openWithDaw, resolveDawApp } from "@/core/daw-app";
+import { showFailure } from "@/core/ui/toast";
+import { getDawLabels } from "@/daws/labels";
 
 const settings = getSettings();
 const t = getTranslations(settings.language);
 const alternativesText = getAlternativesViewStrings(settings.language);
+const labels = getDawLabels(settings.language);
 
 // windowImage：Logic 保存时截下的工程窗口缩略图（Alternatives/NNN/WindowImage.jpg），没有时为 null。
 type ProjectAlternative = DawSet & ProjectFileMetadata & { windowImage: string | null };
@@ -46,11 +50,9 @@ export function AlternativesView({ project }: { project: Project }) {
   const [isLoading, setIsLoading] = useState(true);
   const [logicApp, setLogicApp] = useState<Application | null>(null);
 
-  // 解析 Logic Pro，仅用于 Open in Logic Pro 的图标。
+  // 解析 Logic Pro，用于 Open in Logic Pro 的图标：偏好设置里选了版本就用那个版本。
   useEffect(() => {
-    void getApplications().then((apps) => {
-      setLogicApp(apps.find((app) => app.name.toLowerCase().includes(logicAdapter.appNameMatch)) ?? null);
-    });
+    void resolveDawApp().then(setLogicApp);
   }, []);
 
   useEffect(() => {
@@ -142,10 +144,17 @@ export function AlternativesView({ project }: { project: Project }) {
           actions={
             <ActionPanel>
               <ActionPanel.Section>
-                <Action.Open
+                <Action
                   title={alternativesText.openInDaw}
                   icon={logicApp ? { fileIcon: logicApp.path } : Icon.Document}
-                  target={alternative.path}
+                  onAction={async () => {
+                    try {
+                      await openWithDaw(alternative.path);
+                      await closeMainWindow();
+                    } catch (error) {
+                      await showFailure(labels.openSetFailed, error);
+                    }
+                  }}
                 />
                 <Action.ShowInFinder
                   path={alternative.path}

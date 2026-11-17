@@ -4,7 +4,6 @@ import {
   Clipboard,
   closeMainWindow,
   Color,
-  getApplications,
   Icon,
   Keyboard,
   List,
@@ -70,6 +69,7 @@ import {
 import { SetsView } from "@/daws/ui";
 import { getDawLabels } from "@/daws/labels";
 import { projectIcon } from "@/daws/icons";
+import { openWithDaw, resolveDawApp } from "@/core/daw-app";
 import { LOG_PREFIX } from "@/core/log";
 import { bpmMatches, dateKeywords, matchesSearch, nameKeywords, optionKeywords } from "@/core/ui/search-keywords";
 import { findLatestSet } from "@/core/projects/latest-set";
@@ -159,11 +159,9 @@ export default function Command() {
       playerPath: PLAYER_PATH,
     });
 
-  // 找到 DAW 应用，用于新建项目（启动它）。
+  // 找到 DAW 应用，用于新建项目（启动它）和图标：偏好设置里选了版本就用那个版本。
   useEffect(() => {
-    void getApplications().then((apps) => {
-      setDawApp(apps.find((app) => app.name.toLowerCase().includes(daw.appNameMatch)) ?? null);
-    });
+    void resolveDawApp().then(setDawApp);
   }, []);
 
   // 常驻 Toast：只在播放时显示，title=曲名，message=进度；暂停或停止时隐藏。
@@ -488,7 +486,7 @@ export default function Command() {
       return;
     }
     try {
-      await open(set.path);
+      await openWithDaw(set.path);
       await closeMainWindow();
     } catch (error) {
       await showFailure(labels.openSetFailed, error);

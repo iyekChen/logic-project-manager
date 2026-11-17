@@ -22,6 +22,24 @@
 			"required": true
 		},
 		{
+			"name": "dawApp",
+			"title": "Logic Pro Version",
+			"description": "Which Logic Pro opens your projects.",
+			"type": "dropdown",
+			"required": false,
+			"default": "com.apple.logic10",
+			"data": [
+				{
+					"title": "Logic Pro",
+					"value": "com.apple.logic10"
+				},
+				{
+					"title": "Logic Pro (Creator Studio)",
+					"value": "com.apple.mobilelogic"
+				}
+			]
+		},
+		{
 			"name": "bouncesFolderName",
 			"title": "Bounces Subfolder",
 			"description": "The subfolder inside each project where bounces are saved (e.g. Bounces). Leave empty to look directly in each project folder.",
