@@ -5,7 +5,6 @@ type AlternativesViewStrings = {
   searchAlternatives: string;
   openInDaw: string;
   activeAlternative: string;
-  logicOpensActiveAlternative: string;
   copyAlternativeName: string;
 };
 
@@ -14,7 +13,6 @@ const strings: Record<Language, AlternativesViewStrings> = {
     searchAlternatives: "Search Alternatives",
     openInDaw: "Open in Logic Pro",
     activeAlternative: "Active",
-    logicOpensActiveAlternative: "Logic opens the active alternative: {name}",
     copyAlternativeName: "Copy Alternative Name",
   },
 };

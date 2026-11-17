@@ -7,7 +7,7 @@ const labels: Record<Language, DawLabels> = {
     // 共用代码取的「最新 Set」优先是 Active 的那个，Logic 打开项目时打开的也是它。
     latestSet: "Active Alternative",
     viewSets: "View Alternatives",
-    openLatestSet: "Open Project",
+    openLatestSet: "Open Active Alternative",
     noSets: "No Alternatives Found",
     openSetFailed: "Couldn't Open Project",
     readingSets: "Reading Alternatives…",
