@@ -513,6 +513,22 @@ function nameKey(name: string): string {
   return name.trim().toLowerCase();
 }
 
+/** 比较用：去掉空的曲序和角色 map，让"没有 key"和"空 map"算同一种状态。 */
+function withoutEmptyMaps(data: DataSnapshot): DataSnapshot {
+  const keep = <T>(maps: Record<string, T>): Record<string, T> => {
+    const out: Record<string, T> = {};
+    for (const [id, map] of Object.entries(maps)) {
+      if (Object.keys(map as object).length > 0) out[id] = map;
+    }
+    return out;
+  };
+  return {
+    ...data,
+    collectionOrders: keep(data.collectionOrders),
+    collectionRoles: keep(data.collectionRoles),
+  };
+}
+
 type PlannedTaxonomy = {
   options: TaxonomyOption[];
   /** 当前选项 ID → 名字，用来在引用失效时按名字找回。 */
@@ -707,7 +723,8 @@ export function planImport(file: DataFile, current: CurrentData, projects: Proje
       map[projectId] = number;
       taken.add(number);
     }
-    if (Object.keys(map).length > 0 || fileOrders !== undefined) orders[collectionId] = map;
+    // 空 map 不写入：没有 key 和空 map 视为同一种状态。
+    if (Object.keys(map).length > 0) orders[collectionId] = map;
 
     const roleMap: RoleMap = { ...(fileRoles ?? {}) };
     for (const [projectId, role] of Object.entries(currentRoles[collectionId] ?? {})) {
@@ -715,7 +732,7 @@ export function planImport(file: DataFile, current: CurrentData, projects: Proje
       if (projectId in roleMap) continue;
       roleMap[projectId] = role;
     }
-    if (Object.keys(roleMap).length > 0 || fileRoles !== undefined) roles[collectionId] = roleMap;
+    if (Object.keys(roleMap).length > 0) roles[collectionId] = roleMap;
   }
 
   const pins: string[] = [];
@@ -789,7 +806,7 @@ export function planImport(file: DataFile, current: CurrentData, projects: Proje
       unmatched: tracked.unmatched,
       droppedTracks,
     },
-    unchanged: sameValue(current, data),
+    unchanged: sameValue(withoutEmptyMaps(current), withoutEmptyMaps(data)),
     changeCount,
   };
 }

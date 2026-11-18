@@ -405,6 +405,49 @@ describe("snapshot restore", () => {
     expect(plan.changes.options).toBe(1);
   });
 
+  it("removes the order key when the file has none for a known collection", async () => {
+    await seed();
+    await LocalStorage.setItem("collection-order:ep", JSON.stringify({ alpha: 1 }));
+    const file = dataFile(
+      {
+        taxonomies: {
+          "stage-options": [],
+          "genre-options": [],
+          "collection-options": [{ id: "ep", name: "EP" }],
+          "role-options": [],
+        },
+      },
+      { alpha: { birthtimeMs: 1, inode: 1 } },
+    );
+
+    const current = await readCurrentData();
+    const plan = planImport(file, current, []);
+
+    expect(plan.data.collectionOrders.ep).toBeUndefined();
+    expect(plan.changes.collections).toBe(1);
+
+    await replaceData(file, [], tempDir);
+    expect(await LocalStorage.getItem<string>("collection-order:ep")).toBeUndefined();
+  });
+
+  it("treats a missing order and role key as nothing to change", async () => {
+    await seed();
+    await LocalStorage.setItem("collection-options", JSON.stringify([{ id: "ep", name: "EP" }]));
+    await LocalStorage.removeItem("collection-order:ep");
+    await LocalStorage.removeItem("collection-roles:ep");
+
+    const file = await buildSnapshot([]);
+    const current = await readCurrentData();
+    const plan = planImport(file, current, []);
+
+    expect(plan.unchanged).toBe(true);
+
+    const before = await snapshotStorage();
+    const report = await replaceData(file, [], tempDir);
+    expect(report.backupPath).toBeNull();
+    expect(await snapshotStorage()).toEqual(before);
+  });
+
   it("puts the file's pins first and appends current-only ones", async () => {
     await seed();
     await LocalStorage.setItem("collection-pins", JSON.stringify(["lp", "ep"]));
