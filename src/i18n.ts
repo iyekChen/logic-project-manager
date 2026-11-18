@@ -286,7 +286,6 @@ type TranslationKeys = {
   importBadFormat: string;
   importBadVersion: string;
   importOtherExtension: string;
-  importBadStructure: string;
   importBadStructureAt: string;
   corruptDataKind: string;
   corruptDataMetadata: string;
@@ -602,7 +601,6 @@ const translations: Record<Language, TranslationKeys> = {
     importBadFormat: "This is not an exported data file.",
     importBadVersion: "This file was made by a newer version of the extension.",
     importOtherExtension: "This file was exported by {extension}.",
-    importBadStructure: "The data in this file is not valid.",
     importBadStructureAt: "Invalid data: {detail}",
     corruptDataKind: "Unreadable data: {kind}.",
     corruptDataMetadata: "project tags",
