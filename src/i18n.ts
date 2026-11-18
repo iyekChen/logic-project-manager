@@ -253,6 +253,42 @@ type TranslationKeys = {
   onboardingUnmatchedMessage: string;
   skip: string;
   review: string;
+  exportData: string;
+  exportDataHint: string;
+  saveTo: string;
+  exportFolderRequired: string;
+  exportFolderMissing: string;
+  exportFolderNotDirectory: string;
+  exportingData: string;
+  dataExported: string;
+  exportFailed: string;
+  importData: string;
+  importFile: string;
+  importFileRequired: string;
+  importMode: string;
+  importModeMerge: string;
+  importModeReplace: string;
+  importMergeHint: string;
+  importReplaceHint: string;
+  replaceDataTitle: string;
+  replaceDataMessage: string;
+  replaceData: string;
+  importingData: string;
+  dataImported: string;
+  importSummary: string;
+  importBackupSaved: string;
+  importFailed: string;
+  importBadFormat: string;
+  importBadVersion: string;
+  importOtherExtension: string;
+  importBadStructure: string;
+  corruptDataKind: string;
+  corruptDataMetadata: string;
+  corruptDataCategories: string;
+  corruptDataPins: string;
+  corruptDataOrders: string;
+  corruptDataRoles: string;
+  corruptDataDeleted: string;
 };
 
 const translations: Record<Language, TranslationKeys> = {
@@ -526,6 +562,45 @@ const translations: Record<Language, TranslationKeys> = {
       "Assign each one to a project. You can open Unmatched Bounces anytime from a project's actions.",
     skip: "Skip",
     review: "Review",
+    exportData: "Export Data",
+    exportDataHint:
+      "Includes tags, collections, track numbers, roles and recently deleted projects. Notes and lyrics files are not included.",
+    saveTo: "Save To",
+    exportFolderRequired: "Choose a folder to save the file.",
+    exportFolderMissing: "This folder does not exist.",
+    exportFolderNotDirectory: "This is not a folder.",
+    exportingData: "Exporting Data",
+    dataExported: "Data Exported",
+    exportFailed: "Could Not Export Data",
+    importData: "Import Data",
+    importFile: "File",
+    importFileRequired: "Choose a file to import.",
+    importMode: "Mode",
+    importModeMerge: "Merge",
+    importModeReplace: "Replace",
+    importMergeHint: "Adds data from the file. When both have a value, your current data is kept.",
+    importReplaceHint: "Replaces your current data with the file. A backup is saved next to the file first.",
+    replaceDataTitle: "Replace All Data?",
+    replaceDataMessage:
+      "Your current tags, collections, track numbers and roles will be replaced by the file. A backup is saved next to the file first.",
+    replaceData: "Replace",
+    importingData: "Importing Data",
+    dataImported: "Data Imported",
+    importSummary:
+      "{projects} projects, {rematched} matched by folder, {unmatched} unmatched, {skipped} track numbers skipped.",
+    importBackupSaved: "Backup: {file}",
+    importFailed: "Could Not Import Data",
+    importBadFormat: "This is not an exported data file.",
+    importBadVersion: "This file was made by a newer version of the extension.",
+    importOtherExtension: "This file was exported by {extension}.",
+    importBadStructure: "The data in this file is not valid.",
+    corruptDataKind: "Unreadable data: {kind}.",
+    corruptDataMetadata: "project tags",
+    corruptDataCategories: "categories",
+    corruptDataPins: "pinned collections",
+    corruptDataOrders: "track numbers",
+    corruptDataRoles: "roles",
+    corruptDataDeleted: "recently deleted projects",
   },
 };
 

@@ -205,6 +205,35 @@
 				"track roles",
 				"music production"
 			]
+		},
+		{
+			"name": "export-data",
+			"title": "Export Data",
+			"description": "Save your tags, collections and other extension data to a file.",
+			"mode": "view",
+			"subtitle": "Logic Pro",
+			"keywords": [
+				"export",
+				"backup",
+				"data",
+				"tags",
+				"collections"
+			]
+		},
+		{
+			"name": "import-data",
+			"title": "Import Data",
+			"description": "Restore extension data from an exported file.",
+			"mode": "view",
+			"subtitle": "Logic Pro",
+			"keywords": [
+				"import",
+				"restore",
+				"backup",
+				"data",
+				"tags",
+				"collections"
+			]
 		}
 	],
 	"dependencies": {
