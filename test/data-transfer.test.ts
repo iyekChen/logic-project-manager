@@ -343,13 +343,66 @@ describe("snapshot restore", () => {
       JSON.stringify({ alpha: metadata(), fresh: metadata(), other: metadata() }),
     );
     await LocalStorage.setItem("collection-order:ep", JSON.stringify({ alpha: 1, fresh: 2, other: 1 }));
-    const file = dataFile({ collectionOrders: { ep: { alpha: 1 } } }, { alpha: { birthtimeMs: 1, inode: 1 } });
+    const file = dataFile(
+      {
+        taxonomies: {
+          "stage-options": [],
+          "genre-options": [],
+          "collection-options": [{ id: "ep", name: "EP" }],
+          "role-options": [],
+        },
+        collectionOrders: { ep: { alpha: 1 } },
+      },
+      { alpha: { birthtimeMs: 1, inode: 1 } },
+    );
 
     const current = await readCurrentData();
     const plan = planImport(file, current, []);
 
     expect(plan.data.collectionOrders.ep).toEqual({ alpha: 1, fresh: 2 });
     expect(plan.result.droppedTracks).toBe(1);
+  });
+
+  it("drops a known project's track number when the file has no order key for that collection", async () => {
+    await seed();
+    await LocalStorage.setItem("project-metadata", JSON.stringify({ alpha: metadata(), fresh: metadata() }));
+    await LocalStorage.setItem("collection-order:ep", JSON.stringify({ alpha: 1, fresh: 2 }));
+    const file = dataFile(
+      {
+        taxonomies: {
+          "stage-options": [],
+          "genre-options": [],
+          "collection-options": [{ id: "ep", name: "EP" }],
+          "role-options": [],
+        },
+      },
+      { alpha: { birthtimeMs: 1, inode: 1 } },
+    );
+
+    const current = await readCurrentData();
+    const plan = planImport(file, current, []);
+
+    // ep 在文件的 collection-options 里，所以快照认识它：曲序从空 map 出发，只补快照不知道的项目。
+    expect(plan.data.collectionOrders.ep).toEqual({ fresh: 2 });
+    expect(plan.changes.collections).toBe(1);
+  });
+
+  it("counts a merged same-name genre as one option change", async () => {
+    await seed();
+    await LocalStorage.setItem("genre-options", JSON.stringify([{ id: "house-2", name: "House" }]));
+    const file = dataFile({
+      taxonomies: {
+        "stage-options": [],
+        "genre-options": [{ id: "house", name: "House" }],
+        "collection-options": [],
+        "role-options": [],
+      },
+    });
+
+    const current = await readCurrentData();
+    const plan = planImport(file, current, []);
+
+    expect(plan.changes.options).toBe(1);
   });
 
   it("puts the file's pins first and appends current-only ones", async () => {
@@ -479,8 +532,8 @@ describe("snapshot restore", () => {
     expect(plan.data.taxonomies["collection-options"]).toEqual([{ id: "ep", name: "EP" }]);
     expect(plan.data.collectionOrders.ep).toEqual({ alpha: 1, fresh: 2 });
     expect(plan.data.collectionOrders["ep-2"]).toBeUndefined();
-    // 文件里没有 ep 的角色 map，当前 map 整个保留，ep-2 的条目并进来。
-    expect(plan.data.collectionRoles.ep).toEqual({ alpha: "Intro", fresh: "Intro" });
+    // ep 在文件的 collection-options 里，所以快照认识它：角色从空 map 出发，只补快照不知道的项目。
+    expect(plan.data.collectionRoles.ep).toEqual({ fresh: "Intro" });
     expect(plan.data.collectionRoles["ep-2"]).toBeUndefined();
     expect(plan.data.collectionPins).toEqual(["ep"]);
   });

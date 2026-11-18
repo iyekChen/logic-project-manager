@@ -517,6 +517,8 @@ type PlannedTaxonomy = {
   options: TaxonomyOption[];
   /** 当前选项 ID → 名字，用来在引用失效时按名字找回。 */
   currentNames: Map<string, string>;
+  /** 当前独有、但因为同名被并掉的选项数量。 */
+  merged: number;
 };
 
 /** 文件里的选项在前；当前独有的先按名字合并，合并不上的追加在后。有 order 的分类给追加项续编号。 */
@@ -525,11 +527,15 @@ function planTaxonomy(key: string, current: TaxonomyOption[], incoming: Taxonomy
   const seen = new Set(out.map((option) => option.id));
   const byName = new Map(out.map((option) => [nameKey(option.name), option.id]));
   const appended: TaxonomyOption[] = [];
+  let merged = 0;
 
   for (const option of current) {
     if (seen.has(option.id)) continue;
     // 同名选项：不追加，引用会按名字改写到文件里的那个 ID。
-    if (byName.has(nameKey(option.name))) continue;
+    if (byName.has(nameKey(option.name))) {
+      merged += 1;
+      continue;
+    }
     appended.push({ ...option });
   }
 
@@ -544,6 +550,7 @@ function planTaxonomy(key: string, current: TaxonomyOption[], incoming: Taxonomy
   return {
     options: [...out, ...appended],
     currentNames: new Map(current.map((option) => [option.id, option.name])),
+    merged,
   };
 }
 
@@ -594,10 +601,12 @@ export function planImport(file: DataFile, current: CurrentData, projects: Proje
 
   const taxonomies: Record<string, TaxonomyOption[]> = {};
   const currentNames: Record<string, Map<string, string>> = {};
+  const mergedOptions: Record<string, number> = {};
   for (const key of TAXONOMY_KEYS) {
     const planned = planTaxonomy(key, current.taxonomies[key] ?? [], incoming.taxonomies[key] ?? []);
     taxonomies[key] = planned.options;
     currentNames[key] = planned.currentNames;
+    mergedOptions[key] = planned.merged;
   }
 
   // 收藏夹 ID 的解析：先看最终列表，再按原来的名字找同名选项。
@@ -669,41 +678,44 @@ export function planImport(file: DataFile, current: CurrentData, projects: Proje
     ...Object.keys(incoming.collectionRoles),
   ]);
 
+  // 快照是否认识这个收藏夹，看它在不在文件的 collection-options 里；
+  // 快照时没设过曲序或角色的收藏夹，文件里本来就可能没有对应的 map key。
+  const fileCollectionIds = new Set((incoming.taxonomies["collection-options"] ?? []).map((option) => option.id));
+
   for (const collectionId of plannedCollectionIds) {
     const fileOrders = incoming.collectionOrders[collectionId];
     const fileRoles = incoming.collectionRoles[collectionId];
 
-    if (fileOrders === undefined) {
-      // 文件里没有这个收藏夹：当前 map 整个保留。
+    if (!fileCollectionIds.has(resolveCollectionId(collectionId))) {
+      // 快照不知道的收藏夹：当前 map 整个保留。
       if (currentOrders[collectionId]) orders[collectionId] = currentOrders[collectionId];
-    } else {
-      const map: TrackMap = { ...fileOrders };
-      const taken = new Set(Object.values(map));
-      for (const [projectId, number] of Object.entries(currentOrders[collectionId] ?? {})) {
-        if (known.has(projectId)) continue;
-        // 同一个项目两边都有：以文件的条目为准。
-        if (projectId in map) continue;
-        if (taken.has(number)) {
-          droppedTracks += 1;
-          continue;
-        }
-        map[projectId] = number;
-        taken.add(number);
-      }
-      orders[collectionId] = map;
+      if (currentRoles[collectionId]) roles[collectionId] = currentRoles[collectionId];
+      continue;
     }
 
-    if (fileRoles === undefined) {
-      if (currentRoles[collectionId]) roles[collectionId] = currentRoles[collectionId];
-    } else {
-      const map: RoleMap = { ...fileRoles };
-      for (const [projectId, role] of Object.entries(currentRoles[collectionId] ?? {})) {
-        if (known.has(projectId)) continue;
-        if (projectId in map) continue;
-        map[projectId] = role;
+    // 快照知道的收藏夹：从文件的 map 出发，没有就当作空 map。
+    const map: TrackMap = { ...(fileOrders ?? {}) };
+    const taken = new Set(Object.values(map));
+    for (const [projectId, number] of Object.entries(currentOrders[collectionId] ?? {})) {
+      if (known.has(projectId)) continue;
+      // 同一个项目两边都有：以文件的条目为准。
+      if (projectId in map) continue;
+      if (taken.has(number)) {
+        droppedTracks += 1;
+        continue;
       }
-      roles[collectionId] = map;
+      map[projectId] = number;
+      taken.add(number);
     }
+    if (Object.keys(map).length > 0 || fileOrders !== undefined) orders[collectionId] = map;
+
+    const roleMap: RoleMap = { ...(fileRoles ?? {}) };
+    for (const [projectId, role] of Object.entries(currentRoles[collectionId] ?? {})) {
+      if (known.has(projectId)) continue;
+      if (projectId in roleMap) continue;
+      roleMap[projectId] = role;
+    }
+    if (Object.keys(roleMap).length > 0 || fileRoles !== undefined) roles[collectionId] = roleMap;
   }
 
   const pins: string[] = [];
@@ -729,6 +741,8 @@ export function planImport(file: DataFile, current: CurrentData, projects: Proje
     const currentOptions = current.taxonomies[key] ?? [];
     // 整个分类和默认值一样时，这个分类的改动都不计入。
     if (sameValue(currentOptions, TAXONOMY_DEFAULTS[key] ?? [])) continue;
+    // 当前独有、因为同名被并掉的选项，每并掉一个计 1 项。
+    optionChanges += mergedOptions[key] ?? 0;
     const nextById = new Map(taxonomies[key].map((option) => [option.id, option]));
     for (const option of currentOptions) {
       const next = nextById.get(option.id);
