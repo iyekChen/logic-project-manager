@@ -40,7 +40,7 @@ const EMPTY_PROJECT_METADATA: ProjectMetadata = {
   externalBounceFingerprints: {},
 };
 
-function parseStore(value: unknown): ProjectMetadataStore {
+export function parseStore(value: unknown): ProjectMetadataStore {
   return value && typeof value === "object" && !Array.isArray(value) ? (value as ProjectMetadataStore) : {};
 }
 

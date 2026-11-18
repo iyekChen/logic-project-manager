@@ -9,7 +9,7 @@ import {
   StorageUnreadableError,
   updateJson,
 } from "@/core/fs/storage";
-import { getAllProjectMetadata, type ProjectMetadata } from "@/core/metadata/project-metadata";
+import { getAllProjectMetadata, parseStore, type ProjectMetadata } from "@/core/metadata/project-metadata";
 import {
   collectionTaxonomy,
   GENRE_DEFAULTS,
@@ -19,11 +19,19 @@ import {
   STAGE_DEFAULTS,
   stageTaxonomy,
 } from "@/core/metadata/taxonomies";
-import type { TaxonomyOption } from "@/core/metadata/taxonomy";
-import { getPinnedCollections } from "@/core/metadata/collection-pins";
-import { getTrackMap, setTrackMap, removeTrackMap, type TrackMap } from "@/core/metadata/collection-order";
-import { getRoleMap, setRoleMap, removeRoleMap, type RoleMap } from "@/core/metadata/collection-roles";
+import { parseOptions, type TaxonomyOption } from "@/core/metadata/taxonomy";
+import { getPinnedCollections, parsePins } from "@/core/metadata/collection-pins";
+import {
+  getTrackMap,
+  parseTrackMap,
+  setTrackMap,
+  removeTrackMap,
+  type TrackMap,
+} from "@/core/metadata/collection-order";
+import { getRoleMap, parseRoleMap, setRoleMap, removeRoleMap, type RoleMap } from "@/core/metadata/collection-roles";
 import { sameFolder, type FolderIdentity } from "@/core/fs/project-snapshot";
+import { parseRecords } from "@/core/fs/deleted-projects";
+import type { ArchivedDoc } from "@/core/docs/docs";
 import type { Project } from "@/core/projects/types";
 
 export const DATA_FORMAT = "daw-project-manager-data";
@@ -71,7 +79,7 @@ export type DeletedRecord = FolderIdentity & {
   metadata: ProjectMetadata | null;
   orders: Record<string, number>;
   roles: Record<string, string>;
-  docs: { name: string; kind: string }[];
+  docs: ArchivedDoc[];
   dataRestored?: boolean;
 };
 
@@ -141,52 +149,25 @@ function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === "string");
 }
 
-function isNumberMap(value: unknown): value is Record<string, number> {
-  return (
-    isPlainObject(value) && Object.values(value).every((n) => typeof n === "number" && Number.isFinite(n) && n >= 1)
-  );
+function describeType(value: unknown): string {
+  if (value === null) return "null";
+  if (Array.isArray(value)) return "an array";
+  return `a ${typeof value}`;
 }
 
-function isStringMap(value: unknown): value is Record<string, string> {
-  return isPlainObject(value) && Object.values(value).every((s) => typeof s === "string" && s.trim() !== "");
+/** 只查顶层类型：结构不对就拒绝，并写明是哪一块。 */
+function requireObject(name: string, value: unknown): Record<string, unknown> {
+  if (!isPlainObject(value)) {
+    throw new DataFileError("structure", `${name}: expected an object, got ${describeType(value)}.`);
+  }
+  return value;
 }
 
-function isTaxonomyOption(value: unknown): value is TaxonomyOption {
-  return isPlainObject(value) && typeof value.id === "string" && typeof value.name === "string";
-}
-
-function isMetadata(value: unknown): value is ProjectMetadata {
-  if (!isPlainObject(value)) return false;
-  return (
-    (value.stageId === null || typeof value.stageId === "string") &&
-    isStringArray(value.genreIds) &&
-    isStringArray(value.collectionIds) &&
-    typeof value.pinned === "boolean" &&
-    (value.pinOrder === null || typeof value.pinOrder === "number") &&
-    typeof value.notes === "string" &&
-    isStringArray(value.externalBounceFolders) &&
-    isStringArray(value.externalBounceFiles) &&
-    isStringArray(value.bounceAliases) &&
-    Array.isArray(value.previousBounceNames) &&
-    value.previousBounceNames.every(
-      (item) => isPlainObject(item) && typeof item.name === "string" && typeof item.before === "number",
-    ) &&
-    isStringArray(value.excludedSharedBounces) &&
-    isPlainObject(value.externalBounceFingerprints)
-  );
-}
-
-function isDeletedRecord(value: unknown): value is DeletedRecord {
-  if (!isPlainObject(value)) return false;
-  return (
-    typeof value.id === "string" &&
-    typeof value.deletedAt === "number" &&
-    typeof value.birthtimeMs === "number" &&
-    (value.metadata === null || isMetadata(value.metadata)) &&
-    isNumberMap(value.orders) &&
-    isStringMap(value.roles) &&
-    Array.isArray(value.docs)
-  );
+function requireArray(name: string, value: unknown): unknown[] {
+  if (!Array.isArray(value)) {
+    throw new DataFileError("structure", `${name}: expected an array, got ${describeType(value)}.`);
+  }
+  return value;
 }
 
 /** 只校验、不修正：任何会被现有 parse 函数丢弃或改写的结构都算不合法。 */
@@ -207,41 +188,31 @@ export function parseDataFile(raw: string, extensionName: string): DataFile {
     throw new DataFileError("extension", `The file was exported by "${String(parsed.extension)}".`);
   }
 
-  const data = parsed.data;
-  if (!isPlainObject(data)) throw new DataFileError("structure", "The file has no data section.");
+  const data = requireObject("data", parsed.data);
 
-  const projectMetadata = data.projectMetadata;
-  if (!isPlainObject(projectMetadata) || !Object.values(projectMetadata).every(isMetadata)) {
-    throw new DataFileError("structure", "Project data in the file is not valid.");
-  }
+  // 每一块只查顶层类型；结构对但 parse 会丢弃或修正的内容（过期记录、旧字段、缺默认值）照常接受，
+  // 导入时写入 parse 之后的值。
+  const projectMetadata = parseStore(requireObject("projectMetadata", data.projectMetadata));
 
-  const taxonomies = data.taxonomies;
-  if (!isPlainObject(taxonomies)) throw new DataFileError("structure", "Category data in the file is not valid.");
+  const rawTaxonomies = requireObject("taxonomies", data.taxonomies);
+  const taxonomies: Record<string, TaxonomyOption[]> = {};
   for (const key of TAXONOMY_KEYS) {
-    const options = taxonomies[key];
-    if (!Array.isArray(options) || !options.every(isTaxonomyOption)) {
-      throw new DataFileError("structure", "Category data in the file is not valid.");
-    }
+    taxonomies[key] = parseOptions(requireArray(`taxonomies.${key}`, rawTaxonomies[key]));
   }
 
-  if (!isStringArray(data.collectionPins)) {
-    throw new DataFileError("structure", "Pinned collections in the file are not valid.");
+  const collectionPins = parsePins(requireArray("collectionPins", data.collectionPins));
+
+  const collectionOrders: Record<string, TrackMap> = {};
+  for (const [id, map] of Object.entries(requireObject("collectionOrders", data.collectionOrders))) {
+    collectionOrders[id] = parseTrackMap(map);
   }
 
-  const collectionOrders = data.collectionOrders;
-  if (!isPlainObject(collectionOrders) || !Object.values(collectionOrders).every(isNumberMap)) {
-    throw new DataFileError("structure", "Track numbers in the file are not valid.");
+  const collectionRoles: Record<string, RoleMap> = {};
+  for (const [id, map] of Object.entries(requireObject("collectionRoles", data.collectionRoles))) {
+    collectionRoles[id] = parseRoleMap(map);
   }
 
-  const collectionRoles = data.collectionRoles;
-  if (!isPlainObject(collectionRoles) || !Object.values(collectionRoles).every(isStringMap)) {
-    throw new DataFileError("structure", "Roles in the file are not valid.");
-  }
-
-  const deletedProjects = data.deletedProjects;
-  if (!Array.isArray(deletedProjects) || !deletedProjects.every(isDeletedRecord)) {
-    throw new DataFileError("structure", "Recently deleted projects in the file are not valid.");
-  }
+  const deletedProjects = parseRecords(requireArray("deletedProjects", data.deletedProjects));
 
   const identities = isPlainObject(parsed.identities) ? parsed.identities : {};
   const cleanIdentities: Record<string, FolderIdentity> = {};
@@ -261,16 +232,11 @@ export function parseDataFile(raw: string, extensionName: string): DataFile {
     exportedAt: typeof parsed.exportedAt === "string" ? parsed.exportedAt : "",
     identities: cleanIdentities,
     data: {
-      projectMetadata: projectMetadata as Record<string, ProjectMetadata>,
-      taxonomies: {
-        "stage-options": taxonomies["stage-options"] as TaxonomyOption[],
-        "genre-options": taxonomies["genre-options"] as TaxonomyOption[],
-        "collection-options": taxonomies["collection-options"] as TaxonomyOption[],
-        "role-options": taxonomies["role-options"] as TaxonomyOption[],
-      },
-      collectionPins: data.collectionPins,
-      collectionOrders: collectionOrders as Record<string, TrackMap>,
-      collectionRoles: collectionRoles as Record<string, RoleMap>,
+      projectMetadata,
+      taxonomies,
+      collectionPins,
+      collectionOrders,
+      collectionRoles,
       deletedProjects,
     },
   };
@@ -298,11 +264,7 @@ export async function assertExportable(): Promise<void> {
 }
 
 function readDeletedRecords(): Promise<DeletedRecord[]> {
-  return readJson<DeletedRecord[]>(
-    DELETED_KEY,
-    (value) => (Array.isArray(value) ? (value as DeletedRecord[]) : []),
-    () => [],
-  );
+  return readJson<DeletedRecord[]>(DELETED_KEY, parseRecords, () => []);
 }
 
 async function readOrders(): Promise<Record<string, TrackMap>> {
@@ -346,6 +308,18 @@ export async function buildSnapshot(projects: Project[]): Promise<DataFile> {
     "role-options": await roleTaxonomy.get(),
   };
 
+  // 每一块都过一遍和导入相同的 parse：导出的文件本身就是干净的。
+  const rawTaxonomies: Record<string, TaxonomyOption[]> = {};
+  for (const key of TAXONOMY_KEYS) rawTaxonomies[key] = parseOptions(taxonomies[key]);
+
+  const rawOrders = await readOrders();
+  const collectionOrders: Record<string, TrackMap> = {};
+  for (const [id, map] of Object.entries(rawOrders)) collectionOrders[id] = parseTrackMap(map);
+
+  const rawRoles = await readRoles();
+  const collectionRoles: Record<string, RoleMap> = {};
+  for (const [id, map] of Object.entries(rawRoles)) collectionRoles[id] = parseRoleMap(map);
+
   return {
     format: DATA_FORMAT,
     version: DATA_VERSION,
@@ -353,12 +327,12 @@ export async function buildSnapshot(projects: Project[]): Promise<DataFile> {
     exportedAt: new Date().toISOString(),
     identities: collectIdentities(projects),
     data: {
-      projectMetadata: await getAllProjectMetadata(),
-      taxonomies,
-      collectionPins: await getPinnedCollections(),
-      collectionOrders: await readOrders(),
-      collectionRoles: await readRoles(),
-      deletedProjects: await readDeletedRecords(),
+      projectMetadata: parseStore(await getAllProjectMetadata()),
+      taxonomies: rawTaxonomies,
+      collectionPins: parsePins(await getPinnedCollections()),
+      collectionOrders,
+      collectionRoles,
+      deletedProjects: parseRecords(await readDeletedRecords()),
     },
   };
 }
@@ -744,7 +718,8 @@ export function planImport(file: DataFile, current: CurrentData, projects: Proje
     if (!pins.includes(mapped)) pins.push(mapped);
   }
 
-  const deleted = unionDeleted(current.deletedProjects, incoming.deletedProjects);
+  // 过期的删除记录不写入：和存储读取时用同一个 parse。
+  const deleted = unionDeleted(current.deletedProjects, parseRecords(incoming.deletedProjects));
 
   // 变更计数：只算现有值被改掉或被清空，新增不算。
   let projectChanges = 0;

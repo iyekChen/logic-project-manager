@@ -166,7 +166,8 @@ export default function ImportData() {
       case "extension":
         return t.importOtherExtension.replace("{extension}", error.message);
       case "structure":
-        return t.importBadStructure;
+        // 校验失败时写明是哪一块数据、第一个出错的位置和原因。
+        return t.importBadStructureAt.replace("{detail}", error.message);
     }
   }
 

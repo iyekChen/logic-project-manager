@@ -651,6 +651,63 @@ describe("rename tracking", () => {
   });
 });
 
+describe("validation of each block", () => {
+  it("accepts a deleted record older than 30 days and does not write it", async () => {
+    await seed();
+    const old = {
+      id: "ancient",
+      birthtimeMs: 500,
+      inode: 9,
+      deletedAt: Date.now() - 40 * 24 * 60 * 60 * 1000,
+      metadata: null,
+      orders: {},
+      roles: {},
+      docs: [],
+    };
+    const file = dataFile({ deletedProjects: [old] });
+
+    await replaceData(file, [], tempDir);
+
+    const records = JSON.parse((await LocalStorage.getItem<string>("deleted-projects")) ?? "[]");
+    expect(records.map((r: { id: string }) => r.id)).not.toContain("ancient");
+  });
+
+  it("accepts a deleted record whose metadata lacks newer fields", async () => {
+    await seed();
+    const legacy = {
+      id: "legacy",
+      birthtimeMs: 700,
+      inode: 11,
+      deletedAt: Date.now(),
+      metadata: { stageId: null, genreIds: [], collectionIds: [], pinned: false, pinOrder: null, notes: "" },
+      orders: {},
+      roles: {},
+      docs: [],
+    };
+    const file = dataFile({ deletedProjects: [legacy] });
+
+    await replaceData(file, [], tempDir);
+
+    const records = JSON.parse((await LocalStorage.getItem<string>("deleted-projects")) ?? "[]");
+    expect(records.map((r: { id: string }) => r.id)).toContain("legacy");
+  });
+
+  it("rejects a block with the wrong top-level type and names it", async () => {
+    await seed();
+    const before = await snapshotStorage();
+    const raw = JSON.stringify({ ...dataFile(), data: { ...dataFile().data, projectMetadata: [] } });
+
+    expect(() => parseDataFile(raw, EXTENSION)).toThrow(DataFileError);
+    try {
+      parseDataFile(raw, EXTENSION);
+    } catch (error) {
+      expect((error as DataFileError).reason).toBe("structure");
+      expect((error as DataFileError).message).toContain("projectMetadata");
+    }
+    expect(await snapshotStorage()).toEqual(before);
+  });
+});
+
 describe("deleted projects", () => {
   it("unions records and never drops existing ones", async () => {
     await seed();
