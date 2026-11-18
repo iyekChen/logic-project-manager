@@ -427,6 +427,82 @@ describe("snapshot restore", () => {
     expect(plan.changes.pins).toBe(1);
   });
 
+  it("merges a same-name genre and points the new project at the file's id", async () => {
+    await seed();
+    await LocalStorage.setItem("genre-options", JSON.stringify([{ id: "house-2", name: "House" }]));
+    await LocalStorage.setItem(
+      "project-metadata",
+      JSON.stringify({ alpha: metadata(), fresh: metadata({ genreIds: ["house-2"] }) }),
+    );
+    const file = dataFile(
+      {
+        taxonomies: {
+          "stage-options": [],
+          "genre-options": [{ id: "house", name: "House" }],
+          "collection-options": [],
+          "role-options": [],
+        },
+      },
+      { alpha: { birthtimeMs: 1, inode: 1 } },
+    );
+
+    const current = await readCurrentData();
+    const plan = planImport(file, current, []);
+
+    expect(plan.data.taxonomies["genre-options"]).toEqual([{ id: "house", name: "House" }]);
+    expect(plan.data.projectMetadata.fresh.genreIds).toEqual(["house"]);
+  });
+
+  it("merges a same-name collection and folds its orders and pins into the file's id", async () => {
+    await seed();
+    await LocalStorage.setItem("collection-options", JSON.stringify([{ id: "ep-2", name: "EP" }]));
+    await LocalStorage.setItem("collection-order:ep-2", JSON.stringify({ fresh: 2 }));
+    await LocalStorage.setItem("collection-roles:ep-2", JSON.stringify({ fresh: "Intro" }));
+    await LocalStorage.setItem("collection-pins", JSON.stringify(["ep-2"]));
+    const file = dataFile(
+      {
+        taxonomies: {
+          "stage-options": [],
+          "genre-options": [],
+          "collection-options": [{ id: "ep", name: "EP" }],
+          "role-options": [],
+        },
+        collectionOrders: { ep: { alpha: 1 } },
+        collectionPins: ["ep"],
+      },
+      { alpha: { birthtimeMs: 1, inode: 1 } },
+    );
+
+    const current = await readCurrentData();
+    const plan = planImport(file, current, []);
+
+    expect(plan.data.taxonomies["collection-options"]).toEqual([{ id: "ep", name: "EP" }]);
+    expect(plan.data.collectionOrders.ep).toEqual({ alpha: 1, fresh: 2 });
+    expect(plan.data.collectionOrders["ep-2"]).toBeUndefined();
+    // 文件里没有 ep 的角色 map，当前 map 整个保留，ep-2 的条目并进来。
+    expect(plan.data.collectionRoles.ep).toEqual({ alpha: "Intro", fresh: "Intro" });
+    expect(plan.data.collectionRoles["ep-2"]).toBeUndefined();
+    expect(plan.data.collectionPins).toEqual(["ep"]);
+  });
+
+  it("counts an option change when only aliases differ", async () => {
+    await seed();
+    await LocalStorage.setItem("genre-options", JSON.stringify([{ id: "house", name: "House", aliases: ["deep"] }]));
+    const file = dataFile({
+      taxonomies: {
+        "stage-options": [],
+        "genre-options": [{ id: "house", name: "House" }],
+        "collection-options": [],
+        "role-options": [],
+      },
+    });
+
+    const current = await readCurrentData();
+    const plan = planImport(file, current, []);
+
+    expect(plan.changes.options).toBe(1);
+  });
+
   it("uses the new id after rename tracking when deciding what the snapshot knows", async () => {
     await seed();
     const folder = makeFolder("Renamed");
@@ -443,6 +519,39 @@ describe("snapshot restore", () => {
     expect(plan.result.rematched).toBe(1);
     expect(plan.data.projectMetadata.renamed.notes).toBe("kept");
     expect(plan.data.projectMetadata.old).toBeUndefined();
+  });
+});
+
+describe("rename tracking", () => {
+  it("imports as-is and counts unmatched when the identity differs", async () => {
+    await seed();
+    const folder = makeFolder("Other");
+    const projects = [makeProject("other", folder)];
+    const file = dataFile({ projectMetadata: { old: metadata() } }, { old: { birthtimeMs: 1, inode: 1 } });
+
+    const report = await replaceData(file, projects, tempDir);
+
+    expect(report.unmatched).toBe(1);
+    const store = JSON.parse((await LocalStorage.getItem<string>("project-metadata")) ?? "{}");
+    expect(store.old).toBeDefined();
+  });
+
+  it("does not rename when the target id already has its own entry", async () => {
+    await seed();
+    const folder = makeFolder("Renamed");
+    const stats = fs.statSync(folder);
+    const projects = [makeProject("renamed", folder)];
+    const file = dataFile(
+      { projectMetadata: { old: metadata({ notes: "old" }), renamed: metadata({ notes: "own" }) } },
+      { old: { birthtimeMs: stats.birthtimeMs, inode: stats.ino } },
+    );
+
+    const report = await replaceData(file, projects, tempDir);
+
+    expect(report.unmatched).toBe(1);
+    const store = JSON.parse((await LocalStorage.getItem<string>("project-metadata")) ?? "{}");
+    expect(store.renamed.notes).toBe("own");
+    expect(store.old.notes).toBe("old");
   });
 });
 

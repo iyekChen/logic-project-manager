@@ -513,11 +513,25 @@ function nameKey(name: string): string {
   return name.trim().toLowerCase();
 }
 
-/** 文件里的选项在前，当前独有的追加在后；有 order 的分类给追加项续编号。 */
-function planTaxonomy(key: string, current: TaxonomyOption[], incoming: TaxonomyOption[]): TaxonomyOption[] {
+type PlannedTaxonomy = {
+  options: TaxonomyOption[];
+  /** 当前选项 ID → 名字，用来在引用失效时按名字找回。 */
+  currentNames: Map<string, string>;
+};
+
+/** 文件里的选项在前；当前独有的先按名字合并，合并不上的追加在后。有 order 的分类给追加项续编号。 */
+function planTaxonomy(key: string, current: TaxonomyOption[], incoming: TaxonomyOption[]): PlannedTaxonomy {
   const out = incoming.map((option) => ({ ...option }));
   const seen = new Set(out.map((option) => option.id));
-  const appended = current.filter((option) => !seen.has(option.id)).map((option) => ({ ...option }));
+  const byName = new Map(out.map((option) => [nameKey(option.name), option.id]));
+  const appended: TaxonomyOption[] = [];
+
+  for (const option of current) {
+    if (seen.has(option.id)) continue;
+    // 同名选项：不追加，引用会按名字改写到文件里的那个 ID。
+    if (byName.has(nameKey(option.name))) continue;
+    appended.push({ ...option });
+  }
 
   if (ORDERED_KEYS.includes(key) && appended.length > 0) {
     let next = out.reduce((max, option) => Math.max(max, option.order ?? 0), 0);
@@ -527,26 +541,32 @@ function planTaxonomy(key: string, current: TaxonomyOption[], incoming: Taxonomy
     }
   }
 
-  return [...out, ...appended];
+  return {
+    options: [...out, ...appended],
+    currentNames: new Map(current.map((option) => [option.id, option.name])),
+  };
 }
 
-/** 引用修正：引用的 ID 不在最终列表里时，按名字找同名选项；找不到就去掉。 */
-function fixReferences(ids: string[], options: TaxonomyOption[]): string[] {
+/** 引用修正：ID 不在最终列表里时，按它原来的名字找同名选项；找不到就去掉。 */
+function fixReferences(ids: string[], options: TaxonomyOption[], currentNames: Map<string, string>): string[] {
   const byId = new Set(options.map((option) => option.id));
   const byName = new Map(options.map((option) => [nameKey(option.name), option.id]));
   const out: string[] = [];
   for (const id of ids) {
-    const resolved = byId.has(id) ? id : byName.get(nameKey(id));
+    const resolved = byId.has(id) ? id : byName.get(nameKey(currentNames.get(id) ?? id));
     if (resolved === undefined) continue;
     if (!out.includes(resolved)) out.push(resolved);
   }
   return out;
 }
 
-function fixStageId(stageId: string | null, options: TaxonomyOption[]): string | null {
+function fixStageId(
+  stageId: string | null,
+  options: TaxonomyOption[],
+  currentNames: Map<string, string>,
+): string | null {
   if (stageId === null) return null;
-  const fixed = fixReferences([stageId], options);
-  return fixed[0] ?? null;
+  return fixReferences([stageId], options, currentNames)[0] ?? null;
 }
 
 function unionDeleted(current: DeletedRecord[], incoming: DeletedRecord[]): DeletedRecord[] {
@@ -573,8 +593,21 @@ export function planImport(file: DataFile, current: CurrentData, projects: Proje
   const known = new Set<string>([...Object.keys(file.identities), ...Object.keys(incoming.projectMetadata)]);
 
   const taxonomies: Record<string, TaxonomyOption[]> = {};
+  const currentNames: Record<string, Map<string, string>> = {};
   for (const key of TAXONOMY_KEYS) {
-    taxonomies[key] = planTaxonomy(key, current.taxonomies[key] ?? [], incoming.taxonomies[key] ?? []);
+    const planned = planTaxonomy(key, current.taxonomies[key] ?? [], incoming.taxonomies[key] ?? []);
+    taxonomies[key] = planned.options;
+    currentNames[key] = planned.currentNames;
+  }
+
+  // 收藏夹 ID 的解析：先看最终列表，再按原来的名字找同名选项。
+  const collectionOptions = taxonomies["collection-options"];
+  const collectionIds = new Set(collectionOptions.map((option) => option.id));
+  const collectionByName = new Map(collectionOptions.map((option) => [nameKey(option.name), option.id]));
+  const collectionNames = currentNames["collection-options"];
+  function resolveCollectionId(id: string): string {
+    if (collectionIds.has(id)) return id;
+    return collectionByName.get(nameKey(collectionNames.get(id) ?? id)) ?? id;
   }
 
   const metadata: Record<string, ProjectMetadata> = {};
@@ -582,41 +615,74 @@ export function planImport(file: DataFile, current: CurrentData, projects: Proje
   let kept = 0;
   for (const [id, meta] of Object.entries(current.projectMetadata)) {
     if (known.has(id)) continue;
-    metadata[id] = meta;
+    metadata[id] = {
+      ...meta,
+      stageId: fixStageId(meta.stageId, taxonomies["stage-options"], currentNames["stage-options"]),
+      genreIds: fixReferences(meta.genreIds, taxonomies["genre-options"], currentNames["genre-options"]),
+      collectionIds: fixReferences(meta.collectionIds, collectionOptions, collectionNames),
+    };
     kept += 1;
   }
   for (const [id, meta] of Object.entries(incoming.projectMetadata)) {
     metadata[id] = {
       ...meta,
-      stageId: fixStageId(meta.stageId, taxonomies["stage-options"]),
-      genreIds: fixReferences(meta.genreIds, taxonomies["genre-options"]),
-      collectionIds: fixReferences(meta.collectionIds, taxonomies["collection-options"]),
+      stageId: fixStageId(meta.stageId, taxonomies["stage-options"], currentNames["stage-options"]),
+      genreIds: fixReferences(meta.genreIds, taxonomies["genre-options"], currentNames["genre-options"]),
+      collectionIds: fixReferences(meta.collectionIds, collectionOptions, collectionNames),
     };
     restored += 1;
+  }
+
+  // 当前 map 的收藏夹 key 先按同名合并改写，再和文件里的 map 合并。
+  const currentOrders: Record<string, TrackMap> = {};
+  for (const [id, map] of Object.entries(current.collectionOrders)) {
+    const target = resolveCollectionId(id);
+    const merged = { ...(currentOrders[target] ?? {}) };
+    for (const [projectId, number] of Object.entries(map)) {
+      if (!(projectId in merged)) merged[projectId] = number;
+    }
+    currentOrders[target] = merged;
+  }
+  const currentRoles: Record<string, RoleMap> = {};
+  for (const [id, map] of Object.entries(current.collectionRoles)) {
+    const target = resolveCollectionId(id);
+    const merged = { ...(currentRoles[target] ?? {}) };
+    for (const [projectId, role] of Object.entries(map)) {
+      if (!(projectId in merged)) merged[projectId] = role;
+    }
+    currentRoles[target] = merged;
   }
 
   const orders: Record<string, TrackMap> = {};
   const roles: Record<string, RoleMap> = {};
   let droppedTracks = 0;
-  const collectionIds = new Set([
+  const allCollectionIds = new Set([
     ...Object.keys(current.collectionOrders),
     ...Object.keys(current.collectionRoles),
     ...Object.keys(incoming.collectionOrders),
     ...Object.keys(incoming.collectionRoles),
   ]);
+  const plannedCollectionIds = new Set([
+    ...Object.keys(currentOrders),
+    ...Object.keys(currentRoles),
+    ...Object.keys(incoming.collectionOrders),
+    ...Object.keys(incoming.collectionRoles),
+  ]);
 
-  for (const collectionId of collectionIds) {
+  for (const collectionId of plannedCollectionIds) {
     const fileOrders = incoming.collectionOrders[collectionId];
     const fileRoles = incoming.collectionRoles[collectionId];
 
     if (fileOrders === undefined) {
       // 文件里没有这个收藏夹：当前 map 整个保留。
-      if (current.collectionOrders[collectionId]) orders[collectionId] = current.collectionOrders[collectionId];
+      if (currentOrders[collectionId]) orders[collectionId] = currentOrders[collectionId];
     } else {
       const map: TrackMap = { ...fileOrders };
       const taken = new Set(Object.values(map));
-      for (const [projectId, number] of Object.entries(current.collectionOrders[collectionId] ?? {})) {
+      for (const [projectId, number] of Object.entries(currentOrders[collectionId] ?? {})) {
         if (known.has(projectId)) continue;
+        // 同一个项目两边都有：以文件的条目为准。
+        if (projectId in map) continue;
         if (taken.has(number)) {
           droppedTracks += 1;
           continue;
@@ -628,20 +694,25 @@ export function planImport(file: DataFile, current: CurrentData, projects: Proje
     }
 
     if (fileRoles === undefined) {
-      if (current.collectionRoles[collectionId]) roles[collectionId] = current.collectionRoles[collectionId];
+      if (currentRoles[collectionId]) roles[collectionId] = currentRoles[collectionId];
     } else {
       const map: RoleMap = { ...fileRoles };
-      for (const [projectId, role] of Object.entries(current.collectionRoles[collectionId] ?? {})) {
+      for (const [projectId, role] of Object.entries(currentRoles[collectionId] ?? {})) {
         if (known.has(projectId)) continue;
+        if (projectId in map) continue;
         map[projectId] = role;
       }
       roles[collectionId] = map;
     }
   }
 
-  const pins = [...incoming.collectionPins];
-  for (const id of current.collectionPins) {
+  const pins: string[] = [];
+  for (const id of incoming.collectionPins) {
     if (!pins.includes(id)) pins.push(id);
+  }
+  for (const id of current.collectionPins) {
+    const mapped = resolveCollectionId(id);
+    if (!pins.includes(mapped)) pins.push(mapped);
   }
 
   const deleted = unionDeleted(current.deletedProjects, incoming.deletedProjects);
@@ -662,16 +733,16 @@ export function planImport(file: DataFile, current: CurrentData, projects: Proje
     for (const option of currentOptions) {
       const next = nextById.get(option.id);
       if (!next) continue;
-      if (option.name !== next.name || option.color !== next.color || option.order !== next.order) {
-        optionChanges += 1;
-      }
+      // 比较整个选项：aliases 等字段不同也算变更。
+      if (!sameValue(option, next)) optionChanges += 1;
     }
   }
 
   let collectionChanges = 0;
-  for (const collectionId of collectionIds) {
-    const ordersChanged = !sameValue(current.collectionOrders[collectionId] ?? {}, orders[collectionId] ?? {});
-    const rolesChanged = !sameValue(current.collectionRoles[collectionId] ?? {}, roles[collectionId] ?? {});
+  for (const collectionId of allCollectionIds) {
+    const target = resolveCollectionId(collectionId);
+    const ordersChanged = !sameValue(current.collectionOrders[collectionId] ?? {}, orders[target] ?? {});
+    const rolesChanged = !sameValue(current.collectionRoles[collectionId] ?? {}, roles[target] ?? {});
     if (ordersChanged || rolesChanged) collectionChanges += 1;
   }
 
