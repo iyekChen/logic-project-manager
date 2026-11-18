@@ -265,17 +265,22 @@ type TranslationKeys = {
   importData: string;
   importFile: string;
   importFileRequired: string;
-  importMode: string;
-  importModeMerge: string;
-  importModeReplace: string;
-  importMergeHint: string;
-  importReplaceHint: string;
-  replaceDataTitle: string;
-  replaceDataMessage: string;
   replaceData: string;
   importingData: string;
   dataImported: string;
-  importSummary: string;
+  importNothingToChange: string;
+  importConfirmTitle: string;
+  importConfirmBody: string;
+  importConfirmBackup: string;
+  importChangeProjects: string;
+  importChangeOptions: string;
+  importChangeCollections: string;
+  importChangePins: string;
+  importResultRestored: string;
+  importResultKept: string;
+  importResultRematched: string;
+  importResultUnmatched: string;
+  importResultDropped: string;
   importBackupSaved: string;
   importFailed: string;
   importBadFormat: string;
@@ -575,19 +580,22 @@ const translations: Record<Language, TranslationKeys> = {
     importData: "Import Data",
     importFile: "File",
     importFileRequired: "Choose a file to import.",
-    importMode: "Mode",
-    importModeMerge: "Merge",
-    importModeReplace: "Replace",
-    importMergeHint: "Adds data from the file. When both have a value, your current data is kept.",
-    importReplaceHint: "Replaces your current data with the file. A backup is saved next to the file first.",
-    replaceDataTitle: "Replace All Data?",
-    replaceDataMessage:
-      "Your current tags, collections, track numbers and roles will be replaced by the file. A backup is saved next to the file first.",
     replaceData: "Replace",
     importingData: "Importing Data",
     dataImported: "Data Imported",
-    importSummary:
-      "{projects} projects, {rematched} matched by folder, {unmatched} unmatched, {skipped} track numbers skipped.",
+    importNothingToChange: "Nothing to change",
+    importConfirmTitle: "Replace current data?",
+    importConfirmBody: "This will change {changes}.",
+    importConfirmBackup: "Your current data will be backed up to {file} first.",
+    importChangeProjects: "{count} projects",
+    importChangeOptions: "{count} tag options",
+    importChangeCollections: "track numbers or roles in {count} collections",
+    importChangePins: "pinned collections",
+    importResultRestored: "{count} restored",
+    importResultKept: "{count} kept",
+    importResultRematched: "{count} matched by folder",
+    importResultUnmatched: "{count} unmatched",
+    importResultDropped: "{count} track numbers dropped",
     importBackupSaved: "Backup: {file}",
     importFailed: "Could Not Import Data",
     importBadFormat: "This is not an exported data file.",

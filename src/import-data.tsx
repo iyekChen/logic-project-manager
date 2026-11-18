@@ -10,15 +10,21 @@ import {
   showToast,
   Toast,
 } from "@raycast/api";
+import fs from "node:fs";
 import path from "node:path";
 import { useState } from "react";
 import {
+  applyPlan,
+  assertImportReady,
+  backupFileName,
   CorruptDataError,
   DataFileError,
-  mergeData,
   parseDataFile,
-  replaceData,
-  type ImportMode,
+  planImport,
+  readCurrentData,
+  writeBackup,
+  type ImportChanges,
+  type ImportPlan,
 } from "@/core/data/data-transfer";
 import { loadProjects } from "@/core/projects/load-projects";
 import { showFailure } from "@/core/ui/toast";
@@ -26,6 +32,7 @@ import { getTranslations } from "@/i18n";
 import { getSettings } from "@/settings";
 
 const settings = getSettings();
+const t = getTranslations(settings.language);
 
 function corruptKindName(kind: CorruptDataError["kind"]): string {
   switch (kind) {
@@ -43,11 +50,37 @@ function corruptKindName(kind: CorruptDataError["kind"]): string {
       return t.corruptDataDeleted;
   }
 }
-const t = getTranslations(settings.language);
+
+/** 只列出计数大于 0 的类别。 */
+function changeSummary(changes: ImportChanges): string {
+  const parts: string[] = [];
+  if (changes.projects > 0) parts.push(t.importChangeProjects.replace("{count}", String(changes.projects)));
+  if (changes.options > 0) parts.push(t.importChangeOptions.replace("{count}", String(changes.options)));
+  if (changes.collections > 0) {
+    parts.push(t.importChangeCollections.replace("{count}", String(changes.collections)));
+  }
+  if (changes.pins > 0) parts.push(t.importChangePins);
+  return parts.join(", ");
+}
+
+function resultSummary(plan: ImportPlan): string {
+  const parts: string[] = [];
+  if (plan.result.restored > 0) parts.push(t.importResultRestored.replace("{count}", String(plan.result.restored)));
+  if (plan.result.kept > 0) parts.push(t.importResultKept.replace("{count}", String(plan.result.kept)));
+  if (plan.result.rematched > 0) {
+    parts.push(t.importResultRematched.replace("{count}", String(plan.result.rematched)));
+  }
+  if (plan.result.unmatched > 0) {
+    parts.push(t.importResultUnmatched.replace("{count}", String(plan.result.unmatched)));
+  }
+  if (plan.result.droppedTracks > 0) {
+    parts.push(t.importResultDropped.replace("{count}", String(plan.result.droppedTracks)));
+  }
+  return parts.join(", ");
+}
 
 export default function ImportData() {
   const [file, setFile] = useState<string[]>([]);
-  const [mode, setMode] = useState<ImportMode>("merge");
   const [fileError, setFileError] = useState<string | undefined>();
 
   function validateFile(value: string[]): string | undefined {
@@ -62,34 +95,44 @@ export default function ImportData() {
     }
 
     const target = file[0];
-    if (mode === "replace") {
-      const confirmed = await confirmAlert({
-        title: t.replaceDataTitle,
-        message: t.replaceDataMessage,
-        primaryAction: { title: t.replaceData, style: Alert.ActionStyle.Destructive },
-      });
-      if (!confirmed) return;
-    }
-
     const toast = await showToast({ style: Toast.Style.Animated, title: t.importingData });
     try {
-      const raw = await import("node:fs").then((fs) => fs.readFileSync(target, "utf8"));
+      const raw = fs.readFileSync(target, "utf8");
       const parsed = parseDataFile(raw, environment.extensionName);
+      await assertImportReady(parsed);
+
       const projects = settings.projectsFolder ? loadProjects(settings.projectsFolder) : null;
-      const report =
-        mode === "replace"
-          ? await replaceData(parsed, projects, path.dirname(target))
-          : await mergeData(parsed, projects);
+      const current = await readCurrentData();
+      const plan = planImport(parsed, current, projects);
+
+      if (plan.unchanged) {
+        toast.style = Toast.Style.Success;
+        toast.title = t.importNothingToChange;
+        return;
+      }
+
+      let backupPath: string | null = null;
+      if (plan.changeCount > 0) {
+        const backupName = backupFileName(new Date());
+        const confirmed = await confirmAlert({
+          title: t.importConfirmTitle,
+          message: `${t.importConfirmBody.replace("{changes}", changeSummary(plan.changes))} ${t.importConfirmBackup.replace("{file}", backupName)}`,
+          primaryAction: { title: t.replaceData, style: Alert.ActionStyle.Destructive },
+        });
+        if (!confirmed) {
+          await toast.hide();
+          return;
+        }
+        backupPath = await writeBackup(path.dirname(target), projects ?? []);
+      }
+
+      await applyPlan(plan, current);
 
       toast.style = Toast.Style.Success;
       toast.title = t.dataImported;
-      toast.message = t.importSummary
-        .replace("{projects}", String(report.projects))
-        .replace("{rematched}", String(report.rematched))
-        .replace("{unmatched}", String(report.unmatched))
-        .replace("{skipped}", String(report.skippedTracks));
-      if (report.backupPath) {
-        const backup = report.backupPath;
+      toast.message = resultSummary(plan);
+      if (backupPath) {
+        const backup = backupPath;
         toast.message = `${toast.message} ${t.importBackupSaved.replace("{file}", path.basename(backup))}`;
         toast.primaryAction = {
           title: t.showInFinder,
@@ -149,11 +192,6 @@ export default function ImportData() {
         canChooseFiles
         allowMultipleSelection={false}
       />
-      <Form.Dropdown id="mode" title={t.importMode} value={mode} onChange={(value) => setMode(value as ImportMode)}>
-        <Form.Dropdown.Item value="merge" title={t.importModeMerge} />
-        <Form.Dropdown.Item value="replace" title={t.importModeReplace} />
-      </Form.Dropdown>
-      <Form.Description text={mode === "replace" ? t.importReplaceHint : t.importMergeHint} />
     </Form>
   );
 }

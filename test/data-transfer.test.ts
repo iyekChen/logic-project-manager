@@ -9,6 +9,9 @@ vi.mock("@/core/metadata/taxonomies", async () => {
   const { createTaxonomy } = await import("@/core/metadata/taxonomy");
   const genreBase = createTaxonomy("genre-options", []);
   return {
+    STAGE_DEFAULTS: [],
+    GENRE_DEFAULTS: [],
+    ROLE_DEFAULTS: [],
     stageTaxonomy: createTaxonomy("stage-options", []),
     collectionTaxonomy: createTaxonomy("collection-options", []),
     roleTaxonomy: createTaxonomy("role-options", []),
@@ -28,6 +31,7 @@ vi.mock("@/core/metadata/taxonomies", async () => {
     },
   };
 });
+
 import {
   buildSnapshot,
   CorruptDataError,
@@ -35,8 +39,9 @@ import {
   exportData,
   exportFileName,
   backupFileName,
-  mergeData,
   parseDataFile,
+  planImport,
+  readCurrentData,
   replaceData,
   writeJsonFile,
   type DataFile,
@@ -241,124 +246,208 @@ describe("validation", () => {
   });
 });
 
-describe("merge", () => {
-  it("keeps current values, unions arrays and adds new projects", async () => {
+describe("snapshot restore", () => {
+  it("keeps metadata of projects created after the snapshot", async () => {
     await seed();
+    await LocalStorage.setItem(
+      "project-metadata",
+      JSON.stringify({ alpha: metadata({ notes: "old" }), fresh: metadata({ notes: "new" }) }),
+    );
+    const file = dataFile(
+      { projectMetadata: { alpha: metadata({ notes: "from file" }) } },
+      {
+        alpha: { birthtimeMs: 1, inode: 1 },
+      },
+    );
+
+    const current = await readCurrentData();
+    const plan = planImport(file, current, []);
+
+    expect(plan.data.projectMetadata.alpha.notes).toBe("from file");
+    expect(plan.data.projectMetadata.fresh.notes).toBe("new");
+    expect(plan.result.kept).toBe(1);
+  });
+
+  it("clears metadata of a known project that had none in the file", async () => {
+    await seed();
+    const file = dataFile({}, { alpha: { birthtimeMs: 1, inode: 1 } });
+
+    const current = await readCurrentData();
+    const plan = planImport(file, current, []);
+
+    expect(plan.data.projectMetadata.alpha).toBeUndefined();
+    expect(plan.changes.projects).toBe(1);
+  });
+
+  it("keeps options and collections added after the snapshot and numbers appended ones", async () => {
+    await seed();
+    await LocalStorage.setItem(
+      "stage-options",
+      JSON.stringify([
+        { id: "demo", name: "Demo", order: 1 },
+        { id: "extra", name: "Extra", order: 2 },
+      ]),
+    );
+    await LocalStorage.setItem(
+      "collection-options",
+      JSON.stringify([
+        { id: "ep", name: "EP" },
+        { id: "lp", name: "LP" },
+      ]),
+    );
     const file = dataFile({
-      projectMetadata: {
-        alpha: metadata({ notes: "from file", genreIds: ["house"], bounceAliases: ["a1"] }),
-        beta: metadata({ notes: "new project" }),
+      taxonomies: {
+        "stage-options": [{ id: "demo", name: "Demo", order: 1 }],
+        "genre-options": [],
+        "collection-options": [{ id: "ep", name: "EP" }],
+        "role-options": [],
       },
     });
 
-    await mergeData(file, []);
+    const current = await readCurrentData();
+    const plan = planImport(file, current, []);
 
-    const store = JSON.parse((await LocalStorage.getItem<string>("project-metadata")) ?? "{}");
-    expect(store.alpha.notes).toBe("hello");
-    expect(store.alpha.genreIds).toEqual(["house"]);
-    expect(store.alpha.bounceAliases).toEqual(["a1"]);
-    expect(store.beta.notes).toBe("new project");
+    expect(plan.data.taxonomies["stage-options"]).toEqual([
+      { id: "demo", name: "Demo", order: 1 },
+      { id: "extra", name: "Extra", order: 2 },
+    ]);
+    expect(plan.data.taxonomies["collection-options"].map((option) => option.id)).toEqual(["ep", "lp"]);
   });
 
-  it("maps same-name categories to the existing id everywhere", async () => {
+  it("rewrites references to a same-name option and drops unknown ones", async () => {
     await seed();
     const file = dataFile({
       taxonomies: {
         "stage-options": [{ id: "demo", name: "Demo", order: 1 }],
-        "genre-options": [{ id: "house", name: "House" }],
-        "collection-options": [{ id: "ep-2", name: "EP" }],
-        "role-options": [{ id: "intro", name: "Intro", order: 1 }],
+        "genre-options": [{ id: "house-2", name: "House" }],
+        "collection-options": [{ id: "ep", name: "EP" }],
+        "role-options": [],
       },
-      projectMetadata: { alpha: metadata({ collectionIds: ["ep-2"] }) },
-      collectionPins: ["ep-2"],
-      collectionOrders: { "ep-2": { alpha: 1 } },
-      collectionRoles: { "ep-2": { alpha: "Intro" } },
+      projectMetadata: {
+        alpha: metadata({ genreIds: ["house-2", "missing"], collectionIds: ["ep"] }),
+      },
     });
 
-    await mergeData(file, []);
+    const current = await readCurrentData();
+    const plan = planImport(file, current, []);
 
-    const store = JSON.parse((await LocalStorage.getItem<string>("project-metadata")) ?? "{}");
-    expect(store.alpha.collectionIds).toEqual(["ep"]);
-    expect(JSON.parse((await LocalStorage.getItem<string>("collection-pins")) ?? "[]")).toEqual(["ep"]);
-    expect(JSON.parse((await LocalStorage.getItem<string>("collection-order:ep")) ?? "{}")).toEqual({ alpha: 1 });
-    expect(JSON.parse((await LocalStorage.getItem<string>("collection-roles:ep")) ?? "{}")).toEqual({
-      alpha: "Intro",
-    });
-    // 导入的收藏夹 ID 已映射到现有 ID，不会在 ep-2 下另建一份。
-    expect(JSON.parse((await LocalStorage.getItem<string>("collection-order:ep-2")) ?? "{}")).toEqual({ alpha: 1 });
+    // 文件里的选项原样保留（house-2），当前独有的 house 追加在后，所以引用仍然有效。
+    expect(plan.data.projectMetadata.alpha.genreIds).toEqual(["house-2"]);
+    expect(plan.data.projectMetadata.alpha.collectionIds).toEqual(["ep"]);
   });
 
-  it("skips track numbers already taken in the same collection", async () => {
+  it("keeps a new project's track number when free and drops it when taken", async () => {
     await seed();
-    const file = dataFile({ collectionOrders: { ep: { beta: 1, gamma: 2 } } });
+    await LocalStorage.setItem(
+      "project-metadata",
+      JSON.stringify({ alpha: metadata(), fresh: metadata(), other: metadata() }),
+    );
+    await LocalStorage.setItem("collection-order:ep", JSON.stringify({ alpha: 1, fresh: 2, other: 1 }));
+    const file = dataFile({ collectionOrders: { ep: { alpha: 1 } } }, { alpha: { birthtimeMs: 1, inode: 1 } });
 
-    const report = await mergeData(file, []);
+    const current = await readCurrentData();
+    const plan = planImport(file, current, []);
 
-    expect(report.skippedTracks).toBe(1);
-    expect(JSON.parse((await LocalStorage.getItem<string>("collection-order:ep")) ?? "{}")).toEqual({
-      alpha: 1,
-      gamma: 2,
-    });
+    expect(plan.data.collectionOrders.ep).toEqual({ alpha: 1, fresh: 2 });
+    expect(plan.result.droppedTracks).toBe(1);
   });
-});
 
-describe("rename tracking", () => {
-  it("moves data to the new id when the folder identity matches", async () => {
+  it("puts the file's pins first and appends current-only ones", async () => {
+    await seed();
+    await LocalStorage.setItem("collection-pins", JSON.stringify(["lp", "ep"]));
+    const file = dataFile({ collectionPins: ["ep"] });
+
+    const current = await readCurrentData();
+    const plan = planImport(file, current, []);
+
+    expect(plan.data.collectionPins).toEqual(["ep", "lp"]);
+    expect(plan.changes.pins).toBe(1);
+  });
+
+  it("counts no changes when current data equals the defaults", async () => {
+    const file = dataFile();
+    const current = await readCurrentData();
+    const plan = planImport(file, current, []);
+
+    expect(plan.changeCount).toBe(0);
+  });
+
+  it("writes no backup when there is nothing to change", async () => {
+    await seed();
+    const file = await buildSnapshot([]);
+    const report = await replaceData(file, [], tempDir);
+
+    expect(report.backupPath).toBeNull();
+    expect(fs.readdirSync(tempDir)).toEqual([]);
+  });
+
+  it("reports nothing to change on a second import of the same file", async () => {
+    await seed();
+    const file = await buildSnapshot([]);
+    await replaceData(file, [], tempDir);
+
+    const current = await readCurrentData();
+    const plan = planImport(file, current, []);
+    expect(plan.unchanged).toBe(true);
+
+    const before = await snapshotStorage();
+    const report = await replaceData(file, [], tempDir);
+    expect(report.backupPath).toBeNull();
+    expect(await snapshotStorage()).toEqual(before);
+  });
+
+  it("counts each kind of change", async () => {
+    await seed();
+    await LocalStorage.setItem(
+      "project-metadata",
+      JSON.stringify({ alpha: metadata({ notes: "old" }), beta: metadata({ notes: "keep" }) }),
+    );
+    await LocalStorage.setItem("collection-pins", JSON.stringify(["ep"]));
+    const file = dataFile(
+      {
+        taxonomies: {
+          "stage-options": [{ id: "demo", name: "Demo", order: 1 }],
+          "genre-options": [{ id: "house", name: "House" }],
+          "collection-options": [{ id: "ep", name: "EP" }],
+          "role-options": [{ id: "intro", name: "Intro", order: 1 }],
+        },
+        projectMetadata: { alpha: metadata({ notes: "new" }) },
+        collectionPins: ["lp"],
+        collectionOrders: { ep: { alpha: 2 } },
+        collectionRoles: { ep: { alpha: "Intro" } },
+      },
+      { alpha: { birthtimeMs: 1, inode: 1 } },
+    );
+
+    const current = await readCurrentData();
+    const plan = planImport(file, current, []);
+
+    expect(plan.changes.projects).toBe(1);
+    expect(plan.changes.collections).toBe(1);
+    expect(plan.changes.pins).toBe(1);
+  });
+
+  it("uses the new id after rename tracking when deciding what the snapshot knows", async () => {
     await seed();
     const folder = makeFolder("Renamed");
     const stats = fs.statSync(folder);
     const projects = [makeProject("renamed", folder)];
     const file = dataFile(
-      { projectMetadata: { old: metadata({ notes: "kept" }) }, collectionOrders: { ep: { old: 2 } } },
+      { projectMetadata: { old: metadata({ notes: "kept" }) } },
       { old: { birthtimeMs: stats.birthtimeMs, inode: stats.ino } },
     );
 
-    const report = await mergeData(file, projects);
+    const current = await readCurrentData();
+    const plan = planImport(file, current, projects);
 
-    expect(report.rematched).toBe(1);
-    const store = JSON.parse((await LocalStorage.getItem<string>("project-metadata")) ?? "{}");
-    expect(store.renamed.notes).toBe("kept");
-    expect(store.old).toBeUndefined();
-    expect(JSON.parse((await LocalStorage.getItem<string>("collection-order:ep")) ?? "{}")).toEqual({
-      alpha: 1,
-      renamed: 2,
-    });
-  });
-
-  it("imports as-is and counts unmatched when the identity differs", async () => {
-    await seed();
-    const folder = makeFolder("Other");
-    const projects = [makeProject("other", folder)];
-    const file = dataFile({ projectMetadata: { old: metadata() } }, { old: { birthtimeMs: 1, inode: 1 } });
-
-    const report = await mergeData(file, projects);
-
-    expect(report.unmatched).toBe(1);
-    const store = JSON.parse((await LocalStorage.getItem<string>("project-metadata")) ?? "{}");
-    expect(store.old).toBeDefined();
-  });
-
-  it("does not rename when the target id already has its own entry", async () => {
-    await seed();
-    const folder = makeFolder("Renamed");
-    const stats = fs.statSync(folder);
-    const projects = [makeProject("renamed", folder)];
-    const file = dataFile(
-      { projectMetadata: { old: metadata({ notes: "old" }), renamed: metadata({ notes: "own" }) } },
-      { old: { birthtimeMs: stats.birthtimeMs, inode: stats.ino } },
-    );
-
-    const report = await mergeData(file, projects);
-
-    expect(report.unmatched).toBe(1);
-    const store = JSON.parse((await LocalStorage.getItem<string>("project-metadata")) ?? "{}");
-    expect(store.renamed.notes).toBe("own");
-    expect(store.old.notes).toBe("old");
+    expect(plan.result.rematched).toBe(1);
+    expect(plan.data.projectMetadata.renamed.notes).toBe("kept");
+    expect(plan.data.projectMetadata.old).toBeUndefined();
   });
 });
 
 describe("deleted projects", () => {
-  it("unions records in merge and replace", async () => {
+  it("unions records and never drops existing ones", async () => {
     await seed();
     const extra = {
       id: "gone-2",
@@ -372,31 +461,29 @@ describe("deleted projects", () => {
     };
     const file = dataFile({ deletedProjects: [extra] });
 
-    await mergeData(file, []);
-    let records = JSON.parse((await LocalStorage.getItem<string>("deleted-projects")) ?? "[]");
-    expect(records.map((r: { id: string }) => r.id).sort()).toEqual(["gone", "gone-2"]);
-
     await replaceData(file, [], tempDir);
-    records = JSON.parse((await LocalStorage.getItem<string>("deleted-projects")) ?? "[]");
+    const records = JSON.parse((await LocalStorage.getItem<string>("deleted-projects")) ?? "[]");
     expect(records.map((r: { id: string }) => r.id).sort()).toEqual(["gone", "gone-2"]);
   });
 });
 
 describe("replace", () => {
-  it("removes collection keys missing from the file", async () => {
+  it("keeps collection keys missing from the file", async () => {
     await seed();
     await LocalStorage.setItem("collection-order:other", JSON.stringify({ alpha: 3 }));
     await LocalStorage.setItem("collection-roles:other", JSON.stringify({ alpha: "Intro" }));
 
     await replaceData(dataFile(), [], tempDir);
 
-    expect(await LocalStorage.getItem<string>("collection-order:other")).toBeUndefined();
-    expect(await LocalStorage.getItem<string>("collection-roles:other")).toBeUndefined();
+    expect(JSON.parse((await LocalStorage.getItem<string>("collection-order:other")) ?? "{}")).toEqual({ alpha: 3 });
+    expect(JSON.parse((await LocalStorage.getItem<string>("collection-roles:other")) ?? "{}")).toEqual({
+      alpha: "Intro",
+    });
   });
 
   it("writes a backup before replacing", async () => {
     await seed();
-    const report = await replaceData(dataFile(), [], tempDir);
+    const report = await replaceData(dataFile({}, { alpha: { birthtimeMs: 1, inode: 1 } }), [], tempDir);
 
     expect(report.backupPath).not.toBeNull();
     const backup = JSON.parse(fs.readFileSync(report.backupPath as string, "utf8"));
@@ -408,7 +495,7 @@ describe("replace", () => {
     const before = await snapshotStorage();
     const missing = path.join(tempDir, "missing-folder");
 
-    await expect(replaceData(dataFile(), [], missing)).rejects.toThrow();
+    await expect(replaceData(dataFile({}, { alpha: { birthtimeMs: 1, inode: 1 } }), [], missing)).rejects.toThrow();
     expect(await snapshotStorage()).toEqual(before);
   });
 });
@@ -460,15 +547,6 @@ describe("corrupt storage", () => {
 
     await expect(exportData(tempDir, [])).rejects.toThrow();
     expect(fs.readdirSync(tempDir)).toEqual([]);
-  });
-
-  it("refuses to merge when a category key is corrupt", async () => {
-    await seed();
-    await LocalStorage.setItem("stage-options", "{broken");
-    const before = await snapshotStorage();
-
-    await expect(mergeData(dataFile(), [])).rejects.toThrow(CorruptDataError);
-    expect(await snapshotStorage()).toEqual(before);
   });
 
   it("refuses to replace when a category key is corrupt and writes no backup", async () => {

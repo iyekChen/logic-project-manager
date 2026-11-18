@@ -4,14 +4,21 @@ import { environment, LocalStorage } from "@raycast/api";
 import {
   assertPrefixWritable,
   assertWritable,
-  isCorruptJson,
   listKeySuffixes,
   readJson,
   StorageUnreadableError,
   updateJson,
 } from "@/core/fs/storage";
 import { getAllProjectMetadata, type ProjectMetadata } from "@/core/metadata/project-metadata";
-import { collectionTaxonomy, genreTaxonomy, roleTaxonomy, stageTaxonomy } from "@/core/metadata/taxonomies";
+import {
+  collectionTaxonomy,
+  GENRE_DEFAULTS,
+  genreTaxonomy,
+  ROLE_DEFAULTS,
+  roleTaxonomy,
+  STAGE_DEFAULTS,
+  stageTaxonomy,
+} from "@/core/metadata/taxonomies";
 import type { TaxonomyOption } from "@/core/metadata/taxonomy";
 import { getPinnedCollections } from "@/core/metadata/collection-pins";
 import { getTrackMap, setTrackMap, removeTrackMap, type TrackMap } from "@/core/metadata/collection-order";
@@ -30,9 +37,15 @@ const ROLE_PREFIX = "collection-roles:";
 const DELETED_KEY = "deleted-projects";
 const GENRE_SEED_KEY = "genre-options-seeded-v1";
 
-// 这些存储记录的是本机磁盘状态，不是用户数据：导入不改磁盘，快照仍然有效；
-// Replace 也不清空它，否则会漏掉上次扫描之后在 Finder 里做的改名或删除。
-const LOCAL_STATE_PREFIXES = ["project-snapshot:"];
+// 有 order 的分类：追加的选项从现有最大 order 往后编号。
+const ORDERED_KEYS: readonly string[] = ["stage-options", "role-options"];
+
+const TAXONOMY_DEFAULTS: Record<string, TaxonomyOption[]> = {
+  "stage-options": STAGE_DEFAULTS,
+  "genre-options": GENRE_DEFAULTS,
+  "collection-options": [],
+  "role-options": ROLE_DEFAULTS,
+};
 
 export type DataSnapshot = {
   projectMetadata: Record<string, ProjectMetadata>;
@@ -62,16 +75,37 @@ export type DeletedRecord = FolderIdentity & {
   dataRestored?: boolean;
 };
 
-export type ImportMode = "merge" | "replace";
+/** 当前各存储的值，planImport 的输入。 */
+export type CurrentData = DataSnapshot;
 
-export type ImportReport = {
+export type ImportChanges = {
   projects: number;
+  options: number;
+  collections: number;
+  pins: number;
+};
+
+export type ImportResult = {
+  restored: number;
+  kept: number;
   rematched: number;
   unmatched: number;
-  skippedTracks: number;
+  droppedTracks: number;
+};
+
+export type ImportPlan = {
+  data: DataSnapshot;
+  changes: ImportChanges;
+  result: ImportResult;
+  /** 新值和当前值完全一样。 */
+  unchanged: boolean;
+  /** 变更计数总和，决定要不要弹窗。 */
+  changeCount: number;
+};
+
+export type ImportReport = ImportResult & {
+  changes: ImportChanges;
   backupPath: string | null;
-  renameTrackingSkipped: boolean;
-  naturalKeyFields: string[];
 };
 
 /** 哪一类数据损坏：用于提示里写明，而不是只说"数据读不出"。 */
@@ -329,6 +363,23 @@ export async function buildSnapshot(projects: Project[]): Promise<DataFile> {
   };
 }
 
+/** 读取当前全部可导入的存储，作为 planImport 的输入。 */
+export async function readCurrentData(): Promise<CurrentData> {
+  return {
+    projectMetadata: await getAllProjectMetadata(),
+    taxonomies: {
+      "stage-options": await stageTaxonomy.get(),
+      "genre-options": await genreTaxonomy.get(),
+      "collection-options": await collectionTaxonomy.get(),
+      "role-options": await roleTaxonomy.get(),
+    },
+    collectionPins: await getPinnedCollections(),
+    collectionOrders: await readOrders(),
+    collectionRoles: await readRoles(),
+    deletedProjects: await readDeletedRecords(),
+  };
+}
+
 // ---------- 文件命名 ----------
 
 function pad(value: number): string {
@@ -442,106 +493,63 @@ export function trackRenames(
   return { data: copy, rematched, unmatched, skipped: false };
 }
 
-// ---------- Merge ----------
+// ---------- 计划 ----------
 
-const NATURAL_KEYS: Record<string, string> = {
-  previousBounceNames: "name",
-};
-
-function mergeStringArray(current: string[], incoming: string[]): string[] {
-  const seen = new Set(current);
-  const out = [...current];
-  for (const item of incoming) {
-    if (seen.has(item)) continue;
-    seen.add(item);
-    out.push(item);
+/** 稳定序列化：key 排序后再比较，避免字段顺序不同被当成变化。 */
+function stable(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stable).join(",")}]`;
+  if (isPlainObject(value)) {
+    const keys = Object.keys(value).sort();
+    return `{${keys.map((key) => `${JSON.stringify(key)}:${stable(value[key])}`).join(",")}}`;
   }
-  return out;
+  return JSON.stringify(value) ?? "null";
 }
 
-function mergeObjectArray(current: unknown[], incoming: unknown[], naturalKey: string | undefined): unknown[] {
-  const out = [...current];
-  if (naturalKey) {
-    const seen = new Set(
-      current.map((item) => (isPlainObject(item) ? String(item[naturalKey]) : JSON.stringify(item))),
-    );
-    for (const item of incoming) {
-      const key = isPlainObject(item) ? String(item[naturalKey]) : JSON.stringify(item);
-      if (seen.has(key)) continue;
-      seen.add(key);
-      out.push(item);
-    }
-    return out;
-  }
-  const seen = new Set(current.map((item) => JSON.stringify(item)));
-  for (const item of incoming) {
-    const key = JSON.stringify(item);
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(item);
-  }
-  return out;
+function sameValue(a: unknown, b: unknown): boolean {
+  return stable(a) === stable(b);
 }
 
-function mergeMetadata(current: ProjectMetadata, incoming: ProjectMetadata): ProjectMetadata {
-  const out: ProjectMetadata = { ...current };
-  for (const [field, value] of Object.entries(incoming)) {
-    const existing = (current as unknown as Record<string, unknown>)[field];
-    if (Array.isArray(value)) {
-      const currentArray = Array.isArray(existing) ? existing : [];
-      const isObjectArray = value.some((item) => typeof item === "object" && item !== null);
-      (out as unknown as Record<string, unknown>)[field] = isObjectArray
-        ? mergeObjectArray(currentArray, value, NATURAL_KEYS[field])
-        : mergeStringArray(currentArray as string[], value as string[]);
-      continue;
-    }
-    if (isPlainObject(value)) {
-      const currentMap = isPlainObject(existing) ? existing : {};
-      (out as unknown as Record<string, unknown>)[field] = { ...value, ...currentMap };
-      continue;
-    }
-    if (existing === undefined || existing === "") {
-      (out as unknown as Record<string, unknown>)[field] = value;
-    }
-  }
-  return out;
+function nameKey(name: string): string {
+  return name.trim().toLowerCase();
 }
 
-function mergeTaxonomies(
-  current: Record<string, TaxonomyOption[]>,
-  incoming: Record<string, TaxonomyOption[]>,
-): { merged: Record<string, TaxonomyOption[]>; idMap: Map<string, string> } {
-  const merged: Record<string, TaxonomyOption[]> = {};
-  const idMap = new Map<string, string>();
+/** 文件里的选项在前，当前独有的追加在后；有 order 的分类给追加项续编号。 */
+function planTaxonomy(key: string, current: TaxonomyOption[], incoming: TaxonomyOption[]): TaxonomyOption[] {
+  const out = incoming.map((option) => ({ ...option }));
+  const seen = new Set(out.map((option) => option.id));
+  const appended = current.filter((option) => !seen.has(option.id)).map((option) => ({ ...option }));
 
-  for (const key of TAXONOMY_KEYS) {
-    const existing = current[key] ?? [];
-    const byName = new Map(existing.map((option) => [option.name.trim().toLowerCase(), option]));
-    const out = [...existing];
-    for (const option of incoming[key] ?? []) {
-      const match = byName.get(option.name.trim().toLowerCase());
-      if (match) {
-        if (match.id !== option.id) idMap.set(option.id, match.id);
-        continue;
-      }
-      out.push(option);
+  if (ORDERED_KEYS.includes(key) && appended.length > 0) {
+    let next = out.reduce((max, option) => Math.max(max, option.order ?? 0), 0);
+    for (const option of appended) {
+      next += 1;
+      option.order = next;
     }
-    merged[key] = out;
   }
 
-  return { merged, idMap };
+  return [...out, ...appended];
 }
 
-function remapIds(ids: string[], idMap: Map<string, string>): string[] {
+/** 引用修正：引用的 ID 不在最终列表里时，按名字找同名选项；找不到就去掉。 */
+function fixReferences(ids: string[], options: TaxonomyOption[]): string[] {
+  const byId = new Set(options.map((option) => option.id));
+  const byName = new Map(options.map((option) => [nameKey(option.name), option.id]));
   const out: string[] = [];
   for (const id of ids) {
-    const mapped = idMap.get(id) ?? id;
-    if (!out.includes(mapped)) out.push(mapped);
+    const resolved = byId.has(id) ? id : byName.get(nameKey(id));
+    if (resolved === undefined) continue;
+    if (!out.includes(resolved)) out.push(resolved);
   }
   return out;
 }
 
-function mergeDeleted(current: DeletedRecord[], incoming: DeletedRecord[]): DeletedRecord[] {
+function fixStageId(stageId: string | null, options: TaxonomyOption[]): string | null {
+  if (stageId === null) return null;
+  const fixed = fixReferences([stageId], options);
+  return fixed[0] ?? null;
+}
+
+function unionDeleted(current: DeletedRecord[], incoming: DeletedRecord[]): DeletedRecord[] {
   const seen = new Set(current.map((record) => `${record.id}\n${record.deletedAt}`));
   const out = [...current];
   for (const record of incoming) {
@@ -553,109 +561,155 @@ function mergeDeleted(current: DeletedRecord[], incoming: DeletedRecord[]): Dele
   return out;
 }
 
-export async function mergeData(file: DataFile, projects: Project[] | null): Promise<ImportReport> {
-  // 先预检：分类的 get() 在存储损坏时会悄悄返回默认值，读之前必须先确认能写。
-  await assertImportWritable(file.data.collectionOrders, file.data.collectionRoles);
-
+/**
+ * 按快照恢复：快照知道的项目用文件里的值，快照之后新增的东西保留。
+ * 纯函数，不读写存储。
+ */
+export function planImport(file: DataFile, current: CurrentData, projects: Project[] | null): ImportPlan {
   const tracked = trackRenames(file.data, file.identities, projects);
   const incoming = tracked.data;
 
-  const currentTaxonomies: Record<string, TaxonomyOption[]> = {
-    "stage-options": await stageTaxonomy.get(),
-    "genre-options": await genreTaxonomy.get(),
-    "collection-options": await collectionTaxonomy.get(),
-    "role-options": await roleTaxonomy.get(),
-  };
-  const { merged: mergedTaxonomies, idMap } = mergeTaxonomies(currentTaxonomies, incoming.taxonomies);
+  // 快照知道的项目：ID 在 identities 里，或在文件的元数据里。
+  const known = new Set<string>([...Object.keys(file.identities), ...Object.keys(incoming.projectMetadata)]);
 
-  const currentMetadata = await getAllProjectMetadata();
-  const mergedMetadata: Record<string, ProjectMetadata> = { ...currentMetadata };
-  for (const [id, metadata] of Object.entries(incoming.projectMetadata)) {
-    const remapped: ProjectMetadata = {
-      ...metadata,
-      genreIds: remapIds(metadata.genreIds, idMap),
-      collectionIds: remapIds(metadata.collectionIds, idMap),
-    };
-    mergedMetadata[id] = id in currentMetadata ? mergeMetadata(currentMetadata[id], remapped) : remapped;
-  }
-
-  const currentPins = await getPinnedCollections();
-  const mergedPins = mergeStringArray(currentPins, remapIds(incoming.collectionPins, idMap));
-
-  const currentOrders = await readOrders();
-  const mergedOrders: Record<string, TrackMap> = { ...currentOrders };
-  let skippedTracks = 0;
-  for (const [collectionId, map] of Object.entries(incoming.collectionOrders)) {
-    const target = { ...(mergedOrders[collectionId] ?? {}) };
-    const taken = new Set(Object.values(target));
-    for (const [projectId, number] of Object.entries(map)) {
-      if (projectId in target) continue;
-      if (taken.has(number)) {
-        skippedTracks += 1;
-        continue;
-      }
-      target[projectId] = number;
-      taken.add(number);
-    }
-    mergedOrders[collectionId] = target;
-  }
-
-  const currentRoles = await readRoles();
-  const mergedRoles: Record<string, RoleMap> = { ...currentRoles };
-  for (const [collectionId, map] of Object.entries(incoming.collectionRoles)) {
-    const target = { ...(mergedRoles[collectionId] ?? {}) };
-    for (const [projectId, role] of Object.entries(map)) {
-      if (projectId in target) continue;
-      target[projectId] = role;
-    }
-    mergedRoles[collectionId] = target;
-  }
-
-  const mergedDeleted = mergeDeleted(await readDeletedRecords(), incoming.deletedProjects);
-
+  const taxonomies: Record<string, TaxonomyOption[]> = {};
   for (const key of TAXONOMY_KEYS) {
-    await updateJson(
-      key,
-      (value) => (Array.isArray(value) ? (value as TaxonomyOption[]) : []),
-      () => [],
-      () => mergedTaxonomies[key],
-    );
+    taxonomies[key] = planTaxonomy(key, current.taxonomies[key] ?? [], incoming.taxonomies[key] ?? []);
   }
-  await LocalStorage.setItem(GENRE_SEED_KEY, "true");
 
-  await updateJson(
-    PROJECT_METADATA_KEY,
-    (value) => (isPlainObject(value) ? value : {}),
-    () => ({}),
-    () => mergedMetadata,
-  );
-  await updateJson(
-    PINS_KEY,
-    (value) => (isStringArray(value) ? value : []),
-    () => [],
-    () => mergedPins,
-  );
-  for (const [collectionId, map] of Object.entries(mergedOrders)) await setTrackMap(collectionId, map);
-  for (const [collectionId, map] of Object.entries(mergedRoles)) await setRoleMap(collectionId, map);
-  await updateJson(
-    DELETED_KEY,
-    (value) => (Array.isArray(value) ? (value as DeletedRecord[]) : []),
-    () => [],
-    () => mergedDeleted,
-  );
+  const metadata: Record<string, ProjectMetadata> = {};
+  let restored = 0;
+  let kept = 0;
+  for (const [id, meta] of Object.entries(current.projectMetadata)) {
+    if (known.has(id)) continue;
+    metadata[id] = meta;
+    kept += 1;
+  }
+  for (const [id, meta] of Object.entries(incoming.projectMetadata)) {
+    metadata[id] = {
+      ...meta,
+      stageId: fixStageId(meta.stageId, taxonomies["stage-options"]),
+      genreIds: fixReferences(meta.genreIds, taxonomies["genre-options"]),
+      collectionIds: fixReferences(meta.collectionIds, taxonomies["collection-options"]),
+    };
+    restored += 1;
+  }
+
+  const orders: Record<string, TrackMap> = {};
+  const roles: Record<string, RoleMap> = {};
+  let droppedTracks = 0;
+  const collectionIds = new Set([
+    ...Object.keys(current.collectionOrders),
+    ...Object.keys(current.collectionRoles),
+    ...Object.keys(incoming.collectionOrders),
+    ...Object.keys(incoming.collectionRoles),
+  ]);
+
+  for (const collectionId of collectionIds) {
+    const fileOrders = incoming.collectionOrders[collectionId];
+    const fileRoles = incoming.collectionRoles[collectionId];
+
+    if (fileOrders === undefined) {
+      // 文件里没有这个收藏夹：当前 map 整个保留。
+      if (current.collectionOrders[collectionId]) orders[collectionId] = current.collectionOrders[collectionId];
+    } else {
+      const map: TrackMap = { ...fileOrders };
+      const taken = new Set(Object.values(map));
+      for (const [projectId, number] of Object.entries(current.collectionOrders[collectionId] ?? {})) {
+        if (known.has(projectId)) continue;
+        if (taken.has(number)) {
+          droppedTracks += 1;
+          continue;
+        }
+        map[projectId] = number;
+        taken.add(number);
+      }
+      orders[collectionId] = map;
+    }
+
+    if (fileRoles === undefined) {
+      if (current.collectionRoles[collectionId]) roles[collectionId] = current.collectionRoles[collectionId];
+    } else {
+      const map: RoleMap = { ...fileRoles };
+      for (const [projectId, role] of Object.entries(current.collectionRoles[collectionId] ?? {})) {
+        if (known.has(projectId)) continue;
+        map[projectId] = role;
+      }
+      roles[collectionId] = map;
+    }
+  }
+
+  const pins = [...incoming.collectionPins];
+  for (const id of current.collectionPins) {
+    if (!pins.includes(id)) pins.push(id);
+  }
+
+  const deleted = unionDeleted(current.deletedProjects, incoming.deletedProjects);
+
+  // 变更计数：只算现有值被改掉或被清空，新增不算。
+  let projectChanges = 0;
+  for (const [id, meta] of Object.entries(current.projectMetadata)) {
+    const next = metadata[id];
+    if (next === undefined || !sameValue(meta, next)) projectChanges += 1;
+  }
+
+  let optionChanges = 0;
+  for (const key of TAXONOMY_KEYS) {
+    const currentOptions = current.taxonomies[key] ?? [];
+    // 整个分类和默认值一样时，这个分类的改动都不计入。
+    if (sameValue(currentOptions, TAXONOMY_DEFAULTS[key] ?? [])) continue;
+    const nextById = new Map(taxonomies[key].map((option) => [option.id, option]));
+    for (const option of currentOptions) {
+      const next = nextById.get(option.id);
+      if (!next) continue;
+      if (option.name !== next.name || option.color !== next.color || option.order !== next.order) {
+        optionChanges += 1;
+      }
+    }
+  }
+
+  let collectionChanges = 0;
+  for (const collectionId of collectionIds) {
+    const ordersChanged = !sameValue(current.collectionOrders[collectionId] ?? {}, orders[collectionId] ?? {});
+    const rolesChanged = !sameValue(current.collectionRoles[collectionId] ?? {}, roles[collectionId] ?? {});
+    if (ordersChanged || rolesChanged) collectionChanges += 1;
+  }
+
+  const pinChanges = sameValue(current.collectionPins, pins) ? 0 : 1;
+
+  const changes: ImportChanges = {
+    projects: projectChanges,
+    options: optionChanges,
+    collections: collectionChanges,
+    pins: pinChanges,
+  };
+  const changeCount = projectChanges + optionChanges + collectionChanges + pinChanges;
+
+  const data: DataSnapshot = {
+    projectMetadata: metadata,
+    taxonomies,
+    collectionPins: pins,
+    collectionOrders: orders,
+    collectionRoles: roles,
+    deletedProjects: deleted,
+  };
 
   return {
-    projects: Object.keys(incoming.projectMetadata).length,
-    rematched: tracked.rematched,
-    unmatched: tracked.unmatched,
-    skippedTracks,
-    backupPath: null,
-    renameTrackingSkipped: tracked.skipped,
-    naturalKeyFields: Object.keys(NATURAL_KEYS),
+    data,
+    changes,
+    result: {
+      restored,
+      kept,
+      rematched: tracked.rematched,
+      unmatched: tracked.unmatched,
+      droppedTracks,
+    },
+    unchanged: sameValue(current, data),
+    changeCount,
   };
 }
 
-// ---------- Replace ----------
+// ---------- 写入 ----------
 
 async function assertImportWritable(orders: Record<string, TrackMap>, roles: Record<string, RoleMap>): Promise<void> {
   await checkWritable("metadata", () => assertWritable(PROJECT_METADATA_KEY));
@@ -672,6 +726,65 @@ async function assertImportWritable(orders: Record<string, TrackMap>, roles: Rec
   }
 }
 
+/** 导入前预检：任何要写的存储损坏就抛 CorruptDataError，此时一个字都不写。 */
+export async function assertImportReady(file: DataFile): Promise<void> {
+  await assertImportWritable(file.data.collectionOrders, file.data.collectionRoles);
+}
+
+/** 把计划写进存储。顺序：分类 → 元数据 → 置顶 → 曲序 → 角色 → deleted-projects。 */
+export async function applyPlan(plan: ImportPlan, current: CurrentData): Promise<void> {
+  for (const key of TAXONOMY_KEYS) {
+    await updateJson(
+      key,
+      (value) => (Array.isArray(value) ? (value as TaxonomyOption[]) : []),
+      () => [],
+      () => plan.data.taxonomies[key],
+    );
+  }
+  await LocalStorage.setItem(GENRE_SEED_KEY, "true");
+
+  await updateJson(
+    PROJECT_METADATA_KEY,
+    (value) => (isPlainObject(value) ? value : {}),
+    () => ({}),
+    () => plan.data.projectMetadata,
+  );
+  await updateJson(
+    PINS_KEY,
+    (value) => (isStringArray(value) ? value : []),
+    () => [],
+    () => plan.data.collectionPins,
+  );
+
+  for (const [collectionId, map] of Object.entries(plan.data.collectionOrders)) {
+    await setTrackMap(collectionId, map);
+  }
+  for (const collectionId of Object.keys(current.collectionOrders)) {
+    if (!(collectionId in plan.data.collectionOrders)) await removeTrackMap(collectionId);
+  }
+
+  for (const [collectionId, map] of Object.entries(plan.data.collectionRoles)) {
+    await setRoleMap(collectionId, map);
+  }
+  for (const collectionId of Object.keys(current.collectionRoles)) {
+    if (!(collectionId in plan.data.collectionRoles)) await removeRoleMap(collectionId);
+  }
+
+  await updateJson(
+    DELETED_KEY,
+    (value) => (Array.isArray(value) ? (value as DeletedRecord[]) : []),
+    () => [],
+    () => plan.data.deletedProjects,
+  );
+}
+
+/** 备份当前数据到指定文件夹；失败就抛错，调用方据此中止。 */
+export async function writeBackup(folder: string, projects: Project[]): Promise<string> {
+  const snapshot = await buildSnapshot(projects);
+  return writeJsonFile(folder, backupFileName(new Date()), JSON.stringify(snapshot, null, 2));
+}
+
+/** 一步完成：预检、计划、备份、写入。备份失败时不做任何改动。 */
 export async function replaceData(
   file: DataFile,
   projects: Project[] | null,
@@ -680,85 +793,14 @@ export async function replaceData(
   // 先预检：分类的 get() 在存储损坏时会悄悄返回默认值，读之前必须先确认能写。
   await assertImportWritable(file.data.collectionOrders, file.data.collectionRoles);
 
-  const tracked = trackRenames(file.data, file.identities, projects);
-  const incoming = tracked.data;
+  const current = await readCurrentData();
+  const plan = planImport(file, current, projects);
 
-  // 备份失败就中止，不做任何改动。
-  const backup = await buildSnapshot(projects ?? []);
-  const backupPath = writeJsonFile(backupFolder, backupFileName(new Date()), JSON.stringify(backup, null, 2));
-
-  const currentOrders = await readOrders();
-  const currentRoles = await readRoles();
-
-  try {
-    for (const key of TAXONOMY_KEYS) {
-      await updateJson(
-        key,
-        (value) => (Array.isArray(value) ? (value as TaxonomyOption[]) : []),
-        () => [],
-        () => incoming.taxonomies[key],
-      );
-    }
-    await LocalStorage.setItem(GENRE_SEED_KEY, "true");
-
-    await updateJson(
-      PROJECT_METADATA_KEY,
-      (value) => (isPlainObject(value) ? value : {}),
-      () => ({}),
-      () => incoming.projectMetadata,
-    );
-    await updateJson(
-      PINS_KEY,
-      (value) => (isStringArray(value) ? value : []),
-      () => [],
-      () => incoming.collectionPins,
-    );
-
-    for (const [collectionId, map] of Object.entries(incoming.collectionOrders)) {
-      await setTrackMap(collectionId, map);
-    }
-    for (const collectionId of Object.keys(currentOrders)) {
-      if (!(collectionId in incoming.collectionOrders)) await removeTrackMap(collectionId);
-    }
-
-    for (const [collectionId, map] of Object.entries(incoming.collectionRoles)) {
-      await setRoleMap(collectionId, map);
-    }
-    for (const collectionId of Object.keys(currentRoles)) {
-      if (!(collectionId in incoming.collectionRoles)) await removeRoleMap(collectionId);
-    }
-
-    // 删除记录只取并集，绝不删除现有记录。
-    const mergedDeleted = mergeDeleted(await readDeletedRecords(), incoming.deletedProjects);
-    await updateJson(
-      DELETED_KEY,
-      (value) => (Array.isArray(value) ? (value as DeletedRecord[]) : []),
-      () => [],
-      () => mergedDeleted,
-    );
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`${message} (backup: ${backupPath})`);
+  if (plan.unchanged) {
+    return { ...plan.result, changes: plan.changes, backupPath: null };
   }
 
-  return {
-    projects: Object.keys(incoming.projectMetadata).length,
-    rematched: tracked.rematched,
-    unmatched: tracked.unmatched,
-    skippedTracks: 0,
-    backupPath,
-    renameTrackingSkipped: tracked.skipped,
-    naturalKeyFields: Object.keys(NATURAL_KEYS),
-  };
-}
-
-/** 现有存储是否损坏（导入前预检用）。 */
-export async function isStorageCorrupt(): Promise<boolean> {
-  const all = await LocalStorage.allItems();
-  for (const [key, value] of Object.entries(all)) {
-    if (typeof value !== "string") continue;
-    if (LOCAL_STATE_PREFIXES.some((prefix) => key.startsWith(prefix))) continue;
-    if (isCorruptJson(value)) return true;
-  }
-  return false;
+  const backupPath = await writeBackup(backupFolder, projects ?? []);
+  await applyPlan(plan, current);
+  return { ...plan.result, changes: plan.changes, backupPath };
 }
