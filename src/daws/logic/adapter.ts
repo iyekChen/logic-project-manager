@@ -181,6 +181,8 @@ export const logicAdapter: DawAdapter = {
         continue;
       }
     }
+    // 只有一个 Alternative 时 Logic 只能打开它，直接算 Active（老工程可能没有 ActiveVariant，或者它对不上）。
+    if (sets.length === 1) sets[0].active = true;
     return sets;
   },
 

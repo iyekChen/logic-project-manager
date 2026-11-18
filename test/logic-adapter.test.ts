@@ -168,9 +168,63 @@ describe("logicAdapter.listSets", () => {
     expect(sets).toEqual([expect.objectContaining({ name: "Old Name", path: innerPackagePath, active: true })]);
   });
 
-  it("没有 ProjectInformation.plist 时名字退回编号，没有 Active", () => {
+  it("没有 ProjectInformation.plist 时名字退回编号；只有一个 Alternative 时仍算 Active", () => {
     const sets = logicAdapter.listSets({ folderPath: barePackagePath, kind: "package" });
-    expect(sets).toEqual([expect.objectContaining({ name: "000", active: false })]);
+    expect(sets).toEqual([expect.objectContaining({ name: "000", active: true })]);
+  });
+
+  it("没有 ProjectInformation.plist 时名字退回编号；有两个 Alternative 时都不算 Active", () => {
+    const twoPackagePath = path.join(root, "Two.logicx");
+    writeAlternative(twoPackagePath, "000", songMetadata(120, "C", "major", 4, 4));
+    writeAlternative(twoPackagePath, "001", songMetadata(120, "C", "major", 4, 4));
+
+    const sets = logicAdapter.listSets({ folderPath: twoPackagePath, kind: "package" });
+    const byIndex = [...sets].sort((a, b) => a.metadataFile.localeCompare(b.metadataFile));
+    expect(byIndex.map((set) => [set.name, set.active])).toEqual([
+      ["000", false],
+      ["001", false],
+    ]);
+  });
+
+  it("只有一个 Alternative、没有 ActiveVariant 时，它是 Active", () => {
+    const singlePackagePath = path.join(root, "Single.logicx");
+    writeBinaryPlist(path.join(singlePackagePath, "Resources", "ProjectInformation.plist"), {
+      VariantNamesV2: { "0": "{PROJECT_NAME}" },
+    });
+    writeAlternative(singlePackagePath, "000", songMetadata(120, "C", "major", 4, 4));
+
+    const sets = logicAdapter.listSets({ folderPath: singlePackagePath, kind: "package" });
+    expect(sets).toEqual([
+      {
+        name: "Single",
+        path: singlePackagePath,
+        metadataFile: path.join(singlePackagePath, "Alternatives", "000", "MetaData.plist"),
+        createdAt: expect.any(Number),
+        modifiedAt: expect.any(Number),
+        active: true,
+      },
+    ]);
+  });
+
+  it("只有一个 Alternative、ActiveVariant 指向不存在的编号时，它是 Active", () => {
+    const singlePackagePath = path.join(root, "Single Mismatch.logicx");
+    writeBinaryPlist(path.join(singlePackagePath, "Resources", "ProjectInformation.plist"), {
+      ActiveVariant: 5,
+      VariantNamesV2: { "0": "{PROJECT_NAME}" },
+    });
+    writeAlternative(singlePackagePath, "000", songMetadata(120, "C", "major", 4, 4));
+
+    const sets = logicAdapter.listSets({ folderPath: singlePackagePath, kind: "package" });
+    expect(sets).toEqual([
+      {
+        name: "Single Mismatch",
+        path: singlePackagePath,
+        metadataFile: path.join(singlePackagePath, "Alternatives", "000", "MetaData.plist"),
+        createdAt: expect.any(Number),
+        modifiedAt: expect.any(Number),
+        active: true,
+      },
+    ]);
   });
 });
 
