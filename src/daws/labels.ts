@@ -13,7 +13,6 @@ const labels: Record<Language, DawLabels> = {
     readingSets: "Reading Alternatives…",
     newProjectFile: "New Logic Project",
     newProjectFileFailed: "Logic Pro not found",
-    newProjectWithTemplate: "New Project with Template",
     noProjectsFound: "No Logic projects found",
     noProjectsFoundHint: "Nothing in {folder} contains a Logic project. Check the Projects Folder in preferences.",
     // 开着项目改名时 Logic 会怎样还没测过，所以只提醒先关掉，不写后果。
