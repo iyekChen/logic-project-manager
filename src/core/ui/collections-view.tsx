@@ -771,7 +771,7 @@ function CollectionPanel({
     </ActionPanel.Section>
   );
 
-  // 包（如 .logicx）用「打开」会交给 DAW，所以改成在 Finder 里选中它；普通文件夹照旧在 Finder 里打开。
+  // 工程包用「打开」会交给 DAW，所以改成在 Finder 里选中它；普通文件夹照旧在 Finder 里打开。
   const renderOpenInFinder = (p: Project) =>
     p.kind === "package" ? (
       <Action.ShowInFinder

@@ -1,13 +1,17 @@
 import type { Application } from "@raycast/api";
 import { afterEach, describe, expect, it } from "vitest";
 import { pickDawApp } from "../src/core/daw-app";
+import { daw } from "../src/daws";
 import { __setPreferences } from "./mocks/raycast-api";
 
-const perpetual: Application = { name: "Logic Pro", path: "/Applications/Logic Pro.app", bundleId: "com.apple.logic10" };
-const creatorStudio: Application = {
-  name: "Logic Pro",
-  path: "/Applications/Logic Pro Creator Studio.app",
-  bundleId: "com.apple.mobilelogic",
+// 应用名从适配器取，测试里不写死某个 DAW 的名字。
+const appName = daw.appNameMatch;
+
+const installed: Application = { name: appName, path: `/Applications/${appName}.app`, bundleId: "com.example.daw" };
+const otherVersion: Application = {
+  name: appName,
+  path: `/Applications/${appName} 2.app`,
+  bundleId: "com.example.daw.2",
 };
 const other: Application = { name: "Finder", path: "/System/Library/CoreServices/Finder.app", bundleId: "com.apple.finder" };
 
@@ -17,21 +21,21 @@ afterEach(() => {
 
 describe("pickDawApp", () => {
   it("按 bundle ID 找到选的版本", () => {
-    __setPreferences({ dawApp: "com.apple.mobilelogic" });
-    expect(pickDawApp([other, perpetual, creatorStudio])).toEqual(creatorStudio);
+    __setPreferences({ dawApp: "com.example.daw.2" });
+    expect(pickDawApp([other, installed, otherVersion])).toEqual(otherVersion);
   });
 
-  it("选的版本没装时，用装着的另一个 Logic Pro", () => {
-    __setPreferences({ dawApp: "com.apple.mobilelogic" });
-    expect(pickDawApp([other, perpetual])).toEqual(perpetual);
+  it("选的版本没装时，用装着的另一个版本", () => {
+    __setPreferences({ dawApp: "com.example.daw.2" });
+    expect(pickDawApp([other, installed])).toEqual(installed);
   });
 
   it("没设偏好时按名字找", () => {
-    expect(pickDawApp([other, creatorStudio])).toEqual(creatorStudio);
+    expect(pickDawApp([other, otherVersion])).toEqual(otherVersion);
   });
 
   it("一个都没装时为 null", () => {
-    __setPreferences({ dawApp: "com.apple.logic10" });
+    __setPreferences({ dawApp: "com.example.daw" });
     expect(pickDawApp([other])).toBeNull();
   });
 });

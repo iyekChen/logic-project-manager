@@ -5,8 +5,8 @@ import type { DawSet } from "../src/daws/types";
 function set(name: string, modifiedAt: number, active?: boolean): DawSet {
   return {
     name,
-    path: `/projects/Demo.logicx`,
-    metadataFile: `/projects/Demo.logicx/Alternatives/${name}/MetaData.plist`,
+    path: `/projects/Demo.dawproj`,
+    metadataFile: `/projects/Demo.dawproj/Alternatives/${name}/MetaData.plist`,
     createdAt: 0,
     modifiedAt,
     ...(active === undefined ? {} : { active }),

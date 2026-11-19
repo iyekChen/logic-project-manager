@@ -52,7 +52,7 @@ export function loadProjects(projectsRoot: string): Project[] {
       const sets = daw.listSets(detected);
       if (sets.length === 0) continue;
 
-      // 两个条目换算出同一个 id（如 Logic 的 Song 文件夹和 Song.logicx 包）：只认第一个，否则元数据会混在一起。
+      // 两个条目换算出同一个 id（如同名的文件夹和工程包）：只认第一个，否则元数据会混在一起。
       if (seen.has(detected.id)) {
         console.warn(`${LOG_PREFIX} Skipped duplicate project: ${detected.folderPath}`);
         continue;
