@@ -130,6 +130,7 @@ function parseKey(root: PlistValue | undefined, scale: PlistValue | undefined): 
 export const logicAdapter: DawAdapter = {
   id: "logic",
   appNameMatch: "logic pro",
+  readmeUrl: "https://github.com/iyekChen/logic-project-manager#readme",
 
   // 包名去掉 .logicx 就是 id；文件夹形态的项目直接用文件夹名。
   projectIdForEntry: idForEntry,
