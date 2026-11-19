@@ -176,7 +176,6 @@
 			"title": "Search Projects",
 			"description": "Search, play, and organize your Logic Pro projects and collections",
 			"mode": "view",
-			"subtitle": "Logic Pro",
 			"keywords": [
 				"logic",
 				"logic pro",
@@ -195,7 +194,6 @@
 			"title": "Manage Tags",
 			"description": "Create and manage Stages, Genres, and Track Roles",
 			"mode": "view",
-			"subtitle": "Logic Pro",
 			"keywords": [
 				"logic",
 				"logic pro",
@@ -211,7 +209,6 @@
 			"title": "Export Data",
 			"description": "Save your tags, collections and other extension data to a file.",
 			"mode": "view",
-			"subtitle": "Logic Pro",
 			"keywords": [
 				"export",
 				"backup",
@@ -225,7 +222,6 @@
 			"title": "Import Data",
 			"description": "Restore extension data from an exported file.",
 			"mode": "view",
-			"subtitle": "Logic Pro",
 			"keywords": [
 				"import",
 				"restore",
