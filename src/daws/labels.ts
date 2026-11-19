@@ -11,7 +11,7 @@ const labels: Record<Language, DawLabels> = {
     noSets: "No Alternatives Found",
     openSetFailed: "Couldn't Open Project",
     readingSets: "Reading Alternatives…",
-    newProjectFile: "New Logic Project",
+    newProjectFile: "New Project",
     newProjectFileFailed: "Logic Pro not found",
     noProjectsFound: "No Logic projects found",
     noProjectsFoundHint: "Nothing in {folder} contains a Logic project. Check the Projects Folder in preferences.",
