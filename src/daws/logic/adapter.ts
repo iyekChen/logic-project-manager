@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { LOG_PREFIX } from "@/core/log";
 import { isPlistDict, readPlistFile, type PlistValue } from "./bplist";
@@ -199,5 +200,28 @@ export const logicAdapter: DawAdapter = {
       console.error(`${LOG_PREFIX} Failed to parse Logic metadata: ${set.metadataFile}`, error);
       return emptyMetadata();
     }
+  },
+
+  // Logic 自己的模板位置。
+  defaultTemplatesFolder: () => path.join(os.homedir(), "Music", "Audio Music Apps", "Project Templates"),
+
+  // 模板就是一个 .logicx 包。包在 Finder 里是文件、在磁盘上是文件夹，所以按后缀认，不按 isDirectory 认。
+  isTemplate: (entryPath, entryName) => PACKAGE_EXTENSION_PATTERN.test(entryName) && isDirectory(entryPath),
+
+  createFromTemplate(templatePath, projectsRoot, name) {
+    const target = path.join(projectsRoot, logicAdapter.entryNameFor(name, "package"));
+    // 目标已存在时报错，不覆盖。fs.cp 遇到已存在的目录会合并进去、不报错，所以先自己拦下。
+    if (fs.existsSync(target)) {
+      const error = new Error(`Target already exists: ${target}`) as NodeJS.ErrnoException;
+      error.code = "EEXIST";
+      throw error;
+    }
+    fs.cpSync(templatePath, target, {
+      recursive: true,
+      errorOnExist: true,
+      force: false,
+      preserveTimestamps: true,
+    });
+    return target;
   },
 };
