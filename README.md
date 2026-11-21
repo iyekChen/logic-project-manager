@@ -76,7 +76,7 @@ Logic can save a project in two ways, and the extension lists both:
 | Bounces                             | A package has no folder of its own for bounces, so use a Shared Bounces Folder | Saved in the project folder, usually in a `Bounces` subfolder |
 | Notes and lyrics (no custom folder) | Saved inside the `.logicx`                                                     | Saved in the project folder                                   |
 
-Duplicate Project and Move to Trash work on the whole `.logicx` or the whole folder. A folder can also hold more than one `.logicx`; see [Project files in a folder](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#view-project-files).
+Duplicate Project and Move to Trash work on the whole `.logicx` or the whole folder. A folder can also hold more than one `.logicx`; see [View Project Files](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#view-project-files).
 
 ### View Alternatives
 
@@ -212,7 +212,7 @@ The Search Bounces command lists the bounces of every project in one place. A fi
 
 Assigning bounces never moves or renames your files.
 
-### Unmatched bounces
+### Unmatched Bounces
 
 When a Shared Bounces Folder is set, files in it that don't belong to any project are listed in Unmatched Bounces (⌘⇧B in Search Projects) and marked in [Search Bounces](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#search-bounces). The first time you open Search Projects after setting or changing the folder, the extension offers to review any unmatched files it finds.
 

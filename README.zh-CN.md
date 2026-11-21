@@ -76,7 +76,7 @@ Logic 有两种保存项目的方式，扩展都会列出：
 | Bounce                             | Package 没有自己存放 bounce 的文件夹，请使用 Shared Bounces Folder | 存在项目文件夹里，通常是 `Bounces` 子文件夹 |
 | 笔记和歌词（未设置自定义文件夹时） | 存在 `.logicx` 内部                                                | 存在项目文件夹里                            |
 
-Duplicate Project 和 Move to Trash 作用于整个 `.logicx` 或整个文件夹。一个文件夹里也可以有多个 `.logicx`；见[文件夹里的工程文件](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#view-project-files)。
+Duplicate Project 和 Move to Trash 作用于整个 `.logicx` 或整个文件夹。一个文件夹里也可以有多个 `.logicx`；见 [View Project Files](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#view-project-files)。
 
 ### View Alternatives
 
