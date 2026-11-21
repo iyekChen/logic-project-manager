@@ -24,6 +24,7 @@ import { useOnboarding } from "@/core/ui/projects/use-onboarding";
 import { useProjectList } from "@/core/ui/projects/use-project-list";
 import { resetToFirstRun } from "@/core/ui/projects/reset-to-first-run";
 import { useDocWatcher } from "@/core/ui/hooks/use-doc-watcher";
+import { useMissingDocFolders } from "@/core/ui/hooks/use-missing-doc-folders";
 import { ensureAudioPlayerBinary } from "@/core/audio/audio-player-path";
 import { getSettings } from "@/settings";
 import { deleteProjectMetadata, movePinnedProject, setProjectPinned } from "@/core/metadata/project-metadata";
@@ -45,7 +46,7 @@ import { GroupBySubmenu } from "@/core/ui/actions/group-by-submenu";
 import { useGroupOption } from "@/core/ui/hooks/use-group-option";
 import { groupItems } from "@/core/ui/shared/grouping";
 import { Bounces, UnmatchedBounces } from "@/core/ui/bounces";
-import { displayDoc, missingDocFolder } from "@/core/docs/docs";
+import { displayDoc } from "@/core/docs/docs";
 import { docPlaceholder } from "@/core/docs/doc-actions";
 import { archiveDeletedProject, assertDeletionWritable } from "@/core/fs/deleted-projects";
 import { showFailure } from "@/core/ui/shared/toast";
@@ -253,11 +254,8 @@ export function ProjectsView() {
     name: project.title,
   }));
 
-  // 每次渲染只查一次：笔记 / 歌词文件夹是否存在。占位文字按这个结果生成，不再逐项 existsSync。
-  const missingDocFolders: Record<"notes" | "lyrics", string | null> = {
-    notes: missingDocFolder("notes"),
-    lyrics: missingDocFolder("lyrics"),
-  };
+  // 笔记 / 歌词文件夹是否失效：只在打开时查一次，渲染路径不碰磁盘。
+  const missingDocFolders = useMissingDocFolders();
 
   const renderProject = (item: Project) => {
     const stage = stageOptions.find((option) => option.id === item.stageId);

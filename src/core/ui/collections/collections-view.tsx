@@ -28,6 +28,7 @@ import { CopyProjectSection } from "@/core/ui/actions/copy-project-section";
 import { OpenProjectInFinderAction } from "@/core/ui/actions/open-project-in-finder";
 import { ViewToggleSection } from "@/core/ui/actions/view-toggle";
 import { useDetailView } from "@/core/ui/hooks/use-detail-view";
+import { useMissingDocFolders } from "@/core/ui/hooks/use-missing-doc-folders";
 import {
   TrackMap,
   assignNumber,
@@ -384,6 +385,8 @@ function CollectionPanel({
     defaultMode: "overview",
   });
   const [selectedFilter, setSelectedFilter] = useState("all");
+  // 笔记 / 歌词文件夹是否失效：只在打开时查一次，渲染路径不碰磁盘。
+  const missingDocFolders = useMissingDocFolders();
   const { playbackStatus, playingId, play, pause, resume, stop, seek, restart } = useAudioPlayer({
     playerPath: PLAYER_PATH,
   });
@@ -688,7 +691,7 @@ function CollectionPanel({
     const stage = stages.find((s) => s.id === p.stageId);
     const level = levelOf(p);
     const detailBody = detailDoc === "notes" ? (p.notes ?? "") : (p.lyrics ?? "");
-    const detailPlaceholder = docPlaceholder(detailDoc, p.title);
+    const detailPlaceholder = docPlaceholder(detailDoc, p.title, missingDocFolders[detailDoc]);
 
     return (
       <List.Item.Detail
