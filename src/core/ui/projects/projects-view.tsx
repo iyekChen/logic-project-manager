@@ -82,6 +82,7 @@ import { openWithDaw, resolveDawApp } from "@/core/daw-app";
 import { LOG_PREFIX } from "@/core/log";
 import { optionKeywords } from "@/core/ui/shared/search-keywords";
 import { findCurrentSet } from "@/core/projects/current-set";
+import { formatDate, formatTime } from "@/core/ui/shared/format";
 import {
   createdYears,
   filterByDropdown,
@@ -124,21 +125,6 @@ const PROJECT_SORT_OPTIONS: SortOption[] = [
   "name-asc",
   "name-desc",
 ];
-
-function formatDate(ms: number): string {
-  const date = new Date(ms);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function formatTime(totalSeconds: number): string {
-  const safe = Number.isFinite(totalSeconds) && totalSeconds > 0 ? totalSeconds : 0;
-  const minutes = Math.floor(safe / 60);
-  const seconds = Math.floor(safe % 60);
-  return `${minutes}:${String(seconds).padStart(2, "0")}`;
-}
 
 export function ProjectsView() {
   const { push } = useNavigation();
