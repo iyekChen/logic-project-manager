@@ -677,9 +677,12 @@ export default function Command() {
             ? []
             : [
                 ...stagePill,
-                { text: String(item.setsCount), tooltip: `${item.setsCount} ${labels.sets}` },
-                { icon: Icon.Document, tooltip: `${item.setsCount} ${labels.sets}` },
-                ...fileCountAccessories,
+                ...(fileCount > 1
+                  ? fileCountAccessories
+                  : [
+                      { text: String(item.setsCount), tooltip: `${item.setsCount} ${labels.sets}` },
+                      { icon: Icon.Document, tooltip: `${item.setsCount} ${labels.sets}` },
+                    ]),
                 { text: String(item.bouncesCount), tooltip: `${item.bouncesCount} Bounces` },
                 { icon: Icon.Waveform, tooltip: `${item.bouncesCount} Bounces` },
               ]
@@ -720,12 +723,25 @@ export default function Command() {
                   )}
                   <List.Item.Detail.Metadata.Separator />
                   <List.Item.Detail.Metadata.Label title="Bounces" text={String(item.bouncesCount)} />
-                  {fileCount > 1 && (
+                  {fileCount > 1 ? (
                     <List.Item.Detail.Metadata.Label title={filesText.projectFiles} text={String(fileCount)} />
+                  ) : (
+                    <List.Item.Detail.Metadata.Label title={labels.sets} text={String(item.setsCount)} />
                   )}
-                  <List.Item.Detail.Metadata.Label title={labels.sets} text={String(item.setsCount)} />
                   <List.Item.Detail.Metadata.Separator />
-                  <List.Item.Detail.Metadata.Label title={labels.latestSet} text={latest?.set.name ?? ""} />
+                  {fileCount > 1 ? (
+                    <List.Item.Detail.Metadata.Label
+                      title={filesText.latestProjectFile}
+                      text={
+                        latest?.set.path
+                          .split("/")
+                          .pop()
+                          ?.replace(/\.logicx$/i, "") ?? ""
+                      }
+                    />
+                  ) : (
+                    <List.Item.Detail.Metadata.Label title={labels.latestSet} text={latest?.set.name ?? ""} />
+                  )}
                   <List.Item.Detail.Metadata.Label title="Key" text={latest?.metadata?.key ?? ""} />
                   <List.Item.Detail.Metadata.Label title="BPM" text={latestBpm === null ? "" : String(latestBpm)} />
                   <List.Item.Detail.Metadata.Separator />

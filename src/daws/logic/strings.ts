@@ -52,6 +52,7 @@ type ProjectFilesViewStrings = {
   projectFiles: string;
   searchProjectFiles: string;
   openLatestProjectFile: string;
+  latestProjectFile: string;
   copyProjectFileName: string;
   renameProjectFile: string;
   duplicateProjectFile: string;
@@ -69,6 +70,7 @@ const projectFilesStrings: Record<Language, ProjectFilesViewStrings> = {
     projectFiles: "Project Files",
     searchProjectFiles: "Search Project Files",
     openLatestProjectFile: "Open Latest Project File",
+    latestProjectFile: "Latest Project File",
     copyProjectFileName: "Copy Project File Name",
     renameProjectFile: "Rename Project File",
     duplicateProjectFile: "Duplicate Project File",
