@@ -41,6 +41,7 @@ import { CopyProjectSection } from "@/core/ui/actions/copy-project-section";
 import { OpenProjectInFinderAction } from "@/core/ui/actions/open-project-in-finder";
 import { SortBySubmenu } from "@/core/ui/actions/sort-by-submenu";
 import { useSortOption } from "@/core/ui/hooks/use-sort-option";
+import { useDetailView } from "@/core/ui/hooks/use-detail-view";
 import { sortItems, sortOptionTitle } from "@/core/ui/shared/sorting";
 import type { SortOption } from "@/core/ui/shared/sorting";
 import { GroupBySubmenu } from "@/core/ui/actions/group-by-submenu";
@@ -67,7 +68,6 @@ import {
 } from "@/core/projects/list-cache";
 import { applyProjectMetadata, reloadProjectData } from "@/core/ui/shared/reload-projects";
 import { findLatestProjectBounce, resolveSharedBouncesFolder, unmatchedSharedBounces } from "@/core/projects/bounces";
-import { viewPrefs } from "@/core/ui/shared/view-prefs";
 import { daw, type DawSet, type ProjectFileMetadata } from "@/daws";
 import {
   cachedSetMetadata,
@@ -165,10 +165,11 @@ export function ProjectsView() {
   const lastWrittenRef = useRef(initialCache);
   const [orphanIds, setOrphanIds] = useState<string[]>([]);
   // 默认 Detail；只有记过 Overview 才进 Overview。
-  const [showDetail, setShowDetail] = useState(() => viewPrefs.get(VIEW_MODE_STORAGE_KEY) !== "overview");
-  const [detailDoc, setDetailDoc] = useState<"notes" | "lyrics">(() =>
-    viewPrefs.get(DETAIL_DOC_STORAGE_KEY) === "lyrics" ? "lyrics" : "notes",
-  );
+  const { showDetail, toggleDetail, detailDoc, toggleDetailDoc } = useDetailView({
+    viewModeKey: VIEW_MODE_STORAGE_KEY,
+    detailDocKey: DETAIL_DOC_STORAGE_KEY,
+    defaultMode: "detail",
+  });
   const [dawApp, setDawApp] = useState<Application | null>(null);
   const [currentSets, setCurrentSets] = useState<Record<string, CurrentSetInfo>>({});
   const [readingSets, setReadingSets] = useState(false);
@@ -210,22 +211,6 @@ export function ProjectsView() {
     void stageTaxonomy.get().then(setStageOptions);
     void genreTaxonomy.get().then(setGenreOptions);
     void collectionTaxonomy.get().then(setCollectionOptions);
-  }, []);
-
-  const toggleDetail = useCallback(() => {
-    setShowDetail((prev) => {
-      const next = !prev;
-      viewPrefs.set(VIEW_MODE_STORAGE_KEY, next ? "detail" : "overview");
-      return next;
-    });
-  }, []);
-
-  const toggleDetailDoc = useCallback(() => {
-    setDetailDoc((prev) => {
-      const next = prev === "notes" ? "lyrics" : "notes";
-      viewPrefs.set(DETAIL_DOC_STORAGE_KEY, next);
-      return next;
-    });
   }, []);
 
   // 静默启动刷新：内容没变就保留原引用，不触发重渲染，也不重写缓存。

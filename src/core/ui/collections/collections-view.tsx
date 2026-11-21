@@ -27,7 +27,7 @@ import { PlaybackControlsSection } from "@/core/ui/actions/playback-controls";
 import { DocActions } from "@/core/ui/actions/doc-actions";
 import { CopyProjectSection } from "@/core/ui/actions/copy-project-section";
 import { OpenProjectInFinderAction } from "@/core/ui/actions/open-project-in-finder";
-import { viewPrefs } from "@/core/ui/shared/view-prefs";
+import { useDetailView } from "@/core/ui/hooks/use-detail-view";
 import {
   TrackMap,
   assignNumber,
@@ -386,10 +386,11 @@ function CollectionPanel({
   const [infos, setInfos] = useState<Record<string, TrackInfo>>({});
   const [loading, setLoading] = useState(true);
   // 默认 Overview；只有记过 Detail 才进 Detail。
-  const [showDetail, setShowDetail] = useState(() => viewPrefs.get(VIEW_MODE_STORAGE_KEY) === "detail");
-  const [detailDoc, setDetailDoc] = useState<"notes" | "lyrics">(() =>
-    viewPrefs.get(DETAIL_DOC_STORAGE_KEY) === "lyrics" ? "lyrics" : "notes",
-  );
+  const { showDetail, toggleDetail, detailDoc, toggleDetailDoc } = useDetailView({
+    viewModeKey: VIEW_MODE_STORAGE_KEY,
+    detailDocKey: DETAIL_DOC_STORAGE_KEY,
+    defaultMode: "overview",
+  });
   const [selectedFilter, setSelectedFilter] = useState("all");
   const { playbackStatus, playingId, play, pause, resume, stop, seek, restart } = useAudioPlayer({
     playerPath: PLAYER_PATH,
@@ -466,22 +467,6 @@ function CollectionPanel({
       cancelled = true;
     };
   }, [collection.id, projects]);
-
-  function toggleDetail() {
-    setShowDetail((prev) => {
-      const next = !prev;
-      viewPrefs.set(VIEW_MODE_STORAGE_KEY, next ? "detail" : "overview");
-      return next;
-    });
-  }
-
-  function toggleDetailDoc() {
-    setDetailDoc((prev) => {
-      const next = prev === "notes" ? "lyrics" : "notes";
-      viewPrefs.set(DETAIL_DOC_STORAGE_KEY, next);
-      return next;
-    });
-  }
 
   async function apply(next: TrackMap) {
     setMap(next);
