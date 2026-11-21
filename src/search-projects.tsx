@@ -67,8 +67,7 @@ import {
   loadPersistentProjectFileCache,
   parseSetMetadata,
 } from "@/core/projects/project-file-cache";
-import { SetsView, projectFileCount } from "@/daws/ui";
-import { getProjectFilesViewStrings } from "@/daws/logic/strings";
+import { SetsView, projectFilesInfo } from "@/daws/ui";
 import { getDawLabels } from "@/daws/labels";
 import { projectIcon } from "@/daws/icons";
 import { openWithDaw, resolveDawApp } from "@/core/daw-app";
@@ -87,7 +86,6 @@ import { keyKeywords, keyToken } from "@/core/projects/musical-key";
 const settings = getSettings();
 const t = getTranslations(settings.language);
 const labels = getDawLabels(settings.language);
-const filesText = getProjectFilesViewStrings(settings.language);
 const PROJECTS_ROOT = settings.projectsFolder;
 const SORT_STORAGE_KEY = "project-sort-option";
 const GROUP_STORAGE_KEY = "project-group-option";
@@ -176,9 +174,9 @@ export default function Command() {
   // 每次渲染都更新：load() 的闭包里拿不到最新的 projects state。
   const projectsRef = useRef<Project[]>(projects);
   projectsRef.current = projects;
-  // 每个项目里有几个 .logicx。只在列表变化时重数，不在每次渲染时读磁盘。
-  const projectFileCounts = useMemo(
-    () => new Map(projects.map((project) => [project.id, projectFileCount(project)])),
+  // 每个项目「工程文件」这一层的信息（由 DAW 提供，没有这一层时为 null）。只在列表变化时重算，不在每次渲染时读磁盘。
+  const projectFiles = useMemo(
+    () => new Map(projects.map((project) => [project.id, projectFilesInfo(project)])),
     [projects],
   );
   // 残留数据提示每次打开只弹一次（fs.watch 触发的重载不再重复提示）。
@@ -640,12 +638,11 @@ export default function Command() {
     const collectionNames = namesFor(item.collectionIds, collectionOptions);
     const latest = latestSets[item.id];
     const latestBpm = latest?.metadata?.bpm ?? null;
-    const fileCount = projectFileCounts.get(item.id) ?? 1;
-    const isFolder = item.kind === "folder";
-    const fileCountAccessories = isFolder
+    const files = projectFiles.get(item.id) ?? null;
+    const filesAccessories = files
       ? [
-          { text: String(fileCount), tooltip: `${fileCount} ${filesText.projectFiles}` },
-          { icon: "package.png", tooltip: `${fileCount} ${filesText.projectFiles}` },
+          { text: String(files.count), tooltip: `${files.count} ${files.labels.projectFiles}` },
+          { icon: "package.png", tooltip: `${files.count} ${files.labels.projectFiles}` },
         ]
       : [];
     const stagePill = stage ? [{ tag: { value: stage.name, color: stage.color ?? Color.SecondaryText } }] : [];
@@ -677,8 +674,8 @@ export default function Command() {
             ? []
             : [
                 ...stagePill,
-                ...(isFolder
-                  ? fileCountAccessories
+                ...(files
+                  ? filesAccessories
                   : [
                       { text: String(item.setsCount), tooltip: `${item.setsCount} ${labels.sets}` },
                       { icon: Icon.Document, tooltip: `${item.setsCount} ${labels.sets}` },
@@ -723,21 +720,16 @@ export default function Command() {
                   )}
                   <List.Item.Detail.Metadata.Separator />
                   <List.Item.Detail.Metadata.Label title="Bounces" text={String(item.bouncesCount)} />
-                  {isFolder ? (
-                    <List.Item.Detail.Metadata.Label title={filesText.projectFiles} text={String(fileCount)} />
+                  {files ? (
+                    <List.Item.Detail.Metadata.Label title={files.labels.projectFiles} text={String(files.count)} />
                   ) : (
                     <List.Item.Detail.Metadata.Label title={labels.sets} text={String(item.setsCount)} />
                   )}
                   <List.Item.Detail.Metadata.Separator />
-                  {isFolder ? (
+                  {files ? (
                     <List.Item.Detail.Metadata.Label
-                      title={filesText.latestProjectFile}
-                      text={
-                        latest?.set.path
-                          .split("/")
-                          .pop()
-                          ?.replace(/\.logicx$/i, "") ?? ""
-                      }
+                      title={files.labels.latestProjectFile}
+                      text={latest ? files.latestName(latest.set.path) : ""}
                     />
                   ) : (
                     <List.Item.Detail.Metadata.Label title={labels.latestSet} text={latest?.set.name ?? ""} />
@@ -756,7 +748,7 @@ export default function Command() {
           <ActionPanel>
             <ActionPanel.Section>
               <Action.Push
-                title={isFolder ? filesText.viewProjectFiles : labels.viewSets}
+                title={files ? files.labels.viewProjectFiles : labels.viewSets}
                 icon={Icon.Document}
                 target={<SetsView project={item} />}
                 onPop={() => void reloadProjects()}
@@ -817,7 +809,7 @@ export default function Command() {
                 }}
               />
               <Action
-                title={isFolder ? filesText.openLatestProjectFile : labels.openLatestSet}
+                title={files ? files.labels.openLatestProjectFile : labels.openLatestSet}
                 icon={dawApp ? { fileIcon: dawApp.path } : Icon.Document}
                 shortcut={Keyboard.Shortcut.Common.Open}
                 onAction={() => openLatestSet(item)}
