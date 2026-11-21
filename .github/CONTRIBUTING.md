@@ -34,7 +34,7 @@ Before opening a PR, run lint, tests, and build. CI runs the same steps on macOS
 - `src/*.tsx` are the command entry points, one per command. Manage Tags is `manage-categories.tsx`.
 - `src/core/` holds everything that isn't specific to Logic Pro: projects, bounces, collections, notes, search, and storage.
 - `src/daws/logic/` holds the Logic-specific parts: reading `.logicx` packages, the Alternatives view, and editing Alternatives. They plug into the rest through the `DawAdapter` interface in `src/daws/types.ts`.
-- Most UI text lives in `src/i18n.ts`. Logic-specific wording is in `src/daws/labels.ts` and `src/daws/logic/strings.ts`, and command and preference titles are in `package.json`.
+- Most UI text lives in `src/strings.ts`. Logic-specific wording is in `src/daws/labels.ts` and `src/daws/logic/strings.ts`, and command and preference titles are in `package.json`.
 - `swift/` holds the audio player's source, and `scripts/` the script that builds it.
 - `test/` holds the Vitest unit tests.
 

@@ -31,21 +31,14 @@ import {
 import { SortBySubmenu, sortItems, sortOptionTitle, useSortOption } from "@/core/ui/sorting";
 import type { SortOption } from "@/core/ui/sorting";
 import { GroupBySubmenu, groupItems, useGroupOption } from "@/core/ui/grouping";
-import { getSettings } from "@/settings";
-import { getTranslations } from "@/i18n";
+import { strings } from "@/strings";
 import type { Project } from "@/core/projects/types";
 import { LOG_PREFIX } from "@/core/log";
-import { getAlternativesViewStrings, getProjectFilesViewStrings } from "./strings";
+import { alternativesViewStrings, projectFilesViewStrings } from "./strings";
 import { openWithDaw, resolveDawApp } from "@/core/daw-app";
 import { showFailure } from "@/core/ui/toast";
-import { getDawLabels } from "@/daws/labels";
+import { labels } from "@/daws/labels";
 import { AlternativesView, findWindowImage } from "./alternatives-view";
-
-const settings = getSettings();
-const t = getTranslations(settings.language);
-const alternativesText = getAlternativesViewStrings(settings.language);
-const filesText = getProjectFilesViewStrings(settings.language);
-const labels = getDawLabels(settings.language);
 
 const PROJECT_FILES_SORT_STORAGE_KEY = "project-files-sort-option";
 const PROJECT_FILES_GROUP_STORAGE_KEY = "project-files-group-option";
@@ -108,36 +101,36 @@ function RenameProjectFileForm({ file, onRenamed }: { file: ProjectFile; onRenam
       return;
     }
     if (trimmed.includes("/") || trimmed.includes(":")) {
-      await showToast({ style: Toast.Style.Failure, title: t.invalidName });
+      await showToast({ style: Toast.Style.Failure, title: strings.invalidName });
       return;
     }
 
     const target = path.join(path.dirname(file.packagePath), `${trimmed}${PACKAGE_SUFFIX}`);
     // 目标已存在且不是它自己（只改大小写）时拦下，绝不覆盖另一个 .logicx。
     if (fs.existsSync(target) && !isSameFile(target, file.packagePath)) {
-      await showToast({ style: Toast.Style.Failure, title: filesText.projectFileNameExists });
+      await showToast({ style: Toast.Style.Failure, title: projectFilesViewStrings.projectFileNameExists });
       return;
     }
 
     const confirmed = await confirmAlert({
       icon: { source: Icon.Warning, tintColor: Color.Yellow },
-      title: alternativesText.changeConfirmTitle,
-      message: alternativesText.changeConfirmMessage,
-      primaryAction: { title: t.rename, style: Alert.ActionStyle.Default },
+      title: alternativesViewStrings.changeConfirmTitle,
+      message: alternativesViewStrings.changeConfirmMessage,
+      primaryAction: { title: strings.rename, style: Alert.ActionStyle.Default },
     });
     if (!confirmed) return;
 
     try {
       fs.renameSync(file.packagePath, target);
     } catch (error) {
-      await showFailure(t.renameFailed, error);
+      await showFailure(strings.renameFailed, error);
       return;
     }
 
     onRenamed();
     await showToast({
       style: Toast.Style.Success,
-      title: filesText.projectFileRenamed,
+      title: projectFilesViewStrings.projectFileRenamed,
       message: `${trimmed}${PACKAGE_SUFFIX}`,
     });
     pop();
@@ -145,14 +138,14 @@ function RenameProjectFileForm({ file, onRenamed }: { file: ProjectFile; onRenam
 
   return (
     <Form
-      navigationTitle={`${filesText.renameProjectFile} — ${file.name}`}
+      navigationTitle={`${projectFilesViewStrings.renameProjectFile} — ${file.name}`}
       actions={
         <ActionPanel>
-          <Action.SubmitForm title={t.save} onSubmit={handleSubmit} />
+          <Action.SubmitForm title={strings.save} onSubmit={handleSubmit} />
         </ActionPanel>
       }
     >
-      <Form.TextField id="name" title={t.name} value={name} onChange={setName} />
+      <Form.TextField id="name" title={strings.name} value={name} onChange={setName} />
     </Form>
   );
 }
@@ -259,33 +252,33 @@ export function ProjectFilesView({ project }: { project: Project }) {
       reload();
       await showToast({
         style: Toast.Style.Success,
-        title: filesText.projectFileDuplicated,
+        title: projectFilesViewStrings.projectFileDuplicated,
         message: path.basename(target),
       });
     } catch (error) {
-      await showFailure(t.duplicateFailed, error);
+      await showFailure(strings.duplicateFailed, error);
     }
   };
 
   const handleTrash = async (file: ProjectFile) => {
     // 只剩一个 .logicx 时不让删：删掉后这个文件夹就不再算项目了。
     if (files.length <= 1) {
-      await showToast({ style: Toast.Style.Failure, title: filesText.lastProjectFile });
+      await showToast({ style: Toast.Style.Failure, title: projectFilesViewStrings.lastProjectFile });
       return;
     }
     const confirmed = await confirmAlert({
-      title: t.moveToTrash,
+      title: strings.moveToTrash,
       icon: Icon.Trash,
-      message: `${filesText.trashProjectFileHint}\n${file.name}\n\n${filesText.trashConfirmMessage}`,
-      primaryAction: { title: t.moveToTrash, style: Alert.ActionStyle.Destructive },
+      message: `${projectFilesViewStrings.trashProjectFileHint}\n${file.name}\n\n${projectFilesViewStrings.trashConfirmMessage}`,
+      primaryAction: { title: strings.moveToTrash, style: Alert.ActionStyle.Destructive },
     });
     if (!confirmed) return;
     try {
       await trash(file.packagePath);
       reload();
-      await showToast({ style: Toast.Style.Success, title: t.movedToTrash, message: file.name });
+      await showToast({ style: Toast.Style.Success, title: strings.movedToTrash, message: file.name });
     } catch (error) {
-      await showFailure(t.trashFailed, error);
+      await showFailure(strings.trashFailed, error);
     }
   };
 
@@ -300,7 +293,7 @@ export function ProjectFilesView({ project }: { project: Project }) {
       isLoading={isLoading}
       isShowingDetail
       navigationTitle={project.title}
-      searchBarPlaceholder={filesText.searchProjectFiles}
+      searchBarPlaceholder={projectFilesViewStrings.searchProjectFiles}
     >
       {groupItems(
         sortedFiles,
@@ -320,7 +313,7 @@ export function ProjectFilesView({ project }: { project: Project }) {
                   metadata={
                     <List.Item.Detail.Metadata>
                       <List.Item.Detail.Metadata.Label title={labels.sets} text={String(file.alternativeCount)} />
-                      <List.Item.Detail.Metadata.Label title={labels.latestSet} text={file.active?.name ?? ""} />
+                      <List.Item.Detail.Metadata.Label title={labels.currentSet} text={file.active?.name ?? ""} />
                       <List.Item.Detail.Metadata.Separator />
                       <List.Item.Detail.Metadata.Label title="Key" text={file.key ?? ""} />
                       <List.Item.Detail.Metadata.Label title="BPM" text={file.bpm === null ? "" : String(file.bpm)} />
@@ -333,7 +326,7 @@ export function ProjectFilesView({ project }: { project: Project }) {
                 <ActionPanel>
                   <ActionPanel.Section>
                     <Action
-                      title={alternativesText.openInDaw}
+                      title={alternativesViewStrings.openInDaw}
                       icon={logicApp ? { fileIcon: logicApp.path } : Icon.Document}
                       onAction={() => handleOpen(file)}
                     />
@@ -350,43 +343,43 @@ export function ProjectFilesView({ project }: { project: Project }) {
                     />
                     <Action.ShowInFinder
                       path={file.packagePath}
-                      title={t.showInFinder}
+                      title={strings.showInFinder}
                       shortcut={{ modifiers: ["cmd", "opt"], key: "o" }}
                     />
                     <Action.Push
-                      title={filesText.renameProjectFile}
+                      title={projectFilesViewStrings.renameProjectFile}
                       icon={Icon.Pencil}
                       shortcut={Keyboard.Shortcut.Common.Edit}
                       target={<RenameProjectFileForm file={file} onRenamed={reload} />}
                     />
                     <Action
-                      title={filesText.duplicateProjectFile}
+                      title={projectFilesViewStrings.duplicateProjectFile}
                       icon={Icon.Duplicate}
                       shortcut={Keyboard.Shortcut.Common.Duplicate}
                       onAction={() => handleDuplicate(file)}
                     />
                   </ActionPanel.Section>
-                  <ActionPanel.Section title={t.sectionCopy}>
+                  <ActionPanel.Section title={strings.sectionCopy}>
                     <Action.CopyToClipboard
                       content={path.basename(file.packagePath)}
-                      title={filesText.copyProjectFileName}
+                      title={projectFilesViewStrings.copyProjectFileName}
                       icon={Icon.CopyClipboard}
                       shortcut={Keyboard.Shortcut.Common.CopyName}
                     />
                     <Action.CopyToClipboard
                       content={file.packagePath}
-                      title={t.copyProjectPath}
+                      title={strings.copyProjectPath}
                       icon={Icon.CopyClipboard}
                       shortcut={Keyboard.Shortcut.Common.CopyPath}
                     />
                   </ActionPanel.Section>
-                  <ActionPanel.Section title={t.sectionArrange}>
+                  <ActionPanel.Section title={strings.sectionArrange}>
                     <GroupBySubmenu allowed={["modified", "created"]} value={groupBy} onChange={setGroupBy} />
                     <SortBySubmenu allowed={PROJECT_FILES_SORT_OPTIONS} value={sortBy} onChange={setSortBy} />
                   </ActionPanel.Section>
-                  <ActionPanel.Section title={t.sectionDangerZone}>
+                  <ActionPanel.Section title={strings.sectionDangerZone}>
                     <Action
-                      title={t.moveToTrash}
+                      title={strings.moveToTrash}
                       icon={Icon.Trash}
                       style={Action.Style.Destructive}
                       shortcut={Keyboard.Shortcut.Common.Remove}

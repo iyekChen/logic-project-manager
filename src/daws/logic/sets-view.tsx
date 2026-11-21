@@ -1,9 +1,8 @@
 import path from "node:path";
 import type { Project } from "@/core/projects/types";
-import { getSettings } from "@/settings";
 import type { ProjectFilesInfo } from "../types";
 import { listPackages, PACKAGE_EXTENSION } from "./adapter";
-import { getProjectFilesViewStrings } from "./strings";
+import { projectFilesViewStrings } from "./strings";
 import { AlternativesView } from "./alternatives-view";
 import { ProjectFilesView } from "./project-files-view";
 
@@ -18,8 +17,8 @@ export function projectFilesInfo(project: Pick<Project, "kind" | "folderPath">):
   return {
     count: projectFileCount(project),
     // Logic 的 Set 路径就是 .logicx 包的路径。
-    latestName: (latestSetPath) => path.basename(latestSetPath, PACKAGE_EXTENSION),
-    labels: getProjectFilesViewStrings(getSettings().language),
+    latestName: (currentSetPath) => path.basename(currentSetPath, PACKAGE_EXTENSION),
+    labels: projectFilesViewStrings,
   };
 }
 

@@ -27,24 +27,18 @@ import {
   loadPersistentProjectFileCache,
   parseSetMetadata,
 } from "@/core/projects/project-file-cache";
-import { getSettings } from "@/settings";
-import { getTranslations } from "@/i18n";
+import { strings } from "@/strings";
 import type { Project } from "@/core/projects/types";
 import { LOG_PREFIX } from "@/core/log";
-import { getAlternativesViewStrings } from "./strings";
+import { alternativesViewStrings } from "./strings";
 import { openWithDaw, resolveDawApp } from "@/core/daw-app";
 import { showFailure } from "@/core/ui/toast";
-import { getDawLabels } from "@/daws/labels";
+import { labels } from "@/daws/labels";
 import { SortBySubmenu, sortItems, sortOptionTitle, useSortOption } from "@/core/ui/sorting";
 import type { SortOption } from "@/core/ui/sorting";
 import { GroupBySubmenu, groupItems, useGroupOption } from "@/core/ui/grouping";
 import { alternativeIndex, duplicateName } from "./alternative-rules";
 import { duplicateAlternative, renameAlternative, setActiveAlternative, trashAlternative } from "./alternative-edits";
-
-const settings = getSettings();
-const t = getTranslations(settings.language);
-const alternativesText = getAlternativesViewStrings(settings.language);
-const labels = getDawLabels(settings.language);
 
 const ALTERNATIVES_SORT_STORAGE_KEY = "alternatives-sort-option";
 const ALTERNATIVES_GROUP_STORAGE_KEY = "alternatives-group-option";
@@ -82,40 +76,44 @@ function RenameAlternativeForm({ alternative, onRenamed }: { alternative: Projec
       return;
     }
     if (trimmed.includes("/") || trimmed.includes(":")) {
-      await showToast({ style: Toast.Style.Failure, title: t.invalidName });
+      await showToast({ style: Toast.Style.Failure, title: strings.invalidName });
       return;
     }
 
     const confirmed = await confirmAlert({
       icon: { source: Icon.Warning, tintColor: Color.Yellow },
-      title: alternativesText.changeConfirmTitle,
-      message: alternativesText.changeConfirmMessage,
-      primaryAction: { title: t.rename, style: Alert.ActionStyle.Default },
+      title: alternativesViewStrings.changeConfirmTitle,
+      message: alternativesViewStrings.changeConfirmMessage,
+      primaryAction: { title: strings.rename, style: Alert.ActionStyle.Default },
     });
     if (!confirmed) return;
 
     try {
       await renameAlternative(alternative.path, alternative, trimmed);
     } catch (error) {
-      await showFailure(t.renameFailed, error);
+      await showFailure(strings.renameFailed, error);
       return;
     }
 
     onRenamed();
-    await showToast({ style: Toast.Style.Success, title: alternativesText.alternativeRenamed, message: trimmed });
+    await showToast({
+      style: Toast.Style.Success,
+      title: alternativesViewStrings.alternativeRenamed,
+      message: trimmed,
+    });
     pop();
   }
 
   return (
     <Form
-      navigationTitle={`${alternativesText.renameAlternative} — ${alternative.name}`}
+      navigationTitle={`${alternativesViewStrings.renameAlternative} — ${alternative.name}`}
       actions={
         <ActionPanel>
-          <Action.SubmitForm title={t.save} onSubmit={handleSubmit} />
+          <Action.SubmitForm title={strings.save} onSubmit={handleSubmit} />
         </ActionPanel>
       }
     >
-      <Form.TextField id="name" title={t.name} value={name} onChange={setName} />
+      <Form.TextField id="name" title={strings.name} value={name} onChange={setName} />
     </Form>
   );
 }
@@ -191,9 +189,9 @@ export function AlternativesView({ project }: { project: Project }) {
     try {
       if (!alternative.active) {
         const confirmed = await confirmChange(
-          alternativesText.changeConfirmTitle,
-          alternativesText.changeConfirmMessage,
-          alternativesText.openInDaw,
+          alternativesViewStrings.changeConfirmTitle,
+          alternativesViewStrings.changeConfirmMessage,
+          alternativesViewStrings.openInDaw,
         );
         if (!confirmed) return;
         await setActiveAlternative(alternative.path, alternativeIndex(alternative));
@@ -207,17 +205,21 @@ export function AlternativesView({ project }: { project: Project }) {
 
   const handleSetActive = async (alternative: ProjectAlternative) => {
     const confirmed = await confirmChange(
-      alternativesText.changeConfirmTitle,
-      alternativesText.changeConfirmMessage,
-      alternativesText.setActive,
+      alternativesViewStrings.changeConfirmTitle,
+      alternativesViewStrings.changeConfirmMessage,
+      alternativesViewStrings.setActive,
     );
     if (!confirmed) return;
     try {
       await setActiveAlternative(alternative.path, alternativeIndex(alternative));
       reload();
-      await showToast({ style: Toast.Style.Success, title: alternativesText.activeChanged, message: alternative.name });
+      await showToast({
+        style: Toast.Style.Success,
+        title: alternativesViewStrings.activeChanged,
+        message: alternative.name,
+      });
     } catch (error) {
-      await showFailure(alternativesText.changeFailed, error);
+      await showFailure(alternativesViewStrings.changeFailed, error);
     }
   };
 
@@ -227,30 +229,34 @@ export function AlternativesView({ project }: { project: Project }) {
       alternatives.map((item) => item.name),
     );
     const confirmed = await confirmChange(
-      alternativesText.changeConfirmTitle,
-      alternativesText.changeConfirmMessage,
-      alternativesText.duplicateAlternative,
+      alternativesViewStrings.changeConfirmTitle,
+      alternativesViewStrings.changeConfirmMessage,
+      alternativesViewStrings.duplicateAlternative,
     );
     if (!confirmed) return;
     try {
       await duplicateAlternative(alternative.path, alternative, alternatives.map(alternativeIndex), name);
       reload();
-      await showToast({ style: Toast.Style.Success, title: alternativesText.alternativeDuplicated, message: name });
+      await showToast({
+        style: Toast.Style.Success,
+        title: alternativesViewStrings.alternativeDuplicated,
+        message: name,
+      });
     } catch (error) {
-      await showFailure(t.duplicateFailed, error);
+      await showFailure(strings.duplicateFailed, error);
     }
   };
 
   const handleTrash = async (alternative: ProjectAlternative) => {
     if (alternatives.length <= 1) {
-      await showToast({ style: Toast.Style.Failure, title: alternativesText.lastAlternative });
+      await showToast({ style: Toast.Style.Failure, title: alternativesViewStrings.lastAlternative });
       return;
     }
     const confirmed = await confirmAlert({
-      title: t.moveToTrash,
+      title: strings.moveToTrash,
       icon: Icon.Trash,
-      message: `${alternativesText.trashAlternativeHint}\n${alternative.name}\n\n${alternativesText.changeConfirmMessage}`,
-      primaryAction: { title: t.moveToTrash, style: Alert.ActionStyle.Destructive },
+      message: `${alternativesViewStrings.trashAlternativeHint}\n${alternative.name}\n\n${alternativesViewStrings.changeConfirmMessage}`,
+      primaryAction: { title: strings.moveToTrash, style: Alert.ActionStyle.Destructive },
     });
     if (!confirmed) return;
     try {
@@ -261,9 +267,9 @@ export function AlternativesView({ project }: { project: Project }) {
         alternative.active === true,
       );
       reload();
-      await showToast({ style: Toast.Style.Success, title: t.movedToTrash, message: alternative.name });
+      await showToast({ style: Toast.Style.Success, title: strings.movedToTrash, message: alternative.name });
     } catch (error) {
-      await showFailure(t.trashFailed, error);
+      await showFailure(strings.trashFailed, error);
     }
   };
 
@@ -278,7 +284,7 @@ export function AlternativesView({ project }: { project: Project }) {
       isLoading={isLoading}
       isShowingDetail
       navigationTitle={project.title}
-      searchBarPlaceholder={alternativesText.searchAlternatives}
+      searchBarPlaceholder={alternativesViewStrings.searchAlternatives}
     >
       {groupItems(
         sortedAlternatives,
@@ -301,7 +307,7 @@ export function AlternativesView({ project }: { project: Project }) {
                   ? [
                       {
                         icon: { source: Icon.CheckCircle, tintColor: Color.Green },
-                        tooltip: alternativesText.activeAlternative,
+                        tooltip: alternativesViewStrings.activeAlternative,
                       },
                     ]
                   : []
@@ -313,11 +319,11 @@ export function AlternativesView({ project }: { project: Project }) {
                     <List.Item.Detail.Metadata>
                       {alternative.active ? (
                         <List.Item.Detail.Metadata.Label
-                          title={alternativesText.activeAlternative}
+                          title={alternativesViewStrings.activeAlternative}
                           icon={{ source: Icon.CheckCircle, tintColor: Color.Green }}
                         />
                       ) : (
-                        <List.Item.Detail.Metadata.Label title={alternativesText.activeAlternative} text="" />
+                        <List.Item.Detail.Metadata.Label title={alternativesViewStrings.activeAlternative} text="" />
                       )}
                       <List.Item.Detail.Metadata.Separator />
                       <List.Item.Detail.Metadata.Label title="Key" text={alternative.key ?? ""} />
@@ -334,56 +340,56 @@ export function AlternativesView({ project }: { project: Project }) {
                 <ActionPanel>
                   <ActionPanel.Section>
                     <Action
-                      title={alternativesText.openInDaw}
+                      title={alternativesViewStrings.openInDaw}
                       icon={logicApp ? { fileIcon: logicApp.path } : Icon.Document}
                       onAction={() => handleOpen(alternative)}
                     />
                     {!alternative.active && (
                       <Action
-                        title={alternativesText.setActive}
+                        title={alternativesViewStrings.setActive}
                         icon={Icon.CheckCircle}
                         onAction={() => handleSetActive(alternative)}
                       />
                     )}
                     <Action.ShowInFinder
                       path={path.dirname(alternative.metadataFile)}
-                      title={t.showInFinder}
+                      title={strings.showInFinder}
                       shortcut={{ modifiers: ["cmd", "opt"], key: "o" }}
                     />
                     <Action.Push
-                      title={alternativesText.renameAlternative}
+                      title={alternativesViewStrings.renameAlternative}
                       icon={Icon.Pencil}
                       shortcut={Keyboard.Shortcut.Common.Edit}
                       target={<RenameAlternativeForm alternative={alternative} onRenamed={reload} />}
                     />
                     <Action
-                      title={alternativesText.duplicateAlternative}
+                      title={alternativesViewStrings.duplicateAlternative}
                       icon={Icon.Duplicate}
                       shortcut={Keyboard.Shortcut.Common.Duplicate}
                       onAction={() => handleDuplicate(alternative)}
                     />
                   </ActionPanel.Section>
-                  <ActionPanel.Section title={t.sectionCopy}>
+                  <ActionPanel.Section title={strings.sectionCopy}>
                     <Action.CopyToClipboard
                       content={alternative.name}
-                      title={alternativesText.copyAlternativeName}
+                      title={alternativesViewStrings.copyAlternativeName}
                       icon={Icon.CopyClipboard}
                       shortcut={Keyboard.Shortcut.Common.CopyName}
                     />
                     <Action.CopyToClipboard
                       content={alternative.path}
-                      title={t.copyProjectPath}
+                      title={strings.copyProjectPath}
                       icon={Icon.CopyClipboard}
                       shortcut={Keyboard.Shortcut.Common.CopyPath}
                     />
                   </ActionPanel.Section>
-                  <ActionPanel.Section title={t.sectionArrange}>
+                  <ActionPanel.Section title={strings.sectionArrange}>
                     <GroupBySubmenu allowed={["modified", "created"]} value={groupBy} onChange={setGroupBy} />
                     <SortBySubmenu allowed={ALTERNATIVES_SORT_OPTIONS} value={sortBy} onChange={setSortBy} />
                   </ActionPanel.Section>
-                  <ActionPanel.Section title={t.sectionDangerZone}>
+                  <ActionPanel.Section title={strings.sectionDangerZone}>
                     <Action
-                      title={t.moveToTrash}
+                      title={strings.moveToTrash}
                       icon={Icon.Trash}
                       style={Action.Style.Destructive}
                       shortcut={Keyboard.Shortcut.Common.Remove}
