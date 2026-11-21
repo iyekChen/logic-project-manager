@@ -293,7 +293,7 @@ export function AlternativesView({ project }: { project: Project }) {
               icon={
                 alternative.windowImage
                   ? { source: alternative.windowImage, mask: Image.Mask.RoundedRectangle }
-                  : Icon.Layers
+                  : Icon.Document
               }
               title={{ value: alternative.name, tooltip: alternative.name }}
               accessories={

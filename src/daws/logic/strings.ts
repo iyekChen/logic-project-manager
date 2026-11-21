@@ -51,9 +51,13 @@ type ProjectFilesViewStrings = {
   viewProjectFiles: string;
   projectFiles: string;
   searchProjectFiles: string;
-  latestProjectFile: string;
   openLatestProjectFile: string;
   copyProjectFileName: string;
+  renameProjectFile: string;
+  duplicateProjectFile: string;
+  projectFileRenamed: string;
+  projectFileDuplicated: string;
+  projectFileNameExists: string;
   trashProjectFileHint: string;
   lastProjectFile: string;
   trashConfirmMessage: string;
@@ -64,9 +68,13 @@ const projectFilesStrings: Record<Language, ProjectFilesViewStrings> = {
     viewProjectFiles: "View Project Files",
     projectFiles: "Project Files",
     searchProjectFiles: "Search Project Files",
-    latestProjectFile: "Latest Project File",
     openLatestProjectFile: "Open Latest Project File",
     copyProjectFileName: "Copy Project File Name",
+    renameProjectFile: "Rename Project File",
+    duplicateProjectFile: "Duplicate Project File",
+    projectFileRenamed: "Project File Renamed",
+    projectFileDuplicated: "Project File Duplicated",
+    projectFileNameExists: "A project file with this name already exists",
     trashProjectFileHint: "This moves the project file to the Trash:",
     lastProjectFile: "A project needs at least one project file",
     trashConfirmMessage: "Make sure it's closed in Logic Pro. Audio files in the project folder stay where they are.",

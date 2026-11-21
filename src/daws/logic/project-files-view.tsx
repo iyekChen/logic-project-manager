@@ -5,6 +5,7 @@ import {
   closeMainWindow,
   Color,
   confirmAlert,
+  Form,
   Icon,
   Image,
   Keyboard,
@@ -12,19 +13,24 @@ import {
   showToast,
   Toast,
   trash,
+  useNavigation,
   type Application,
 } from "@raycast/api";
+import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { useEffect, useState } from "react";
 import type { DawSet, ProjectFileMetadata } from "@/daws";
-import { findPackage, lastSavedAt, listPackages, logicAdapter } from "./adapter";
+import { lastSavedAt, listPackages, logicAdapter } from "./adapter";
 import {
   EMPTY_METADATA,
   cachedSetMetadata,
   loadPersistentProjectFileCache,
   parseSetMetadata,
 } from "@/core/projects/project-file-cache";
+import { SortBySubmenu, sortItems, sortOptionTitle, useSortOption } from "@/core/ui/sorting";
+import type { SortOption } from "@/core/ui/sorting";
+import { GroupBySubmenu, groupItems, useGroupOption } from "@/core/ui/grouping";
 import { getSettings } from "@/settings";
 import { getTranslations } from "@/i18n";
 import type { Project } from "@/core/projects/types";
@@ -41,34 +47,127 @@ const alternativesText = getAlternativesViewStrings(settings.language);
 const filesText = getProjectFilesViewStrings(settings.language);
 const labels = getDawLabels(settings.language);
 
+const PROJECT_FILES_SORT_STORAGE_KEY = "project-files-sort-option";
+const PROJECT_FILES_GROUP_STORAGE_KEY = "project-files-group-option";
+
+const PROJECT_FILES_SORT_OPTIONS: SortOption[] = [
+  "modified-desc",
+  "modified-asc",
+  "created-desc",
+  "created-asc",
+  "name-asc",
+  "name-desc",
+];
+
+const PACKAGE_SUFFIX = ".logicx";
+// 结尾的 .logicx（不区分大小写），用于去掉用户顺手输入的后缀。
+const PACKAGE_SUFFIX_PATTERN = /\.logicx$/i;
+
 // 文件夹里的一个 .logicx。缩略图和元数据取它的 Active Alternative。
-type ProjectFile = {
+// modifiedAt 是最后一次保存的时间（各 Alternative 里 ProjectData 的最新修改时间），和 ⌘O 选「最新」用的是同一个。
+type ProjectFile = ProjectFileMetadata & {
   packagePath: string;
   name: string;
-  savedAt: number;
-  isLatest: boolean;
+  createdAt: number;
+  modifiedAt: number;
   alternativeCount: number;
   active: DawSet | null;
-  metadata: ProjectFileMetadata;
   windowImage: string | null;
 };
 
-function formatDate(ms: number): string {
-  if (!Number.isFinite(ms)) return "";
-  const date = new Date(ms);
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${date.getFullYear()}-${month}-${day}`;
+function uniqueCopyPath(dir: string, baseName: string): string {
+  let candidate = path.join(dir, `${baseName} copy${PACKAGE_SUFFIX}`);
+  let counter = 2;
+  while (fs.existsSync(candidate)) {
+    candidate = path.join(dir, `${baseName} copy ${counter}${PACKAGE_SUFFIX}`);
+    counter++;
+  }
+  return candidate;
 }
 
-// 文件夹形态的项目里有多个 .logicx 时的列表（和 APM 的 Sets 列表一样）：Enter 直接用 Logic 打开这个 .logicx，
+// 两个路径是否指向同一个文件（只改大小写时，在不区分大小写的卷上为 true）。
+function isSameFile(a: string, b: string): boolean {
+  try {
+    const sa = fs.statSync(a);
+    const sb = fs.statSync(b);
+    return sa.ino === sb.ino && sa.dev === sb.dev;
+  } catch {
+    return false;
+  }
+}
+
+function RenameProjectFileForm({ file, onRenamed }: { file: ProjectFile; onRenamed: () => void }) {
+  const { pop } = useNavigation();
+  const [name, setName] = useState(file.name);
+
+  async function handleSubmit() {
+    // 用户顺手输了 .logicx 也接受，统一由这里补后缀。
+    const trimmed = name.trim().replace(PACKAGE_SUFFIX_PATTERN, "");
+    if (trimmed === "" || trimmed === file.name) {
+      pop();
+      return;
+    }
+    if (trimmed.includes("/") || trimmed.includes(":")) {
+      await showToast({ style: Toast.Style.Failure, title: t.invalidName });
+      return;
+    }
+
+    const target = path.join(path.dirname(file.packagePath), `${trimmed}${PACKAGE_SUFFIX}`);
+    // 目标已存在且不是它自己（只改大小写）时拦下，绝不覆盖另一个 .logicx。
+    if (fs.existsSync(target) && !isSameFile(target, file.packagePath)) {
+      await showToast({ style: Toast.Style.Failure, title: filesText.projectFileNameExists });
+      return;
+    }
+
+    const confirmed = await confirmAlert({
+      icon: { source: Icon.Warning, tintColor: Color.Yellow },
+      title: alternativesText.changeConfirmTitle,
+      message: alternativesText.changeConfirmMessage,
+      primaryAction: { title: t.rename, style: Alert.ActionStyle.Default },
+    });
+    if (!confirmed) return;
+
+    try {
+      fs.renameSync(file.packagePath, target);
+    } catch (error) {
+      await showFailure(t.renameFailed, error);
+      return;
+    }
+
+    onRenamed();
+    await showToast({
+      style: Toast.Style.Success,
+      title: filesText.projectFileRenamed,
+      message: `${trimmed}${PACKAGE_SUFFIX}`,
+    });
+    pop();
+  }
+
+  return (
+    <Form
+      navigationTitle={`${filesText.renameProjectFile} — ${file.name}`}
+      actions={
+        <ActionPanel>
+          <Action.SubmitForm title={t.save} onSubmit={handleSubmit} />
+        </ActionPanel>
+      }
+    >
+      <Form.TextField id="name" title={t.name} value={name} onChange={setName} />
+    </Form>
+  );
+}
+
+// 文件夹形态的项目里有多个 .logicx 时的列表，对应 APM 的 View Sets：Enter 直接用 Logic 打开这个 .logicx，
 // ⌘↵ 进它的 Alternatives（只有一个 Alternative 也能进，用来设为 Active、重命名、复制）。
 export function ProjectFilesView({ project }: { project: Project }) {
   const [files, setFiles] = useState<ProjectFile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [logicApp, setLogicApp] = useState<Application | null>(null);
+  const [sortBy, setSortBy] = useSortOption(PROJECT_FILES_SORT_STORAGE_KEY, PROJECT_FILES_SORT_OPTIONS, "created-desc");
+  const [groupBy, setGroupBy] = useGroupOption(PROJECT_FILES_GROUP_STORAGE_KEY, "created");
   const [reloadToken, setReloadToken] = useState(0);
 
+  // 解析 Logic Pro，用于 Open in Logic Pro 的图标：偏好设置里选了版本就用那个版本。
   useEffect(() => {
     void resolveDawApp().then(setLogicApp);
   }, []);
@@ -81,7 +180,6 @@ export function ProjectFilesView({ project }: { project: Project }) {
         await loadPersistentProjectFileCache();
         if (cancelled) return;
 
-        const latest = findPackage(project.folderPath);
         const items: ProjectFile[] = [];
         for (const packagePath of listPackages(project.folderPath)) {
           const sets = logicAdapter.listSets({ folderPath: packagePath, kind: "package" });
@@ -99,19 +197,26 @@ export function ProjectFilesView({ project }: { project: Project }) {
             }
           }
           if (cancelled) return;
+
+          let createdAt = 0;
+          try {
+            createdAt = fs.statSync(packagePath).birthtimeMs;
+          } catch {
+            // 读不到就按 0，排到最旧。
+          }
+          // 一个 Alternative 都读不到保存时间时，按创建时间算，免得分组里出现无效日期。
+          const savedAt = lastSavedAt(packagePath);
           items.push({
+            ...metadata,
             packagePath,
             name: logicAdapter.projectIdForEntry(path.basename(packagePath)),
-            savedAt: lastSavedAt(packagePath),
-            isLatest: packagePath === latest,
+            createdAt,
+            modifiedAt: Number.isFinite(savedAt) ? savedAt : createdAt,
             alternativeCount: sets.length,
             active,
-            metadata,
             windowImage: active ? findWindowImage(active) : null,
           });
         }
-        // 最后保存的排最上面；都读不到保存时间时按名字。
-        items.sort((a, b) => b.savedAt - a.savedAt || a.name.localeCompare(b.name));
         setFiles(items);
       } catch (error) {
         if (!cancelled) {
@@ -141,7 +246,29 @@ export function ProjectFilesView({ project }: { project: Project }) {
     }
   };
 
+  const handleDuplicate = async (file: ProjectFile) => {
+    try {
+      const target = uniqueCopyPath(path.dirname(file.packagePath), file.name);
+      // 保留修改时间：不然副本会成为「最后保存」的那个，⌘O 会打开副本而不是用户正在做的版本。
+      await fs.promises.cp(file.packagePath, target, {
+        recursive: true,
+        preserveTimestamps: true,
+        errorOnExist: true,
+        force: false,
+      });
+      reload();
+      await showToast({
+        style: Toast.Style.Success,
+        title: filesText.projectFileDuplicated,
+        message: path.basename(target),
+      });
+    } catch (error) {
+      await showFailure(t.duplicateFailed, error);
+    }
+  };
+
   const handleTrash = async (file: ProjectFile) => {
+    // 只剩一个 .logicx 时不让删：删掉后这个文件夹就不再算项目了。
     if (files.length <= 1) {
       await showToast({ style: Toast.Style.Failure, title: filesText.lastProjectFile });
       return;
@@ -162,6 +289,12 @@ export function ProjectFilesView({ project }: { project: Project }) {
     }
   };
 
+  const sortedFiles = sortItems(files, sortBy, (file) => ({
+    created: file.createdAt,
+    modified: file.modifiedAt,
+    name: file.name,
+  }));
+
   return (
     <List
       isLoading={isLoading}
@@ -169,95 +302,102 @@ export function ProjectFilesView({ project }: { project: Project }) {
       navigationTitle={project.title}
       searchBarPlaceholder={filesText.searchProjectFiles}
     >
-      {files.map((file) => (
-        <List.Item
-          key={file.packagePath}
-          icon={file.windowImage ? { source: file.windowImage, mask: Image.Mask.RoundedRectangle } : "package.png"}
-          title={{ value: file.name, tooltip: file.name }}
-          accessories={[
-            ...(file.alternativeCount > 1
-              ? [
-                  {
-                    text: String(file.alternativeCount),
-                    icon: Icon.Layers,
-                    tooltip: `${file.alternativeCount} ${labels.sets}`,
-                  },
-                ]
-              : []),
-            ...(file.isLatest
-              ? [{ icon: { source: Icon.CheckCircle, tintColor: Color.Green }, tooltip: filesText.latestProjectFile }]
-              : []),
-          ]}
-          detail={
-            <List.Item.Detail
-              markdown={file.windowImage ? `![](${pathToFileURL(file.windowImage).href})` : ""}
-              metadata={
-                <List.Item.Detail.Metadata>
-                  <List.Item.Detail.Metadata.Label title="Saved" text={formatDate(file.savedAt)} />
-                  <List.Item.Detail.Metadata.Separator />
-                  <List.Item.Detail.Metadata.Label title={labels.sets} text={String(file.alternativeCount)} />
-                  <List.Item.Detail.Metadata.Label title={labels.latestSet} text={file.active?.name ?? ""} />
-                  <List.Item.Detail.Metadata.Label title="Key" text={file.metadata.key ?? ""} />
-                  <List.Item.Detail.Metadata.Label
-                    title="BPM"
-                    text={file.metadata.bpm === null ? "" : String(file.metadata.bpm)}
-                  />
-                  <List.Item.Detail.Metadata.Label title="Time Signature" text={file.metadata.timeSignature ?? ""} />
-                </List.Item.Detail.Metadata>
+      {groupItems(
+        sortedFiles,
+        groupBy,
+        (file) => ({ created: file.createdAt, modified: file.modifiedAt }),
+        sortOptionTitle(sortBy),
+      ).map((group) => (
+        <List.Section key={group.key} title={group.title} subtitle={group.subtitle}>
+          {group.items.map((file) => (
+            <List.Item
+              key={file.packagePath}
+              icon={file.windowImage ? { source: file.windowImage, mask: Image.Mask.RoundedRectangle } : "package.png"}
+              title={{ value: file.name, tooltip: file.name }}
+              detail={
+                <List.Item.Detail
+                  markdown={file.windowImage ? `![](${pathToFileURL(file.windowImage).href})` : ""}
+                  metadata={
+                    <List.Item.Detail.Metadata>
+                      <List.Item.Detail.Metadata.Label title={labels.sets} text={String(file.alternativeCount)} />
+                      <List.Item.Detail.Metadata.Label title={labels.latestSet} text={file.active?.name ?? ""} />
+                      <List.Item.Detail.Metadata.Separator />
+                      <List.Item.Detail.Metadata.Label title="Key" text={file.key ?? ""} />
+                      <List.Item.Detail.Metadata.Label title="BPM" text={file.bpm === null ? "" : String(file.bpm)} />
+                      <List.Item.Detail.Metadata.Label title="Time Signature" text={file.timeSignature ?? ""} />
+                    </List.Item.Detail.Metadata>
+                  }
+                />
+              }
+              actions={
+                <ActionPanel>
+                  <ActionPanel.Section>
+                    <Action
+                      title={alternativesText.openInDaw}
+                      icon={logicApp ? { fileIcon: logicApp.path } : Icon.Document}
+                      onAction={() => handleOpen(file)}
+                    />
+                    <Action.Push
+                      title={labels.viewSets}
+                      icon={Icon.Document}
+                      shortcut={{ modifiers: ["cmd"], key: "return" }}
+                      target={
+                        <AlternativesView
+                          project={{ ...project, title: file.name, folderPath: file.packagePath, kind: "package" }}
+                        />
+                      }
+                      onPop={reload}
+                    />
+                    <Action.ShowInFinder
+                      path={file.packagePath}
+                      title={t.showInFinder}
+                      shortcut={{ modifiers: ["cmd", "opt"], key: "o" }}
+                    />
+                    <Action.Push
+                      title={filesText.renameProjectFile}
+                      icon={Icon.Pencil}
+                      shortcut={Keyboard.Shortcut.Common.Edit}
+                      target={<RenameProjectFileForm file={file} onRenamed={reload} />}
+                    />
+                    <Action
+                      title={filesText.duplicateProjectFile}
+                      icon={Icon.Duplicate}
+                      shortcut={Keyboard.Shortcut.Common.Duplicate}
+                      onAction={() => handleDuplicate(file)}
+                    />
+                  </ActionPanel.Section>
+                  <ActionPanel.Section title={t.sectionCopy}>
+                    <Action.CopyToClipboard
+                      content={path.basename(file.packagePath)}
+                      title={filesText.copyProjectFileName}
+                      icon={Icon.CopyClipboard}
+                      shortcut={Keyboard.Shortcut.Common.CopyName}
+                    />
+                    <Action.CopyToClipboard
+                      content={file.packagePath}
+                      title={t.copyProjectPath}
+                      icon={Icon.CopyClipboard}
+                      shortcut={Keyboard.Shortcut.Common.CopyPath}
+                    />
+                  </ActionPanel.Section>
+                  <ActionPanel.Section title={t.sectionArrange}>
+                    <GroupBySubmenu allowed={["modified", "created"]} value={groupBy} onChange={setGroupBy} />
+                    <SortBySubmenu allowed={PROJECT_FILES_SORT_OPTIONS} value={sortBy} onChange={setSortBy} />
+                  </ActionPanel.Section>
+                  <ActionPanel.Section title={t.sectionDangerZone}>
+                    <Action
+                      title={t.moveToTrash}
+                      icon={Icon.Trash}
+                      style={Action.Style.Destructive}
+                      shortcut={Keyboard.Shortcut.Common.Remove}
+                      onAction={() => handleTrash(file)}
+                    />
+                  </ActionPanel.Section>
+                </ActionPanel>
               }
             />
-          }
-          actions={
-            <ActionPanel>
-              <ActionPanel.Section>
-                <Action
-                  title={alternativesText.openInDaw}
-                  icon={logicApp ? { fileIcon: logicApp.path } : Icon.Document}
-                  onAction={() => handleOpen(file)}
-                />
-                <Action.Push
-                  title={labels.viewSets}
-                  icon={Icon.Layers}
-                  shortcut={{ modifiers: ["cmd"], key: "return" }}
-                  target={
-                    <AlternativesView
-                      project={{ ...project, title: file.name, folderPath: file.packagePath, kind: "package" }}
-                    />
-                  }
-                  onPop={reload}
-                />
-                <Action.ShowInFinder
-                  path={file.packagePath}
-                  title={t.showInFinder}
-                  shortcut={{ modifiers: ["cmd", "opt"], key: "o" }}
-                />
-              </ActionPanel.Section>
-              <ActionPanel.Section title={t.sectionCopy}>
-                <Action.CopyToClipboard
-                  content={file.name}
-                  title={filesText.copyProjectFileName}
-                  icon={Icon.CopyClipboard}
-                  shortcut={Keyboard.Shortcut.Common.CopyName}
-                />
-                <Action.CopyToClipboard
-                  content={file.packagePath}
-                  title={t.copyProjectPath}
-                  icon={Icon.CopyClipboard}
-                  shortcut={Keyboard.Shortcut.Common.CopyPath}
-                />
-              </ActionPanel.Section>
-              <ActionPanel.Section title={t.sectionDangerZone}>
-                <Action
-                  title={t.moveToTrash}
-                  icon={Icon.Trash}
-                  style={Action.Style.Destructive}
-                  shortcut={Keyboard.Shortcut.Common.Remove}
-                  onAction={() => handleTrash(file)}
-                />
-              </ActionPanel.Section>
-            </ActionPanel>
-          }
-        />
+          ))}
+        </List.Section>
       ))}
     </List>
   );
