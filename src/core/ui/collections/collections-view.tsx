@@ -22,6 +22,8 @@ import { strings } from "@/strings";
 import { getSettings } from "@/settings";
 import type { Project } from "@/core/projects/types";
 import { slugify, type TaxonomyOption } from "@/core/metadata/taxonomy";
+import { PlayToggleAction } from "@/core/ui/actions/play-toggle";
+import { PlaybackControlsSection } from "@/core/ui/actions/playback-controls";
 import { viewPrefs } from "@/core/ui/shared/view-prefs";
 import {
   TrackMap,
@@ -79,7 +81,6 @@ type Collection = { id: string; name: string };
 const VIEW_MODE_STORAGE_KEY = "view-mode:collections";
 const DETAIL_DOC_STORAGE_KEY = "detail-doc:collections";
 const PLAYER_PATH = ensureAudioPlayerBinary();
-const SEEK_STEP_SECONDS = 5;
 
 // 固定的冷→暖位置色模板：每个圆点槽位颜色固定，所有 Project 一致。
 // 槽位 1→5：最冷 → 次冷 → 中性 → 次暖 → 最暖。
@@ -418,73 +419,27 @@ function CollectionPanel({
       message: latestBouncePath.split("/").pop() ?? "",
     });
   }
-  const renderPlayToggle = (p: Project) => {
-    const isThisPlaying = playingId === p.id;
-    const toggleIsPause = isThisPlaying && (playbackStatus === "Playing" || playbackStatus === "Starting");
-    const title = isThisPlaying
-      ? playbackStatus === "Paused"
-        ? strings.resumePlayback
-        : playbackStatus === "Stopping"
-          ? strings.stoppingPlayback
-          : strings.pausePlayback
-      : strings.playLatestBounce;
-    return (
-      <Action
-        title={title}
-        icon={isThisPlaying ? (toggleIsPause ? Icon.PauseFilled : Icon.PlayFilled) : Icon.Play}
-        onAction={() => {
-          if (isThisPlaying) {
-            if (playbackStatus === "Stopping") {
-              return;
-            }
-            if (playbackStatus === "Paused") {
-              resume();
-            } else {
-              pause();
-            }
-            return;
-          }
-          playProjectBounce(p);
-        }}
-      />
-    );
-  };
+  const renderPlayToggle = (p: Project) => (
+    <PlayToggleAction
+      isThisPlaying={playingId === p.id}
+      playbackStatus={playbackStatus}
+      onPlay={() => playProjectBounce(p)}
+      onPause={pause}
+      onResume={resume}
+    />
+  );
 
   // 播放时才出现的停止、seek / restart 控制，作用于全局播放器。
-  const renderPlaybackControls = () =>
-    playingId !== null ? (
-      <ActionPanel.Section title={strings.sectionPlayback}>
-        <Action
-          title={strings.stopPlayback}
-          icon={Icon.StopFilled}
-          shortcut={{ modifiers: ["cmd"], key: "-" }}
-          onAction={stop}
-        />
-        <Action
-          title={strings.seekBackward}
-          icon={Icon.RewindFilled}
-          shortcut={{ modifiers: ["opt"], key: "arrowLeft" }}
-          onAction={() => seek(-SEEK_STEP_SECONDS)}
-        />
-        <Action
-          title={strings.seekForward}
-          icon={Icon.ForwardFilled}
-          shortcut={{ modifiers: ["opt"], key: "arrowRight" }}
-          onAction={() => seek(SEEK_STEP_SECONDS)}
-        />
-        <Action
-          title={strings.restartTrack}
-          icon={Icon.ArrowCounterClockwise}
-          shortcut={{ modifiers: ["cmd"], key: "arrowLeft" }}
-          onAction={() => {
-            restart();
-            if (playbackStatus === "Paused") {
-              resume();
-            }
-          }}
-        />
-      </ActionPanel.Section>
-    ) : null;
+  const renderPlaybackControls = () => (
+    <PlaybackControlsSection
+      playingId={playingId}
+      playbackStatus={playbackStatus}
+      onStop={stop}
+      onSeek={seek}
+      onRestart={restart}
+      onResume={resume}
+    />
+  );
 
   useEffect(() => {
     let cancelled = false;

@@ -34,6 +34,8 @@ import {
 import { removeProjectFromAllOrders } from "@/core/metadata/collection-order";
 import { removeProjectFromAllRoles } from "@/core/metadata/collection-roles";
 import { strings } from "@/strings";
+import { PlayToggleAction } from "@/core/ui/actions/play-toggle";
+import { PlaybackControlsSection } from "@/core/ui/actions/playback-controls";
 import { SortBySubmenu } from "@/core/ui/actions/sort-by-submenu";
 import { useSortOption } from "@/core/ui/hooks/use-sort-option";
 import { sortItems, sortOptionTitle } from "@/core/ui/shared/sorting";
@@ -96,7 +98,6 @@ const ONBOARDING_ASKED_KEY = "onboarding:shared-bounces-asked";
 const ONBOARDING_UNMATCHED_KEY = "onboarding:unmatched-shown-for";
 const DETAIL_DOC_STORAGE_KEY = "detail-doc:projects";
 const PLAYER_PATH = ensureAudioPlayerBinary();
-const SEEK_STEP_SECONDS = 5;
 // 同时解析的 Set 数，和 View Sets 一样。
 const METADATA_CONCURRENCY = 3;
 // 要读的 Set 少于这个数时不弹进度提示（如在 DAW 里刚存了一个 Set），免得一闪而过。
@@ -651,18 +652,6 @@ export function ProjectsView() {
     const detailPlaceholder = docPlaceholder(detailDoc, item.title, missingDocFolders[detailDoc]);
 
     const isThisPlaying = playingId === item.id;
-    const isAnythingPlaying = playingId !== null;
-    // 主操作：未播→播；播放中→暂停；暂停→续播。
-    const toggleIsPause = isThisPlaying && (playbackStatus === "Playing" || playbackStatus === "Starting");
-    const toggleTitle = isThisPlaying
-      ? playbackStatus === "Paused"
-        ? strings.resumePlayback
-        : playbackStatus === "Stopping"
-          ? strings.stoppingPlayback
-          : strings.pausePlayback
-      : strings.playLatestBounce;
-
-    const toggleIcon = isThisPlaying ? (toggleIsPause ? Icon.PauseFilled : Icon.PlayFilled) : Icon.Play;
 
     return (
       <List.Item
@@ -754,24 +743,13 @@ export function ProjectsView() {
                 target={<SetsView project={item} />}
                 onPop={() => void reloadProjects()}
               />
-              <Action
-                title={toggleTitle}
-                icon={toggleIcon}
+              <PlayToggleAction
+                isThisPlaying={isThisPlaying}
+                playbackStatus={playbackStatus}
                 shortcut={{ modifiers: ["cmd"], key: "return" }}
-                onAction={() => {
-                  if (isThisPlaying) {
-                    if (playbackStatus === "Stopping") {
-                      return;
-                    }
-                    if (playbackStatus === "Paused") {
-                      resume();
-                    } else {
-                      pause();
-                    }
-                    return;
-                  }
-                  playProjectBounce(item);
-                }}
+                onPlay={() => playProjectBounce(item)}
+                onPause={pause}
+                onResume={resume}
               />
               <Action
                 title={strings.browseBounces}
@@ -817,39 +795,14 @@ export function ProjectsView() {
                 onAction={() => openCurrentSet(item)}
               />
             </ActionPanel.Section>
-            {isAnythingPlaying && (
-              <ActionPanel.Section title={strings.sectionPlayback}>
-                <Action
-                  title={strings.stopPlayback}
-                  icon={Icon.StopFilled}
-                  shortcut={{ modifiers: ["cmd"], key: "-" }}
-                  onAction={stop}
-                />
-                <Action
-                  title={strings.seekBackward}
-                  icon={Icon.RewindFilled}
-                  shortcut={{ modifiers: ["opt"], key: "arrowLeft" }}
-                  onAction={() => seek(-SEEK_STEP_SECONDS)}
-                />
-                <Action
-                  title={strings.seekForward}
-                  icon={Icon.ForwardFilled}
-                  shortcut={{ modifiers: ["opt"], key: "arrowRight" }}
-                  onAction={() => seek(SEEK_STEP_SECONDS)}
-                />
-                <Action
-                  title={strings.restartTrack}
-                  icon={Icon.ArrowCounterClockwise}
-                  shortcut={{ modifiers: ["cmd"], key: "arrowLeft" }}
-                  onAction={() => {
-                    restart();
-                    if (playbackStatus === "Paused") {
-                      resume();
-                    }
-                  }}
-                />
-              </ActionPanel.Section>
-            )}
+            <PlaybackControlsSection
+              playingId={playingId}
+              playbackStatus={playbackStatus}
+              onStop={stop}
+              onSeek={seek}
+              onRestart={restart}
+              onResume={resume}
+            />
             <ActionPanel.Section title={strings.sectionDetails}>
               <Action.Push
                 title={strings.editInfo}
