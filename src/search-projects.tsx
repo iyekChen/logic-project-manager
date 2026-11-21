@@ -801,7 +801,7 @@ export default function Command() {
                 }}
               />
               <Action
-                title={labels.openLatestSet}
+                title={fileCount > 1 ? filesText.openLatestProjectFile : labels.openLatestSet}
                 icon={dawApp ? { fileIcon: dawApp.path } : Icon.Document}
                 shortcut={Keyboard.Shortcut.Common.Open}
                 onAction={() => openLatestSet(item)}

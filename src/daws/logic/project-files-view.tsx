@@ -61,7 +61,8 @@ function formatDate(ms: number): string {
   return `${date.getFullYear()}-${month}-${day}`;
 }
 
-// 文件夹形态的项目里有多个 .logicx 时的列表。Enter 进这个 .logicx 的 Alternatives，⌘O 直接打开它。
+// 文件夹形态的项目里有多个 .logicx 时的列表（和 APM 的 Sets 列表一样）：Enter 直接用 Logic 打开这个 .logicx；
+// 里面有多个 Alternative 时，⌘↵ 进它的 Alternatives。
 export function ProjectFilesView({ project }: { project: Project }) {
   const [files, setFiles] = useState<ProjectFile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -173,11 +174,20 @@ export function ProjectFilesView({ project }: { project: Project }) {
           key={file.packagePath}
           icon={file.windowImage ? { source: file.windowImage, mask: Image.Mask.RoundedRectangle } : "package.png"}
           title={{ value: file.name, tooltip: file.name }}
-          accessories={
-            file.isLatest
+          accessories={[
+            ...(file.alternativeCount > 1
+              ? [
+                  {
+                    text: String(file.alternativeCount),
+                    icon: Icon.Layers,
+                    tooltip: `${file.alternativeCount} ${labels.sets}`,
+                  },
+                ]
+              : []),
+            ...(file.isLatest
               ? [{ icon: { source: Icon.CheckCircle, tintColor: Color.Green }, tooltip: filesText.latestProjectFile }]
-              : []
-          }
+              : []),
+          ]}
           detail={
             <List.Item.Detail
               markdown={file.windowImage ? `![](${pathToFileURL(file.windowImage).href})` : ""}
@@ -208,22 +218,24 @@ export function ProjectFilesView({ project }: { project: Project }) {
           actions={
             <ActionPanel>
               <ActionPanel.Section>
-                <Action.Push
-                  title={labels.viewSets}
-                  icon={Icon.Layers}
-                  target={
-                    <AlternativesView
-                      project={{ ...project, title: file.name, folderPath: file.packagePath, kind: "package" }}
-                    />
-                  }
-                  onPop={reload}
-                />
                 <Action
                   title={alternativesText.openInDaw}
                   icon={logicApp ? { fileIcon: logicApp.path } : Icon.Document}
-                  shortcut={Keyboard.Shortcut.Common.Open}
                   onAction={() => handleOpen(file)}
                 />
+                {file.alternativeCount > 1 && (
+                  <Action.Push
+                    title={labels.viewSets}
+                    icon={Icon.Layers}
+                    shortcut={{ modifiers: ["cmd"], key: "return" }}
+                    target={
+                      <AlternativesView
+                        project={{ ...project, title: file.name, folderPath: file.packagePath, kind: "package" }}
+                      />
+                    }
+                    onPop={reload}
+                  />
+                )}
                 <Action.ShowInFinder
                   path={file.packagePath}
                   title={t.showInFinder}

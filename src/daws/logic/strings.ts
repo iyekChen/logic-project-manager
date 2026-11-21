@@ -52,6 +52,7 @@ type ProjectFilesViewStrings = {
   projectFiles: string;
   searchProjectFiles: string;
   latestProjectFile: string;
+  openLatestProjectFile: string;
   copyProjectFileName: string;
   trashProjectFileHint: string;
   lastProjectFile: string;
@@ -63,7 +64,8 @@ const projectFilesStrings: Record<Language, ProjectFilesViewStrings> = {
     viewProjectFiles: "View Project Files",
     projectFiles: "Project Files",
     searchProjectFiles: "Search Project Files",
-    latestProjectFile: "Saved Most Recently",
+    latestProjectFile: "Latest Project File",
+    openLatestProjectFile: "Open Latest Project File",
     copyProjectFileName: "Copy Project File Name",
     trashProjectFileHint: "This moves the project file to the Trash:",
     lastProjectFile: "A project needs at least one project file",
