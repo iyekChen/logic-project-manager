@@ -641,13 +641,13 @@ export default function Command() {
     const latest = latestSets[item.id];
     const latestBpm = latest?.metadata?.bpm ?? null;
     const fileCount = projectFileCounts.get(item.id) ?? 1;
-    const fileCountAccessories =
-      fileCount > 1
-        ? [
-            { text: String(fileCount), tooltip: `${fileCount} ${filesText.projectFiles}` },
-            { icon: "package.png", tooltip: `${fileCount} ${filesText.projectFiles}` },
-          ]
-        : [];
+    const isFolder = item.kind === "folder";
+    const fileCountAccessories = isFolder
+      ? [
+          { text: String(fileCount), tooltip: `${fileCount} ${filesText.projectFiles}` },
+          { icon: "package.png", tooltip: `${fileCount} ${filesText.projectFiles}` },
+        ]
+      : [];
     const stagePill = stage ? [{ tag: { value: stage.name, color: stage.color ?? Color.SecondaryText } }] : [];
     const detailBody = !showDetail ? "" : detailDoc === "notes" ? item.notes : item.lyrics;
     const detailPlaceholder = docPlaceholder(detailDoc, item.title, missingDocFolders[detailDoc]);
@@ -677,7 +677,7 @@ export default function Command() {
             ? []
             : [
                 ...stagePill,
-                ...(fileCount > 1
+                ...(isFolder
                   ? fileCountAccessories
                   : [
                       { text: String(item.setsCount), tooltip: `${item.setsCount} ${labels.sets}` },
@@ -723,13 +723,13 @@ export default function Command() {
                   )}
                   <List.Item.Detail.Metadata.Separator />
                   <List.Item.Detail.Metadata.Label title="Bounces" text={String(item.bouncesCount)} />
-                  {fileCount > 1 ? (
+                  {isFolder ? (
                     <List.Item.Detail.Metadata.Label title={filesText.projectFiles} text={String(fileCount)} />
                   ) : (
                     <List.Item.Detail.Metadata.Label title={labels.sets} text={String(item.setsCount)} />
                   )}
                   <List.Item.Detail.Metadata.Separator />
-                  {fileCount > 1 ? (
+                  {isFolder ? (
                     <List.Item.Detail.Metadata.Label
                       title={filesText.latestProjectFile}
                       text={
@@ -756,7 +756,7 @@ export default function Command() {
           <ActionPanel>
             <ActionPanel.Section>
               <Action.Push
-                title={fileCount > 1 ? filesText.viewProjectFiles : labels.viewSets}
+                title={isFolder ? filesText.viewProjectFiles : labels.viewSets}
                 icon={Icon.Document}
                 target={<SetsView project={item} />}
                 onPop={() => void reloadProjects()}
@@ -817,7 +817,7 @@ export default function Command() {
                 }}
               />
               <Action
-                title={fileCount > 1 ? filesText.openLatestProjectFile : labels.openLatestSet}
+                title={isFolder ? filesText.openLatestProjectFile : labels.openLatestSet}
                 icon={dawApp ? { fileIcon: dawApp.path } : Icon.Document}
                 shortcut={Keyboard.Shortcut.Common.Open}
                 onAction={() => openLatestSet(item)}

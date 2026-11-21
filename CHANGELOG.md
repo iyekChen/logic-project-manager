@@ -5,7 +5,7 @@
 - Search, sort, group, and pin your Logic Pro projects, with Detail and Overview views and Stage, Genre, and Year filters
 - Start with `#` in Search Projects to combine filters: name, stage, genre, collection, created date, key, BPM or BPM range, and time signature
 - View each project's Alternatives with their window thumbnail, key, BPM, and time signature; open one in Logic Pro, set it as active, rename, duplicate, or move it to the Trash
-- When a project folder holds more than one `.logicx` (e.g. versions saved with Save As), View Project Files lists them; the most recently saved one is used for key, BPM, and ⌘O
+- For a project saved in a folder, View Project Files lists its `.logicx` files (e.g. versions saved with Save As); the most recently saved one is used for key, BPM, and ⌘O
 - Choose which Logic Pro opens your projects: Logic Pro or Logic Pro (Creator Studio)
 - Play the latest bounce from Raycast, with pause, seek, and restart; playback keeps going after the Raycast window closes
 - Gather bounces from each project, a Shared Bounces Folder matched by name, and external folders or files; Search Bounces finds any bounce across all your projects

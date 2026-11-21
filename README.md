@@ -20,7 +20,7 @@
 - **[Listen to your bounces](#playback)** without digging through Finder.
 - **[Plan the tracklist](#-collections)** for an EP or album, give tracks roles, and compare each track's energy.
 - **[Keep notes and lyrics](#-notes--lyrics)** as Markdown files, in each project or in a folder such as an Obsidian vault.
-- **[Switch Alternatives](#opening-alternatives)** and see which one is active, without opening Logic Pro, and **[browse the versions you save with Save As](#multiple-project-files)**.
+- **[Switch Alternatives](#opening-alternatives)** and see which one is active, without opening Logic Pro, and **[browse the versions you save with Save As](#project-files-in-a-folder)**.
 
 See also: [Configuration](#-configuration) · [Known limitations](#-known-limitations) · [Data & files](#-data--files)
 
@@ -55,7 +55,7 @@ Most of the time you'll use Search Projects. To get it ready:
 
 ### ④ Try it
 
-- Select a project in Search Projects: Enter shows its Alternatives (or its project files, if its folder holds more than one), ⌘O opens it in Logic Pro, and ⌘↵ plays its latest bounce. Press ⌘K to see every other action.
+- Select a project in Search Projects: Enter shows its Alternatives (or its project files, for a project saved in a folder), ⌘O opens it in Logic Pro, and ⌘↵ plays its latest bounce. Press ⌘K to see every other action.
 
 **You're all set.** Everything below covers each feature in detail, for when you want to dig deeper.
 
@@ -75,19 +75,19 @@ Logic can save a project in two ways, and the extension lists both:
 | Bounces                             | A package has no folder of its own for bounces, so use a Shared Bounces Folder | Saved in the project folder, usually in a `Bounces` subfolder |
 | Notes and lyrics (no custom folder) | Saved inside the `.logicx`                                                     | Saved in the project folder                                   |
 
-Duplicate Project and Move to Trash work on the whole `.logicx` or the whole folder. A folder can also hold more than one `.logicx`; see [Multiple project files](#multiple-project-files).
+Duplicate Project and Move to Trash work on the whole `.logicx` or the whole folder. A folder can also hold more than one `.logicx`; see [Project files in a folder](#project-files-in-a-folder).
 
 ### Opening Alternatives
 
-- **View Alternatives** (Enter) lists a project's Alternatives, each with the thumbnail of the project window that Logic saves with it. The Active Alternative is marked with a green check, and the side panel shows each Alternative's key, BPM, and time signature.
+- **View Alternatives** (Enter for a project saved as a package) lists a project's Alternatives, each with the thumbnail of the project window that Logic saves with it. The Active Alternative is marked with a green check, and the side panel shows each Alternative's key, BPM, and time signature.
 - **Open in Logic Pro** opens the project. If the Alternative you picked isn't the active one, it's set as active first, so that's the one Logic opens.
 - You can also use Set as Active Alternative, Rename Alternative (⌘E), Duplicate Alternative (⌘D), and Move to Trash (⌃X). A project always keeps at least one Alternative. If you move the active one to the Trash, a neighboring one becomes active.
 - These actions change the project itself, so you're asked to close it in Logic Pro first. If it's still open, Logic overwrites the change the next time it saves.
 - **Open Active Alternative** (⌘O) opens the project in Logic Pro with its Active Alternative.
 
-### Multiple project files
+### Project files in a folder
 
-When you use Save As in Logic Pro, the new `.logicx` is saved in the same project folder by default, so one folder can hold several versions of a song. For such a project:
+When you use Save As in Logic Pro, the new `.logicx` is saved in the same project folder by default, so one folder can hold several versions of a song. A project saved in a folder always works this way, even with a single `.logicx`:
 
 - **View Project Files** (Enter) lists every `.logicx` in the folder, each with its thumbnail and its Active Alternative's key, BPM, and time signature. Like the project list, it can be grouped and sorted by date or name.
 - **The latest project file** is the one saved most recently. The project's key, BPM, time signature, and Alternative count come from it, and **Open Latest Project File** (⌘O) opens it.
@@ -96,7 +96,7 @@ When you use Save As in Logic Pro, the new `.logicx` is saved in the same projec
 
 ### Overview and Detail
 
-Search Projects has two views. Overview shows each project's stage and how many Alternatives and bounces it has, plus how many project files, if there's more than one. Detail adds a side panel with the project's note, its tags and collections, the Active Alternative's key and BPM, and its created and modified dates.
+Search Projects has two views. Overview shows each project's stage and how many Alternatives and bounces it has; for a project saved in a folder, it shows how many project files instead of Alternatives. Detail adds a side panel with the project's note, its tags and collections, the Active Alternative's key and BPM, and its created and modified dates.
 
 - ⌘⇧T switches between Overview and Detail.
 - In Detail, ⌘⌥⇧T switches the panel between notes and lyrics; see [Notes & lyrics](#-notes--lyrics).
@@ -171,7 +171,7 @@ Things that are easy to miss:
 - **Short numbers are tempos.** Numbers with up to three digits are always read as BPM, so `# album 01` looks for a tempo of 1 instead of a collection called Album 01. Search by the words in the name instead.
 - **Half and double tempo count.** `# 140` also finds projects at 70 and 280 BPM, and tempos are rounded, so 139.6 counts as 140. A range includes both ends and can be written either way round (`100-90`).
 - **Keys and time signatures match whole.** `# cm` finds C minor only, not C major. A root on its own (`a`, `eb`) isn't a key search, and `# a minor` is read as two separate words. Both spellings of a black key work: `c#m` and `dbm` find the same projects. `6/8` doesn't match `6/4`.
-- **Key, BPM, and time signature come from the Active Alternative.** They're read in the background from each project's Active Alternative (or its most recently modified one, if the project doesn't record which is active), then cached. For a folder with [more than one project file](#multiple-project-files), the latest one is used. Until a project's Alternative has been read, it doesn't match these words. The key is the one set for the project in Logic Pro, not detected from the audio.
+- **Key, BPM, and time signature come from the Active Alternative.** They're read in the background from each project's Active Alternative (or its most recently modified one, if the project doesn't record which is active), then cached. For a project saved in a folder, the [latest project file](#project-files-in-a-folder) is used. Until a project's Alternative has been read, it doesn't match these words. The key is the one set for the project in Logic Pro, not detected from the audio.
 
 ## 🎧 Bounces
 

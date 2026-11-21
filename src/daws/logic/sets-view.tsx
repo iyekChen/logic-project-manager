@@ -8,11 +8,7 @@ export function projectFileCount(project: Pick<Project, "kind" | "folderPath">):
   return project.kind === "folder" ? listPackages(project.folderPath).length : 1;
 }
 
-// 共用代码的 SetsView 入口：文件夹里有多个 .logicx 时先列出它们，否则直接进 Alternatives（只有一个 Alternative 也一样）。
+// 共用代码的 SetsView 入口：文件夹形态的项目先列出里面的 .logicx（只有一个也一样），Package 直接进 Alternatives。
 export function LogicSetsView({ project }: { project: Project }) {
-  return projectFileCount(project) > 1 ? (
-    <ProjectFilesView project={project} />
-  ) : (
-    <AlternativesView project={project} />
-  );
+  return project.kind === "folder" ? <ProjectFilesView project={project} /> : <AlternativesView project={project} />;
 }
