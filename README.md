@@ -44,6 +44,7 @@ Most of the time you'll use Search Projects. To get it ready:
 ### ② Tell it where your bounces are
 
 - In Extension Preferences, set Bounces Subfolder to the subfolder inside each project where you save bounces (e.g. `Bounces`), or leave it empty if they're saved directly in each project folder.
+- Projects saved as packages have no folder of their own for bounces. Export their bounces to one folder and set it as the Shared Bounces Folder; see [Package and folder projects](#package-and-folder-projects).
 - Optional: if you also export bounces from all your projects into one folder, set it as the Shared Bounces Folder. Files there are matched to projects by name, and the next time you open Search Projects, it offers to review any that don't match; see [Shared Bounces Folder](#shared-bounces-folder).
 - Optional: to include bounces stored anywhere else, select a project in Search Projects and use Manage External Bounce (⌘B).
 
@@ -61,6 +62,20 @@ Most of the time you'll use Search Projects. To get it ready:
 ## 📁 Projects
 
 Search Projects lists every project in your Projects Folder. Pinned projects stay at the top. The rest can be grouped by created or modified date and sorted by date or name.
+
+### Package and folder projects
+
+Logic can save a project in two ways, and the extension lists both:
+
+|                                     | Package                                                                        | Folder                                                        |
+| ----------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------- |
+| On disk                             | A single `.logicx` in your Projects Folder                                     | A folder with the `.logicx` and its audio files inside        |
+| Icon in the list                    | A package icon                                                                 | The extension's icon                                          |
+| Renaming                            | Renames the `.logicx`                                                          | Renames the folder; the `.logicx` inside keeps its name       |
+| Bounces                             | A package has no folder of its own for bounces, so use a Shared Bounces Folder | Saved in the project folder, usually in a `Bounces` subfolder |
+| Notes and lyrics (no custom folder) | Saved inside the `.logicx`                                                     | Saved in the project folder                                   |
+
+Duplicate Project and Move to Trash work on the whole `.logicx` or the whole folder.
 
 ### Opening Alternatives
 
@@ -246,7 +261,7 @@ Each feature is then scaled from 0 to 1 across the tracks in the collection's Tr
 
 Each project can have a note and a lyrics file, saved as ordinary Markdown files.
 
-- **Where they're saved:** `Notes.md` and `Lyrics.md` in the project folder by default. Set a Notes Folder or Lyrics Folder to keep them elsewhere, such as an Obsidian vault; see [File names](#file-names).
+- **Where they're saved:** `Notes.md` and `Lyrics.md` in the project folder by default (inside the `.logicx` for a project saved as a package). Set a Notes Folder or Lyrics Folder to keep them elsewhere, such as an Obsidian vault; see [File names](#file-names).
 - **Viewing:** in Search Projects' [Detail view](#overview-and-detail) (⌘⇧T), the side panel shows the note, and ⌘⌥⇧T switches it to the lyrics.
 - **Editing:** use Edit Note (⌘⌥N) and Edit Lyrics (⌘⌥L) to edit in Raycast, or Open Note (⌘⇧N) and Open Lyrics (⌘⇧L) to open the file in your Markdown app. These actions also work on tracks inside a collection.
 - **Editing elsewhere:** changes made in other apps show up right away. If a file changes in another app while you're editing it in Raycast, you're asked before your save replaces those changes.

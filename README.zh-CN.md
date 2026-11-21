@@ -44,6 +44,7 @@
 ### ② 告诉它 bounce 在哪里
 
 - 在 Extension Preferences 中，把 Bounces Subfolder 设为每个项目里存放 bounce 的子文件夹（例如 `Bounces`）；如果 bounce 直接存在项目文件夹里，就留空。
+- 存成 Package 的项目没有自己存放 bounce 的文件夹。请把它们的 bounce 导出到同一个文件夹，并设为 Shared Bounces Folder；见 [Package 与文件夹项目](#package-与文件夹项目)。
 - 可选：如果你还会把所有项目的 bounce 导出到同一个文件夹，把它设为 Shared Bounces Folder。其中的文件按名称匹配到项目，下次打开 Search Projects 时，扩展会提示你检查没有匹配上的文件；见 [Shared Bounces Folder](#shared-bounces-folder)。
 - 可选：要加入存放在其他位置的 bounce，在 Search Projects 中选中项目，使用 Manage External Bounce（⌘B）。
 
@@ -61,6 +62,20 @@
 ## 📁 项目
 
 Search Projects 列出 Projects Folder 中的所有项目。置顶的项目始终排在最上面，其余项目可以按创建或修改日期分组，按日期或名称排序。
+
+### Package 与文件夹项目
+
+Logic 有两种保存项目的方式，扩展都会列出：
+
+|                                    | Package                                                            | 文件夹                                      |
+| ---------------------------------- | ------------------------------------------------------------------ | ------------------------------------------- |
+| 磁盘上                             | Projects Folder 中的一个 `.logicx`                                 | 一个文件夹，里面有 `.logicx` 和音频文件     |
+| 列表图标                           | Package 图标                                                       | 扩展图标                                    |
+| 重命名                             | 重命名 `.logicx`                                                   | 重命名文件夹，里面的 `.logicx` 保持原名     |
+| Bounce                             | Package 没有自己存放 bounce 的文件夹，请使用 Shared Bounces Folder | 存在项目文件夹里，通常是 `Bounces` 子文件夹 |
+| 笔记和歌词（未设置自定义文件夹时） | 存在 `.logicx` 内部                                                | 存在项目文件夹里                            |
+
+Duplicate Project 和 Move to Trash 作用于整个 `.logicx` 或整个文件夹。
 
 ### 打开 Alternative
 
@@ -246,7 +261,7 @@ Energy（能量）通过比较每首曲目和合集中其他曲目在密度、�
 
 每个项目可以有一份笔记和一份歌词，都存成普通的 Markdown 文件。
 
-- **保存位置：** 默认是项目文件夹中的 `Notes.md` 和 `Lyrics.md`。设置 Notes Folder 或 Lyrics Folder 可以存到别处，比如 Obsidian 仓库；见[文件名](#文件名)。
+- **保存位置：** 默认是项目文件夹中的 `Notes.md` 和 `Lyrics.md`（存成 Package 的项目则在 `.logicx` 内部）。设置 Notes Folder 或 Lyrics Folder 可以存到别处，比如 Obsidian 仓库；见[文件名](#文件名)。
 - **查看：** 在 Search Projects 的 [Detail 视图](#overview-与-detail)（⌘⇧T）中，侧边栏显示笔记，⌘⌥⇧T 切换到歌词。
 - **编辑：** 用 Edit Note（⌘⌥N）和 Edit Lyrics（⌘⌥L）在 Raycast 中编辑，或用 Open Note（⌘⇧N）和 Open Lyrics（⌘⇧L）在你的 Markdown App 中打开文件。这些操作在合集里的曲目上同样可用。
 - **在别处编辑：** 在其他 App 中的修改会立即显示。如果你在 Raycast 中编辑时，文件在别的 App 里被改了，保存前会先询问你，再覆盖那些修改。
