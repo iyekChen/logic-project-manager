@@ -21,6 +21,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import fs from "node:fs";
 import { useAudioPlayer } from "@/core/ui/hooks/use-audio-player";
+import { usePlaybackToast } from "@/core/ui/projects/use-playback-toast";
 import { refreshDocFile, useDocWatcher } from "@/core/ui/hooks/use-doc-watcher";
 import { ensureAudioPlayerBinary } from "@/core/audio/audio-player-path";
 import { getSettings } from "@/settings";
@@ -81,7 +82,7 @@ import { useTaxonomies } from "@/core/ui/projects/use-taxonomies";
 import { LOG_PREFIX } from "@/core/log";
 import { optionKeywords } from "@/core/ui/shared/search-keywords";
 import { findCurrentSet } from "@/core/projects/current-set";
-import { formatDate, formatTime } from "@/core/ui/shared/format";
+import { formatDate } from "@/core/ui/shared/format";
 import { itemLimit, limitGroups } from "@/core/ui/shared/progressive-list";
 import { useProgressiveList } from "@/core/ui/hooks/use-progressive-list";
 import {
@@ -176,10 +177,12 @@ export function ProjectsView() {
       playerPath: PLAYER_PATH,
     });
 
-  // 常驻 Toast：只在播放时显示，title=曲名，message=进度；暂停或停止时隐藏。
-  const toastRef = useRef<Toast | null>(null);
-  const toastBusyRef = useRef(false);
-  const toastActiveRef = useRef(false);
+  const { isPlaybackToastActive } = usePlaybackToast(projects, {
+    playbackStatus,
+    playingId,
+    positionSeconds,
+    durationSeconds,
+  });
 
   // 静默启动刷新：内容没变就保留原引用，不触发重渲染，也不重写缓存。
   const commitProjects = useCallback((updated: Project[]) => {
@@ -194,54 +197,61 @@ export function ProjectsView() {
   }, [commitProjects]);
 
   // 读出每个项目 current Set 的元数据：有缓存的立刻显示，其余在后台解析，读完一个显示一个。
-  const refreshCurrentSets = useCallback(async (list: Project[]) => {
-    const run = ++currentSetsRunRef.current;
-    await loadPersistentProjectFileCache();
-    if (run !== currentSetsRunRef.current) return;
+  const refreshCurrentSets = useCallback(
+    async (list: Project[]) => {
+      const run = ++currentSetsRunRef.current;
+      await loadPersistentProjectFileCache();
+      if (run !== currentSetsRunRef.current) return;
 
-    const initial: Record<string, CurrentSetInfo> = {};
-    const missing: [string, DawSet][] = [];
-    for (const project of list) {
-      const set = findCurrentSet(daw.listSets(project));
-      if (!set) continue;
-      const cached = cachedSetMetadata(set);
-      initial[project.id] = { set, metadata: cached };
-      if (!cached) missing.push([project.id, set]);
-    }
-    setCurrentSets(initial);
-    setReadingSets(missing.length > 0);
-    if (missing.length === 0) return;
-
-    // 正在播放时不弹，免得盖住播放提示。
-    const toast =
-      missing.length >= SET_PROGRESS_MIN && !toastActiveRef.current
-        ? await showToast({ style: Toast.Style.Animated, title: labels.readingSets, message: `0 / ${missing.length}` })
-        : null;
-
-    let done = 0;
-    let nextIndex = 0;
-    async function worker() {
-      while (run === currentSetsRunRef.current) {
-        const index = nextIndex++;
-        if (index >= missing.length) return;
-        const [id, set] = missing[index];
-        try {
-          const metadata = await parseSetMetadata(set);
-          if (run !== currentSetsRunRef.current) return;
-          // 期间项目的 current Set 换了（又存了一个）就不写，等下一轮。
-          setCurrentSets((prev) => (prev[id]?.set.path === set.path ? { ...prev, [id]: { set, metadata } } : prev));
-        } catch (error) {
-          console.error(`${LOG_PREFIX} Failed to load set metadata: ${set.path}`, error);
-        }
-        done++;
-        if (toast) toast.message = `${done} / ${missing.length}`;
+      const initial: Record<string, CurrentSetInfo> = {};
+      const missing: [string, DawSet][] = [];
+      for (const project of list) {
+        const set = findCurrentSet(daw.listSets(project));
+        if (!set) continue;
+        const cached = cachedSetMetadata(set);
+        initial[project.id] = { set, metadata: cached };
+        if (!cached) missing.push([project.id, set]);
       }
-    }
-    await Promise.all(Array.from({ length: Math.min(METADATA_CONCURRENCY, missing.length) }, () => worker()));
+      setCurrentSets(initial);
+      setReadingSets(missing.length > 0);
+      if (missing.length === 0) return;
 
-    void toast?.hide();
-    if (run === currentSetsRunRef.current) setReadingSets(false);
-  }, []);
+      // 正在播放时不弹，免得盖住播放提示。
+      const toast =
+        missing.length >= SET_PROGRESS_MIN && !isPlaybackToastActive()
+          ? await showToast({
+              style: Toast.Style.Animated,
+              title: labels.readingSets,
+              message: `0 / ${missing.length}`,
+            })
+          : null;
+
+      let done = 0;
+      let nextIndex = 0;
+      async function worker() {
+        while (run === currentSetsRunRef.current) {
+          const index = nextIndex++;
+          if (index >= missing.length) return;
+          const [id, set] = missing[index];
+          try {
+            const metadata = await parseSetMetadata(set);
+            if (run !== currentSetsRunRef.current) return;
+            // 期间项目的 current Set 换了（又存了一个）就不写，等下一轮。
+            setCurrentSets((prev) => (prev[id]?.set.path === set.path ? { ...prev, [id]: { set, metadata } } : prev));
+          } catch (error) {
+            console.error(`${LOG_PREFIX} Failed to load set metadata: ${set.path}`, error);
+          }
+          done++;
+          if (toast) toast.message = `${done} / ${missing.length}`;
+        }
+      }
+      await Promise.all(Array.from({ length: Math.min(METADATA_CONCURRENCY, missing.length) }, () => worker()));
+
+      void toast?.hide();
+      if (run === currentSetsRunRef.current) setReadingSets(false);
+    },
+    [isPlaybackToastActive],
+  );
 
   const runReload = useCallback(async (): Promise<string[]> => {
     try {
@@ -386,38 +396,6 @@ export function ProjectsView() {
       watcher?.close();
     };
   }, [reloadProjects]);
-
-  // 根据播放状态维护常驻 Toast。
-  useEffect(() => {
-    const playingProject = projects.find((p) => p.id === playingId);
-    const name = playingProject?.title ?? "";
-    const isActive = playingId !== null && (playbackStatus === "Starting" || playbackStatus === "Playing");
-    toastActiveRef.current = isActive;
-
-    if (isActive) {
-      // 标题放歌名（主文字色），说明放进度（次要文字色）；动作名已经写了 Play Latest Bounce，这里不重复。
-      // 还不知道歌名时（如刚从后台恢复、列表未载入）退回 "Playing Latest Bounce"。
-      const title = name || strings.playingLatestBounce;
-      const message = durationSeconds > 0 ? `${formatTime(positionSeconds)} / ${formatTime(durationSeconds)}` : "";
-      if (toastRef.current) {
-        toastRef.current.title = title;
-        toastRef.current.message = message;
-      } else if (!toastBusyRef.current) {
-        toastBusyRef.current = true;
-        void showToast({ style: Toast.Style.Animated, title, message }).then((toast) => {
-          toastBusyRef.current = false;
-          if (!toastActiveRef.current) {
-            void toast.hide();
-            return;
-          }
-          toastRef.current = toast;
-        });
-      }
-    } else if (toastRef.current) {
-      void toastRef.current.hide();
-      toastRef.current = null;
-    }
-  }, [playbackStatus, playingId, projects, positionSeconds, durationSeconds]);
 
   const playProjectBounce = useCallback(
     (project: Project) => {
