@@ -436,25 +436,33 @@ function CollectionPanel({
     />
   );
 
+  // 轨号表和角色只跟合集有关：和曲目分析分开，改笔记、改标签时不必重读这两张表。
   useEffect(() => {
     let cancelled = false;
-    const memberList = projects.filter((p) => p.collectionIds.includes(collection.id));
-    async function load() {
+    void (async () => {
       const [trackMap, roleMap] = await Promise.all([getTrackMap(collection.id), getRoleMap(collection.id)]);
       if (cancelled) return;
       setMap(trackMap);
       setRoles(roleMap);
       setLoading(false);
-      await loadTrackInfos(
-        memberList,
-        (projectId, info) => {
-          if (cancelled) return;
-          setInfos((prev) => ({ ...prev, [projectId]: info }));
-        },
-        () => cancelled,
-      );
-    }
-    void load();
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [collection.id]);
+
+  // 曲目分析：重跑时不清空已有结果，也不重新打开加载状态，避免列表闪一下。
+  useEffect(() => {
+    let cancelled = false;
+    const memberList = projects.filter((p) => p.collectionIds.includes(collection.id));
+    void loadTrackInfos(
+      memberList,
+      (projectId, info) => {
+        if (cancelled) return;
+        setInfos((prev) => ({ ...prev, [projectId]: info }));
+      },
+      () => cancelled,
+    );
     return () => {
       cancelled = true;
     };
