@@ -22,6 +22,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import fs from "node:fs";
 import { useAudioPlayer } from "@/core/ui/hooks/use-audio-player";
 import { usePlaybackToast } from "@/core/ui/projects/use-playback-toast";
+import { useCurrentSets } from "@/core/ui/projects/use-current-sets";
 import { refreshDocFile, useDocWatcher } from "@/core/ui/hooks/use-doc-watcher";
 import { ensureAudioPlayerBinary } from "@/core/audio/audio-player-path";
 import { getSettings } from "@/settings";
@@ -67,12 +68,7 @@ import {
 } from "@/core/projects/list-cache";
 import { applyProjectMetadata, reloadProjectData } from "@/core/ui/shared/reload-projects";
 import { findLatestProjectBounce, resolveSharedBouncesFolder, unmatchedSharedBounces } from "@/core/projects/bounces";
-import { daw, type DawSet, type ProjectFileMetadata } from "@/daws";
-import {
-  cachedSetMetadata,
-  loadPersistentProjectFileCache,
-  parseSetMetadata,
-} from "@/core/projects/project-file-cache";
+import { daw } from "@/daws";
 import { SetsView, projectFilesInfo } from "@/daws/ui";
 import { labels } from "@/daws/labels";
 import { projectIcon } from "@/daws/icons";
@@ -106,13 +102,7 @@ const ONBOARDING_ASKED_KEY = "onboarding:shared-bounces-asked";
 const ONBOARDING_UNMATCHED_KEY = "onboarding:unmatched-shown-for";
 const DETAIL_DOC_STORAGE_KEY = "detail-doc:projects";
 const PLAYER_PATH = ensureAudioPlayerBinary();
-// 同时解析的 Set 数，和 View Sets 一样。
-const METADATA_CONCURRENCY = 3;
-// 要读的 Set 少于这个数时不弹进度提示（如在 DAW 里刚存了一个 Set），免得一闪而过。
-const SET_PROGRESS_MIN = 5;
 
-// 每个项目的 current Set 和它的元数据；还没读完时 metadata 为 null。
-type CurrentSetInfo = { set: DawSet; metadata: ProjectFileMetadata | null };
 // 正在由扩展执行 Move to Trash 的项目：已归档，目录监听触发的重载不要再当成 Finder 删除处理。
 const trashingIds = new Set<string>();
 
@@ -151,10 +141,6 @@ export function ProjectsView() {
     defaultMode: "detail",
   });
   const dawApp = useDawApp();
-  const [currentSets, setCurrentSets] = useState<Record<string, CurrentSetInfo>>({});
-  const [readingSets, setReadingSets] = useState(false);
-  // 每次读取编号：新一轮开始后，旧一轮的结果不再写入。
-  const currentSetsRunRef = useRef(0);
   const baseProjectsRef = useRef<Project[]>([]);
   // 每次渲染都更新：load() 的闭包里拿不到最新的 projects state。
   const projectsRef = useRef<Project[]>(projects);
@@ -183,6 +169,7 @@ export function ProjectsView() {
     positionSeconds,
     durationSeconds,
   });
+  const { currentSets, readingSets, refreshCurrentSets } = useCurrentSets({ isPlaybackToastActive });
 
   // 静默启动刷新：内容没变就保留原引用，不触发重渲染，也不重写缓存。
   const commitProjects = useCallback((updated: Project[]) => {
@@ -195,63 +182,6 @@ export function ProjectsView() {
     const updated = await applyProjectMetadata(baseProjectsRef.current);
     commitProjects(updated);
   }, [commitProjects]);
-
-  // 读出每个项目 current Set 的元数据：有缓存的立刻显示，其余在后台解析，读完一个显示一个。
-  const refreshCurrentSets = useCallback(
-    async (list: Project[]) => {
-      const run = ++currentSetsRunRef.current;
-      await loadPersistentProjectFileCache();
-      if (run !== currentSetsRunRef.current) return;
-
-      const initial: Record<string, CurrentSetInfo> = {};
-      const missing: [string, DawSet][] = [];
-      for (const project of list) {
-        const set = findCurrentSet(daw.listSets(project));
-        if (!set) continue;
-        const cached = cachedSetMetadata(set);
-        initial[project.id] = { set, metadata: cached };
-        if (!cached) missing.push([project.id, set]);
-      }
-      setCurrentSets(initial);
-      setReadingSets(missing.length > 0);
-      if (missing.length === 0) return;
-
-      // 正在播放时不弹，免得盖住播放提示。
-      const toast =
-        missing.length >= SET_PROGRESS_MIN && !isPlaybackToastActive()
-          ? await showToast({
-              style: Toast.Style.Animated,
-              title: labels.readingSets,
-              message: `0 / ${missing.length}`,
-            })
-          : null;
-
-      let done = 0;
-      let nextIndex = 0;
-      async function worker() {
-        while (run === currentSetsRunRef.current) {
-          const index = nextIndex++;
-          if (index >= missing.length) return;
-          const [id, set] = missing[index];
-          try {
-            const metadata = await parseSetMetadata(set);
-            if (run !== currentSetsRunRef.current) return;
-            // 期间项目的 current Set 换了（又存了一个）就不写，等下一轮。
-            setCurrentSets((prev) => (prev[id]?.set.path === set.path ? { ...prev, [id]: { set, metadata } } : prev));
-          } catch (error) {
-            console.error(`${LOG_PREFIX} Failed to load set metadata: ${set.path}`, error);
-          }
-          done++;
-          if (toast) toast.message = `${done} / ${missing.length}`;
-        }
-      }
-      await Promise.all(Array.from({ length: Math.min(METADATA_CONCURRENCY, missing.length) }, () => worker()));
-
-      void toast?.hide();
-      if (run === currentSetsRunRef.current) setReadingSets(false);
-    },
-    [isPlaybackToastActive],
-  );
 
   const runReload = useCallback(async (): Promise<string[]> => {
     try {
