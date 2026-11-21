@@ -33,6 +33,7 @@ import { LOG_PREFIX } from "@/core/log";
 import { alternativesViewStrings } from "./strings";
 import { openWithDaw, resolveDawApp } from "@/core/daw-app";
 import { showFailure } from "@/core/ui/shared/toast";
+import { ShowInFinderAction } from "@/core/ui/actions/show-in-finder";
 import { labels } from "@/daws/labels";
 import { SortBySubmenu } from "@/core/ui/actions/sort-by-submenu";
 import { useSortOption } from "@/core/ui/hooks/use-sort-option";
@@ -355,11 +356,7 @@ export function AlternativesView({ project }: { project: Project }) {
                         onAction={() => handleSetActive(alternative)}
                       />
                     )}
-                    <Action.ShowInFinder
-                      path={path.dirname(alternative.metadataFile)}
-                      title={strings.showInFinder}
-                      shortcut={{ modifiers: ["cmd", "opt"], key: "o" }}
-                    />
+                    <ShowInFinderAction path={path.dirname(alternative.metadataFile)} />
                     <Action.Push
                       title={alternativesViewStrings.renameAlternative}
                       icon={Icon.Pencil}

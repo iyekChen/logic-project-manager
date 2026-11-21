@@ -21,6 +21,7 @@ import path from "node:path";
 import { strings } from "@/strings";
 import { SortBySubmenu } from "@/core/ui/actions/sort-by-submenu";
 import { CopyBounceSection } from "@/core/ui/actions/copy-bounce-section";
+import { ShowInFinderAction } from "@/core/ui/actions/show-in-finder";
 import { useSortOption } from "@/core/ui/hooks/use-sort-option";
 import { sortItems, sortOptionTitle } from "@/core/ui/shared/sorting";
 import type { SortOption } from "@/core/ui/shared/sorting";
@@ -340,11 +341,7 @@ export function Bounces(props: {
                           shortcut={Keyboard.Shortcut.Common.Open}
                         />
                         {renderManageAction()}
-                        <Action.ShowInFinder
-                          title={strings.showInFinder}
-                          path={b.path}
-                          shortcut={{ modifiers: ["cmd", "opt"], key: "o" }}
-                        />
+                        <ShowInFinderAction path={b.path} />
                         <Action.Push
                           title={strings.renameBounce}
                           icon={Icon.Pencil}

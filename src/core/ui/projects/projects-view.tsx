@@ -38,6 +38,7 @@ import { PlayToggleAction } from "@/core/ui/actions/play-toggle";
 import { PlaybackControlsSection } from "@/core/ui/actions/playback-controls";
 import { DocActions } from "@/core/ui/actions/doc-actions";
 import { CopyProjectSection } from "@/core/ui/actions/copy-project-section";
+import { OpenProjectInFinderAction } from "@/core/ui/actions/open-project-in-finder";
 import { SortBySubmenu } from "@/core/ui/actions/sort-by-submenu";
 import { useSortOption } from "@/core/ui/hooks/use-sort-option";
 import { sortItems, sortOptionTitle } from "@/core/ui/shared/sorting";
@@ -814,21 +815,7 @@ export function ProjectsView() {
               <DocActions project={item} onNoteSaved={reloadProjects} onLyricsSaved={reloadProjects} />
             </ActionPanel.Section>
             <ActionPanel.Section title={strings.sectionFile}>
-              {/* 包用「打开」会交给 DAW，所以改成在 Finder 里选中它；普通文件夹照旧在 Finder 里打开。 */}
-              {item.kind === "package" ? (
-                <Action.ShowInFinder
-                  path={item.folderPath}
-                  title={strings.showInFinder}
-                  shortcut={{ modifiers: ["cmd", "opt"], key: "o" }}
-                />
-              ) : (
-                <Action.Open
-                  title={strings.openInFinder}
-                  icon={Icon.Finder}
-                  shortcut={{ modifiers: ["cmd", "opt"], key: "o" }}
-                  target={item.folderPath}
-                />
-              )}
+              <OpenProjectInFinderAction kind={item.kind} folderPath={item.folderPath} />
               <Action
                 title={labels.newProjectFile}
                 icon={Icon.NewDocument}

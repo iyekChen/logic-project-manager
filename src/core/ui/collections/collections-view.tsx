@@ -26,6 +26,7 @@ import { PlayToggleAction } from "@/core/ui/actions/play-toggle";
 import { PlaybackControlsSection } from "@/core/ui/actions/playback-controls";
 import { DocActions } from "@/core/ui/actions/doc-actions";
 import { CopyProjectSection } from "@/core/ui/actions/copy-project-section";
+import { OpenProjectInFinderAction } from "@/core/ui/actions/open-project-in-finder";
 import { viewPrefs } from "@/core/ui/shared/view-prefs";
 import {
   TrackMap,
@@ -700,21 +701,7 @@ function CollectionPanel({
   );
 
   // 工程包用「打开」会交给 DAW，所以改成在 Finder 里选中它；普通文件夹照旧在 Finder 里打开。
-  const renderOpenInFinder = (p: Project) =>
-    p.kind === "package" ? (
-      <Action.ShowInFinder
-        path={p.folderPath}
-        title={strings.showInFinder}
-        shortcut={{ modifiers: ["cmd", "opt"], key: "o" }}
-      />
-    ) : (
-      <Action.Open
-        title={strings.openInFinder}
-        icon={Icon.Finder}
-        shortcut={{ modifiers: ["cmd", "opt"], key: "o" }}
-        target={p.folderPath}
-      />
-    );
+  const renderOpenInFinder = (p: Project) => <OpenProjectInFinderAction kind={p.kind} folderPath={p.folderPath} />;
 
   const renderCopySection = (p: Project) => (
     <CopyProjectSection project={p} onCopyLatestBounce={() => copyLatestBounce(p)} />

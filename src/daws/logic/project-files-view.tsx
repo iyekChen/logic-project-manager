@@ -41,6 +41,7 @@ import { LOG_PREFIX } from "@/core/log";
 import { alternativesViewStrings, projectFilesViewStrings } from "./strings";
 import { openWithDaw, resolveDawApp } from "@/core/daw-app";
 import { showFailure } from "@/core/ui/shared/toast";
+import { ShowInFinderAction } from "@/core/ui/actions/show-in-finder";
 import { labels } from "@/daws/labels";
 import { AlternativesView, findWindowImage } from "./alternatives-view";
 
@@ -345,11 +346,7 @@ export function ProjectFilesView({ project }: { project: Project }) {
                       }
                       onPop={reload}
                     />
-                    <Action.ShowInFinder
-                      path={file.packagePath}
-                      title={strings.showInFinder}
-                      shortcut={{ modifiers: ["cmd", "opt"], key: "o" }}
-                    />
+                    <ShowInFinderAction path={file.packagePath} />
                     <Action.Push
                       title={projectFilesViewStrings.renameProjectFile}
                       icon={Icon.Pencil}

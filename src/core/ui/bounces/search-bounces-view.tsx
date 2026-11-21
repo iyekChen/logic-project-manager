@@ -17,6 +17,7 @@ import { strings } from "@/strings";
 import { LOG_PREFIX } from "@/core/log";
 import { SortBySubmenu } from "@/core/ui/actions/sort-by-submenu";
 import { CopyBounceSection } from "@/core/ui/actions/copy-bounce-section";
+import { ShowInFinderAction } from "@/core/ui/actions/show-in-finder";
 import { useSortOption } from "@/core/ui/hooks/use-sort-option";
 import { sortItems, sortOptionTitle } from "@/core/ui/shared/sorting";
 import { groupItems } from "@/core/ui/shared/grouping";
@@ -236,11 +237,7 @@ export function SearchBouncesView() {
                         target={b.path}
                         shortcut={Keyboard.Shortcut.Common.Open}
                       />
-                      <Action.ShowInFinder
-                        title={strings.showInFinder}
-                        path={b.path}
-                        shortcut={{ modifiers: ["cmd", "opt"], key: "o" }}
-                      />
+                      <ShowInFinderAction path={b.path} />
                       {!b.unmatched && b.owners.length > 0 && (
                         <Action.Push
                           title={strings.browseProjectBounces}
