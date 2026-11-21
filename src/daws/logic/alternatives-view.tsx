@@ -132,6 +132,9 @@ export function AlternativesView({ project }: { project: Project }) {
   const [groupBy, setGroupBy] = useGroupOption(ALTERNATIVES_GROUP_STORAGE_KEY, "created");
   const [reloadToken, setReloadToken] = useState(0);
 
+  // 只依赖这两个字段：project 对象来自上一层，引用可能每次都变，整个放进依赖会让 effect 反复跑。
+  const { folderPath, kind } = project;
+
   useEffect(() => {
     let cancelled = false;
 
@@ -141,7 +144,9 @@ export function AlternativesView({ project }: { project: Project }) {
         if (cancelled) return;
 
         // 按编号排（Alternatives/000、001……），和 Logic 菜单里的顺序一致。
-        const sets = logicAdapter.listSets(project).sort((a, b) => a.metadataFile.localeCompare(b.metadataFile));
+        const sets = logicAdapter
+          .listSets({ folderPath, kind })
+          .sort((a, b) => a.metadataFile.localeCompare(b.metadataFile));
         const items: ProjectAlternative[] = [];
         for (const set of sets) {
           const cached = cachedSetMetadata(set);
@@ -172,7 +177,7 @@ export function AlternativesView({ project }: { project: Project }) {
     return () => {
       cancelled = true;
     };
-  }, [project.folderPath, project.kind, reloadToken]);
+  }, [folderPath, kind, reloadToken]);
 
   const reload = () => setReloadToken((n) => n + 1);
 
