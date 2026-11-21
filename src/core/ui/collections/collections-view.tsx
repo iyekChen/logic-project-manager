@@ -84,6 +84,7 @@ import {
   sameName,
   splitTracklist,
   totalDuration,
+  trackInfoSignature,
 } from "@/core/ui/collections/tracklist";
 import { projectIcon } from "@/daws/icons";
 
@@ -427,12 +428,16 @@ function CollectionPanel({
     };
   }, [collection.id]);
 
-  // 曲目分析：重跑时不清空已有结果，也不重新打开加载状态，避免列表闪一下。
+  // 曲目分析：只在影响分析结果的字段变化时重跑（见 trackInfoSignature），改笔记、改标签不再重跑。
+  // 重跑时不清空已有结果，也不重新打开加载状态，避免列表闪一下。
+  // 成员列表走 ref：effect 只依赖签名，否则 exhaustive-deps 会要求依赖整个数组。
+  const membersRef = useRef<Project[]>(members);
+  membersRef.current = members;
+  const analysisSignature = trackInfoSignature(members);
   useEffect(() => {
     let cancelled = false;
-    const memberList = projects.filter((p) => p.collectionIds.includes(collection.id));
     void loadTrackInfos(
-      memberList,
+      membersRef.current,
       (projectId, info) => {
         if (cancelled) return;
         setInfos((prev) => ({ ...prev, [projectId]: info }));
@@ -442,7 +447,7 @@ function CollectionPanel({
     return () => {
       cancelled = true;
     };
-  }, [collection.id, projects]);
+  }, [collection.id, analysisSignature]);
 
   async function apply(next: TrackMap) {
     setMap(next);
