@@ -24,6 +24,7 @@ import type { Project } from "@/core/projects/types";
 import { slugify, type TaxonomyOption } from "@/core/metadata/taxonomy";
 import { PlayToggleAction } from "@/core/ui/actions/play-toggle";
 import { PlaybackControlsSection } from "@/core/ui/actions/playback-controls";
+import { DocActions } from "@/core/ui/actions/doc-actions";
 import { viewPrefs } from "@/core/ui/shared/view-prefs";
 import {
   TrackMap,
@@ -55,7 +56,7 @@ import { refreshDocFile, useDocWatcher } from "@/core/ui/hooks/use-doc-watcher";
 import { ensureAudioPlayerBinary } from "@/core/audio/audio-player-path";
 import { findLatestProjectBounce } from "@/core/projects/bounces";
 import { displayDoc, readDocFile, stripFrontmatter } from "@/core/docs/docs";
-import { docPlaceholder, openDoc } from "@/core/docs/doc-actions";
+import { docPlaceholder } from "@/core/docs/doc-actions";
 import {
   getPinnedCollections,
   movePinnedCollection,
@@ -72,7 +73,6 @@ import {
 import { showFailure } from "@/core/ui/shared/toast";
 import { onFinderRenames } from "@/core/fs/finder-sync";
 import { EditInfo, type ProjectRename } from "@/core/ui/components/edit-info";
-import { EditNote } from "@/core/ui/components/edit-note";
 import { optionKeywords } from "@/core/ui/shared/search-keywords";
 import { projectIcon } from "@/daws/icons";
 
@@ -660,36 +660,7 @@ function CollectionPanel({
 
   // 打开 Note / Lyrics 的外部编辑动作。Note 文件存在才出现；Lyrics 打开即建（可套模板）。
   const renderDocActions = (p: Project) => (
-    <>
-      <Action.Push
-        title={strings.editNote}
-        icon={Icon.Highlight}
-        shortcut={{ modifiers: ["cmd", "opt"], key: "n" }}
-        target={<EditNote project={p} onSaved={() => reloadDoc(p, "notes")} />}
-      />
-      <Action.Push
-        title={strings.editLyrics}
-        icon={Icon.Highlight}
-        shortcut={{ modifiers: ["cmd", "opt"], key: "l" }}
-        target={<EditNote project={p} kind="lyrics" onSaved={() => reloadDoc(p, "lyrics")} />}
-      />
-      <Action
-        title={strings.openNote}
-        icon={Icon.Book}
-        shortcut={{ modifiers: ["cmd", "shift"], key: "n" }}
-        onAction={async () => {
-          await openDoc(p, "notes");
-        }}
-      />
-      <Action
-        title={strings.openLyrics}
-        icon={Icon.Book}
-        shortcut={{ modifiers: ["cmd", "shift"], key: "l" }}
-        onAction={async () => {
-          await openDoc(p, "lyrics");
-        }}
-      />
-    </>
+    <DocActions project={p} onNoteSaved={() => reloadDoc(p, "notes")} onLyricsSaved={() => reloadDoc(p, "lyrics")} />
   );
 
   // 视图切换 Action（Detail / Overview，本视图独立记忆）。

@@ -36,6 +36,7 @@ import { removeProjectFromAllRoles } from "@/core/metadata/collection-roles";
 import { strings } from "@/strings";
 import { PlayToggleAction } from "@/core/ui/actions/play-toggle";
 import { PlaybackControlsSection } from "@/core/ui/actions/playback-controls";
+import { DocActions } from "@/core/ui/actions/doc-actions";
 import { SortBySubmenu } from "@/core/ui/actions/sort-by-submenu";
 import { useSortOption } from "@/core/ui/hooks/use-sort-option";
 import { sortItems, sortOptionTitle } from "@/core/ui/shared/sorting";
@@ -47,13 +48,12 @@ import { Bounces, UnmatchedBounces } from "@/core/ui/bounces";
 import { stageTaxonomy, genreTaxonomy, collectionTaxonomy } from "@/core/metadata/taxonomies";
 import type { TaxonomyOption } from "@/core/metadata/taxonomy";
 import { displayDoc, missingDocFolder } from "@/core/docs/docs";
-import { docPlaceholder, openDoc } from "@/core/docs/doc-actions";
+import { docPlaceholder } from "@/core/docs/doc-actions";
 import { archiveDeletedProject, assertDeletionWritable } from "@/core/fs/deleted-projects";
 import { showFailure } from "@/core/ui/shared/toast";
 import { CollectionList } from "@/core/ui/collections";
 import { CleanUpRemovedProjects } from "@/core/ui/cleanup";
 import { EditInfo } from "@/core/ui/components/edit-info";
-import { EditNote } from "@/core/ui/components/edit-note";
 import { DuplicateProject } from "@/core/ui/projects/duplicate-project";
 import { ManageExternalBounces } from "@/core/ui/components/manage-external-bounces";
 import type { Project } from "@/core/projects/types";
@@ -810,34 +810,7 @@ export function ProjectsView() {
                 shortcut={Keyboard.Shortcut.Common.Edit}
                 target={<EditInfo project={item} onSaved={reloadProjects} />}
               />
-              <Action.Push
-                title={strings.editNote}
-                icon={Icon.Highlight}
-                shortcut={{ modifiers: ["cmd", "opt"], key: "n" }}
-                target={<EditNote project={item} onSaved={reloadProjects} />}
-              />
-              <Action.Push
-                title={strings.editLyrics}
-                icon={Icon.Highlight}
-                shortcut={{ modifiers: ["cmd", "opt"], key: "l" }}
-                target={<EditNote project={item} kind="lyrics" onSaved={reloadProjects} />}
-              />
-              <Action
-                title={strings.openNote}
-                icon={Icon.Book}
-                shortcut={{ modifiers: ["cmd", "shift"], key: "n" }}
-                onAction={async () => {
-                  await openDoc(item, "notes");
-                }}
-              />
-              <Action
-                title={strings.openLyrics}
-                icon={Icon.Book}
-                shortcut={{ modifiers: ["cmd", "shift"], key: "l" }}
-                onAction={async () => {
-                  await openDoc(item, "lyrics");
-                }}
-              />
+              <DocActions project={item} onNoteSaved={reloadProjects} onLyricsSaved={reloadProjects} />
             </ActionPanel.Section>
             <ActionPanel.Section title={strings.sectionFile}>
               {/* 包用「打开」会交给 DAW，所以改成在 Finder 里选中它；普通文件夹照旧在 Finder 里打开。 */}
