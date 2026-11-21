@@ -23,15 +23,11 @@ import fs from "node:fs";
 import { useAudioPlayer } from "@/core/ui/hooks/use-audio-player";
 import { usePlaybackToast } from "@/core/ui/projects/use-playback-toast";
 import { useCurrentSets } from "@/core/ui/projects/use-current-sets";
+import { ONBOARDING_ASKED_KEY, ONBOARDING_UNMATCHED_KEY, useOnboarding } from "@/core/ui/projects/use-onboarding";
 import { refreshDocFile, useDocWatcher } from "@/core/ui/hooks/use-doc-watcher";
 import { ensureAudioPlayerBinary } from "@/core/audio/audio-player-path";
 import { getSettings } from "@/settings";
-import {
-  deleteProjectMetadata,
-  getAllProjectMetadata,
-  movePinnedProject,
-  setProjectPinned,
-} from "@/core/metadata/project-metadata";
+import { deleteProjectMetadata, movePinnedProject, setProjectPinned } from "@/core/metadata/project-metadata";
 import { removeProjectFromAllOrders } from "@/core/metadata/collection-order";
 import { removeProjectFromAllRoles } from "@/core/metadata/collection-roles";
 import { strings } from "@/strings";
@@ -67,7 +63,7 @@ import {
   writeProjectListCache,
 } from "@/core/projects/list-cache";
 import { applyProjectMetadata, reloadProjectData } from "@/core/ui/shared/reload-projects";
-import { findLatestProjectBounce, resolveSharedBouncesFolder, unmatchedSharedBounces } from "@/core/projects/bounces";
+import { findLatestProjectBounce, resolveSharedBouncesFolder } from "@/core/projects/bounces";
 import { daw } from "@/daws";
 import { SetsView, projectFilesInfo } from "@/daws/ui";
 import { labels } from "@/daws/labels";
@@ -97,9 +93,6 @@ const PROJECTS_ROOT = settings.projectsFolder;
 const SORT_STORAGE_KEY = "project-sort-option";
 const GROUP_STORAGE_KEY = "project-group-option";
 const VIEW_MODE_STORAGE_KEY = "view-mode:projects";
-// 首次使用引导：问过共享文件夹没有；上次弹「未匹配」提示时用的共享文件夹路径。
-const ONBOARDING_ASKED_KEY = "onboarding:shared-bounces-asked";
-const ONBOARDING_UNMATCHED_KEY = "onboarding:unmatched-shown-for";
 const DETAIL_DOC_STORAGE_KEY = "detail-doc:projects";
 const PLAYER_PATH = ensureAudioPlayerBinary();
 
@@ -152,8 +145,6 @@ export function ProjectsView() {
   );
   // 残留数据提示每次打开只弹一次（fs.watch 触发的重载不再重复提示）。
   const leftoverToastShownRef = useRef(false);
-  // 首次使用引导每次打开最多弹一个。
-  const onboardingShownRef = useRef(false);
 
   // 外部编辑器改了笔记 / 歌词：只重读那一份，详情面板马上跟着变。
   useDocWatcher(PROJECTS_ROOT, (file) => setProjects((prev) => refreshDocFile(prev, file)));
@@ -236,42 +227,7 @@ export function ProjectsView() {
     return promise;
   }, [runReload]);
 
-  // 首次使用引导：没设共享文件夹时问一次；换了共享文件夹时，有未匹配的 bounce 就提示一次。
-  const runOnboarding = useCallback(async () => {
-    if (onboardingShownRef.current) return;
-    const folder = resolveSharedBouncesFolder();
-    if (folder === null) {
-      if ((await LocalStorage.getItem(ONBOARDING_ASKED_KEY)) === "true") return;
-      onboardingShownRef.current = true;
-      await confirmAlert({
-        title: strings.onboardingSharedTitle,
-        message: strings.onboardingSharedMessage,
-        primaryAction: { title: strings.openPreferences, onAction: () => void openExtensionPreferences() },
-        dismissAction: { title: strings.skip },
-      });
-      await LocalStorage.setItem(ONBOARDING_ASKED_KEY, "true");
-      return;
-    }
-
-    if ((await LocalStorage.getItem(ONBOARDING_UNMATCHED_KEY)) === folder) return;
-    // 先记下这个文件夹：没有未匹配的也算判断过，换文件夹前不再重复检查。
-    await LocalStorage.setItem(ONBOARDING_UNMATCHED_KEY, folder);
-    const metadataStore = await getAllProjectMetadata();
-    const claimed = Object.values(metadataStore).flatMap((metadata) => metadata.externalBounceFiles);
-    const count = unmatchedSharedBounces(claimed).length;
-    if (count === 0) return;
-    onboardingShownRef.current = true;
-    await confirmAlert({
-      title: strings.onboardingUnmatchedTitle.replace("{count}", String(count)),
-      message: strings.onboardingUnmatchedMessage,
-      primaryAction: {
-        title: strings.review,
-        onAction: () =>
-          push(<UnmatchedBounces projects={projectsRef.current} onChanged={() => void reloadProjects()} />),
-      },
-      dismissAction: { title: strings.skip },
-    });
-  }, [push, reloadProjects]);
+  const { runOnboarding } = useOnboarding({ getProjects: () => projectsRef.current, reloadProjects });
 
   // 启动只加载一遍：依赖里的 push 每次渲染都是新函数，会让这个 effect 重跑。
   const startupDoneRef = useRef(false);
