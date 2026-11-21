@@ -80,16 +80,18 @@ import { labels } from "@/daws/labels";
 import { projectIcon } from "@/daws/icons";
 import { openWithDaw, resolveDawApp } from "@/core/daw-app";
 import { LOG_PREFIX } from "@/core/log";
-import {
-  bpmMatches,
-  dateKeywords,
-  matchesSearch,
-  nameKeywords,
-  optionKeywords,
-  timeSignatureMatches,
-} from "@/core/ui/shared/search-keywords";
+import { optionKeywords } from "@/core/ui/shared/search-keywords";
 import { findCurrentSet } from "@/core/projects/current-set";
-import { keyKeywords, keyToken } from "@/core/projects/musical-key";
+import {
+  createdYears,
+  filterByDropdown,
+  matchProject,
+  parseTagSearch,
+  projectKeyWords,
+  projectSearchTerms,
+  splitPinned,
+  tagNames,
+} from "@/core/ui/projects/project-filter";
 
 const settings = getSettings();
 const PROJECTS_ROOT = settings.projectsFolder;
@@ -122,12 +124,6 @@ const PROJECT_SORT_OPTIONS: SortOption[] = [
   "name-asc",
   "name-desc",
 ];
-
-function namesFor(ids: string[], options: TaxonomyOption[]): string[] {
-  return ids
-    .map((id) => options.find((option) => option.id === id)?.name)
-    .filter((name): name is string => name !== undefined);
-}
 
 function formatDate(ms: number): string {
   const date = new Date(ms);
@@ -548,73 +544,24 @@ export function ProjectsView() {
     }
   };
 
-  // 每个项目可被搜到的内容：标题、Stage、Genre、合集名的各种写法，加上创建年月。
-  const searchTerms = (project: Project) => {
-    const stage = stageOptions.find((option) => option.id === project.stageId);
-    const genres = genreOptions.filter((option) => project.genreIds.includes(option.id));
-    const collections = collectionOptions.filter((option) => project.collectionIds.includes(option.id));
-    return [
-      ...nameKeywords(project.title),
-      ...(stage ? optionKeywords(stage) : []),
-      ...genres.flatMap(optionKeywords),
-      ...collections.flatMap(optionKeywords),
-      ...dateKeywords(project.createdAt),
-    ];
-  };
-
-  const filteredByDropdown = (() => {
-    if (selectedFilter === "all") return projects;
-    const separator = selectedFilter.indexOf(":");
-    const dimension = selectedFilter.slice(0, separator);
-    const id = selectedFilter.slice(separator + 1);
-    if (dimension === "stage") return projects.filter((project) => project.stageId === id);
-    if (dimension === "genre") return projects.filter((project) => project.genreIds.includes(id));
-    if (dimension === "created")
-      return projects.filter((project) => new Date(project.createdAt).getFullYear() === Number(id));
-    return projects;
-  })();
-
-  // current Set 的 Key 的各种写法。不放进 searchTerms：组合搜索里 Key 要整词对上，
-  // 否则 cm（C 小调）会被当成 cmaj（C 大调）的一部分搜到。
-  const keyWordsOf = (project: Project) => {
-    const key = currentSets[project.id]?.metadata?.key;
-    return key ? [key, ...keyKeywords(key)] : [];
-  };
-
-  const matchProject = (project: Project, query: string) => {
-    const keyTokens = new Set(keyWordsOf(project).map(keyToken));
-    const bpm = currentSets[project.id]?.metadata?.bpm ?? null;
-    const timeSignature = currentSets[project.id]?.metadata?.timeSignature ?? null;
-    return matchesSearch(
-      searchTerms(project),
-      query,
-      (word) =>
-        bpmMatches(bpm, word) ??
-        timeSignatureMatches(timeSignature, word) ??
-        (keyTokens.has(keyToken(word)) ? true : undefined),
-    );
-  };
+  // 搜索、筛选、排序都只读当前状态，计算本身在 project-filter.ts 里。
+  const searchContext = { stageOptions, genreOptions, collectionOptions, currentSets };
+  const searchTerms = (project: Project) => projectSearchTerms(project, searchContext);
+  const keyWordsOf = (project: Project) => projectKeyWords(project, searchContext);
 
   // 以 # 开头时用组合搜索（每个词都要命中）；否则交给 Raycast 的模糊搜索。
-  const isTagSearch = searchText.trimStart().startsWith("#");
-  const isEmptyTagSearch = isTagSearch && searchText.trimStart().slice(1).trim() === "";
+  const { isTagSearch, isEmptyTagSearch, query } = parseTagSearch(searchText);
+  const filteredByDropdown = filterByDropdown(projects, selectedFilter);
   const filteredProjects = isTagSearch
-    ? filteredByDropdown.filter((project) => matchProject(project, searchText.trimStart().slice(1)))
+    ? filteredByDropdown.filter((project) => matchProject(project, query, searchContext))
     : filteredByDropdown;
 
-  const pinnedProjects = filteredProjects
-    .filter((project) => project.pinned)
-    .sort((a, b) => (a.pinOrder ?? Number.MAX_SAFE_INTEGER) - (b.pinOrder ?? Number.MAX_SAFE_INTEGER));
-
-  const unpinnedProjects = sortItems(
-    filteredProjects.filter((project) => !project.pinned),
-    sortBy,
-    (project) => ({
-      created: project.createdAt,
-      modified: project.modifiedAt,
-      name: project.title,
-    }),
-  );
+  const { pinned: pinnedProjects, unpinned } = splitPinned(filteredProjects);
+  const unpinnedProjects = sortItems(unpinned, sortBy, (project) => ({
+    created: project.createdAt,
+    modified: project.modifiedAt,
+    name: project.title,
+  }));
 
   // 每次渲染只查一次：笔记 / 歌词文件夹是否存在。占位文字按这个结果生成，不再逐项 existsSync。
   const missingDocFolders: Record<"notes" | "lyrics", string | null> = {
@@ -624,8 +571,8 @@ export function ProjectsView() {
 
   const renderProject = (item: Project) => {
     const stage = stageOptions.find((option) => option.id === item.stageId);
-    const genreNames = namesFor(item.genreIds, genreOptions);
-    const collectionNames = namesFor(item.collectionIds, collectionOptions);
+    const genreNames = tagNames(item.genreIds, genreOptions);
+    const collectionNames = tagNames(item.collectionIds, collectionOptions);
     const current = currentSets[item.id];
     const currentBpm = current?.metadata?.bpm ?? null;
     const files = projectFiles.get(item.id) ?? null;
@@ -928,7 +875,7 @@ export function ProjectsView() {
 
   const currentSortTitle = sortOptionTitle(sortBy);
   // Filter 的 Created 分组只列出有项目的年份，新的在前。
-  const createdYears = [...new Set(projects.map((p) => new Date(p.createdAt).getFullYear()))].sort((a, b) => b - a);
+  const years = createdYears(projects);
 
   const groups = groupItems(
     unpinnedProjects,
@@ -987,7 +934,7 @@ export function ProjectsView() {
             ))}
           </List.Dropdown.Section>
           <List.Dropdown.Section title={strings.created}>
-            {createdYears.map((year) => (
+            {years.map((year) => (
               <List.Dropdown.Item
                 key={`created:${year}`}
                 title={String(year)}
