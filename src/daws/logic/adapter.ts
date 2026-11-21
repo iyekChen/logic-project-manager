@@ -51,21 +51,53 @@ function isDirectory(entryPath: string): boolean {
   }
 }
 
-// 文件夹形态：项目文件夹里放着一个 .logicx 包。改名只改外层文件夹，包名不跟着变，所以按后缀找，不按名字拼。
-function findPackage(folderPath: string): string | null {
+/** 文件夹里所有 .logicx 包的完整路径，按名字排序。改名只改外层文件夹，包名不跟着变，所以按后缀找，不按名字拼。 */
+export function listPackages(folderPath: string): string[] {
   let entries: string[];
   try {
     entries = fs.readdirSync(folderPath);
   } catch {
-    return null;
+    return [];
   }
-  const packages = entries
+  return entries
     .filter((entry) => PACKAGE_EXTENSION_PATTERN.test(entry) && isDirectory(path.join(folderPath, entry)))
-    .sort();
-  if (packages.length === 0) return null;
-  // 有多个包时优先和文件夹同名的那个，否则取排序后的第一个，保证每次结果一样。
-  const sameName = packages.find((entry) => idForEntry(entry) === path.basename(folderPath));
-  return path.join(folderPath, sameName ?? packages[0]);
+    .sort()
+    .map((entry) => path.join(folderPath, entry));
+}
+
+/** 包最后一次保存的时间：各 Alternative 里 ProjectData 修改时间的最大值。一个都读不到时为 -Infinity。 */
+export function lastSavedAt(packagePath: string): number {
+  const alternativesPath = path.join(packagePath, "Alternatives");
+  let entries: string[];
+  try {
+    entries = fs.readdirSync(alternativesPath);
+  } catch {
+    return Number.NEGATIVE_INFINITY;
+  }
+  let latest = Number.NEGATIVE_INFINITY;
+  for (const entry of entries) {
+    if (!ALTERNATIVE_INDEX_PATTERN.test(entry)) continue;
+    try {
+      latest = Math.max(latest, fs.statSync(path.join(alternativesPath, entry, "ProjectData")).mtimeMs);
+    } catch {
+      continue;
+    }
+  }
+  return latest;
+}
+
+// 文件夹形态的主包。用 Save As 做版本时，Logic 默认存进同一个文件夹，所以一个文件夹里常有好几个包。
+// 取最后保存的那个（用户正在做的版本）；保存时间一样时优先和文件夹同名的，再按名字。
+function findPackage(folderPath: string): string | null {
+  const folderName = path.basename(folderPath);
+  const ranked = listPackages(folderPath)
+    .map((packagePath) => ({
+      packagePath,
+      savedAt: lastSavedAt(packagePath),
+      sameName: idForEntry(path.basename(packagePath)) === folderName,
+    }))
+    .sort((a, b) => b.savedAt - a.savedAt || Number(b.sameName) - Number(a.sameName));
+  return ranked[0]?.packagePath ?? null;
 }
 
 type ProjectInformation = { names: Map<number, string>; active: number | null };
@@ -141,7 +173,7 @@ export const logicAdapter: DawAdapter = {
     if (PACKAGE_EXTENSION_PATTERN.test(entryName)) {
       return { id: idForEntry(entryName), folderPath: entryPath, kind: "package" };
     }
-    return findPackage(entryPath) ? { id: entryName, folderPath: entryPath, kind: "folder" } : null;
+    return listPackages(entryPath).length > 0 ? { id: entryName, folderPath: entryPath, kind: "folder" } : null;
   },
 
   listSets({ folderPath, kind }) {

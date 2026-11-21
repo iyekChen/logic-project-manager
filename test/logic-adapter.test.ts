@@ -15,7 +15,8 @@ function escapeXml(text: string): string {
 function toXml(value: Fixture): string {
   if (typeof value === "string") return `<string>${escapeXml(value)}</string>`;
   if (typeof value === "boolean") return value ? "<true/>" : "<false/>";
-  if (typeof value === "number") return Number.isInteger(value) ? `<integer>${value}</integer>` : `<real>${value}</real>`;
+  if (typeof value === "number")
+    return Number.isInteger(value) ? `<integer>${value}</integer>` : `<real>${value}</real>`;
   if (Array.isArray(value)) return `<array>${value.map(toXml).join("")}</array>`;
   const entries = Object.entries(value).map(([key, item]) => `<key>${escapeXml(key)}</key>${toXml(item)}`);
   return `<dict>${entries.join("")}</dict>`;
@@ -166,6 +167,32 @@ describe("logicAdapter.listSets", () => {
   it("Folder 形态读里面的包，名字用包名而不是文件夹名", () => {
     const sets = logicAdapter.listSets({ folderPath, kind: "folder" });
     expect(sets).toEqual([expect.objectContaining({ name: "Old Name", path: innerPackagePath, active: true })]);
+  });
+
+  it("Folder 里有多个包时，读最后保存的那个，不管名字", () => {
+    const versionsPath = path.join(root, "Versions");
+    const original = path.join(versionsPath, "Versions.logicx");
+    const newer = path.join(versionsPath, "Versions v2.logicx");
+    writeAlternative(original, "000", songMetadata(90, "C", "major", 4, 4));
+    writeAlternative(newer, "000", songMetadata(128, "D", "minor", 4, 4));
+    fs.utimesSync(path.join(original, "Alternatives", "000", "ProjectData"), 2000, 2000);
+    fs.utimesSync(path.join(newer, "Alternatives", "000", "ProjectData"), 3000, 3000);
+
+    const sets = logicAdapter.listSets({ folderPath: versionsPath, kind: "folder" });
+    expect(sets.map((set) => set.path)).toEqual([newer]);
+  });
+
+  it("Folder 里几个包保存时间一样时，优先和文件夹同名的", () => {
+    const tiePath = path.join(root, "Tie");
+    const other = path.join(tiePath, "A Other.logicx");
+    const sameName = path.join(tiePath, "Tie.logicx");
+    writeAlternative(other, "000", songMetadata(90, "C", "major", 4, 4));
+    writeAlternative(sameName, "000", songMetadata(90, "C", "major", 4, 4));
+    fs.utimesSync(path.join(other, "Alternatives", "000", "ProjectData"), 2000, 2000);
+    fs.utimesSync(path.join(sameName, "Alternatives", "000", "ProjectData"), 2000, 2000);
+
+    const sets = logicAdapter.listSets({ folderPath: tiePath, kind: "folder" });
+    expect(sets.map((set) => set.path)).toEqual([sameName]);
   });
 
   it("没有 ProjectInformation.plist 时名字退回编号；只有一个 Alternative 时仍算 Active", () => {
