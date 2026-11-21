@@ -32,7 +32,7 @@ import type { Project } from "@/core/projects/types";
 import { LOG_PREFIX } from "@/core/log";
 import { alternativesViewStrings } from "./strings";
 import { openWithDaw, resolveDawApp } from "@/core/daw-app";
-import { showFailure } from "@/core/ui/toast";
+import { showFailure } from "@/core/ui/shared/toast";
 import { labels } from "@/daws/labels";
 import { SortBySubmenu, sortItems, sortOptionTitle, useSortOption } from "@/core/ui/sorting";
 import type { SortOption } from "@/core/ui/sorting";

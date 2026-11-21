@@ -36,7 +36,7 @@ import type { Project } from "@/core/projects/types";
 import { LOG_PREFIX } from "@/core/log";
 import { alternativesViewStrings, projectFilesViewStrings } from "./strings";
 import { openWithDaw, resolveDawApp } from "@/core/daw-app";
-import { showFailure } from "@/core/ui/toast";
+import { showFailure } from "@/core/ui/shared/toast";
 import { labels } from "@/daws/labels";
 import { AlternativesView, findWindowImage } from "./alternatives-view";
 

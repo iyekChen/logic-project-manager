@@ -26,18 +26,11 @@ import {
 } from "@/core/projects/bounce-list";
 import type { BounceListItem, BounceOwner } from "@/core/projects/bounce-list";
 import type { Project } from "@/core/projects/types";
-import { reloadProjectData } from "@/core/ui/reload-projects";
-import {
-  BOUNCES_SORT_OPTIONS,
-  BounceGroupSubmenu,
-  Bounces,
-  formatSize,
-  isBounceGroup,
-  splitExt,
-} from "@/core/ui/bounces";
-import type { BounceGroup } from "@/core/ui/bounces";
-import { AssignBounce } from "@/core/ui/unmatched-bounces";
-import { showFailure } from "@/core/ui/toast";
+import { reloadProjectData } from "@/core/ui/shared/reload-projects";
+import { BOUNCES_SORT_OPTIONS, BounceGroupSubmenu, Bounces, formatSize, isBounceGroup, splitExt } from "./bounces";
+import type { BounceGroup } from "./bounces";
+import { AssignBounce } from "./unmatched-bounces";
+import { showFailure } from "@/core/ui/shared/toast";
 
 const settings = getSettings();
 const PROJECTS_ROOT = settings.projectsFolder;

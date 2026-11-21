@@ -1,6 +1,6 @@
 import { Action, ActionPanel, Icon } from "@raycast/api";
 import { useState } from "react";
-import { readCachedChoice, viewPrefs } from "./view-prefs";
+import { readCachedChoice, viewPrefs } from "./shared/view-prefs";
 import { strings } from "@/strings";
 
 export type GroupOption = "created" | "modified" | "none";
