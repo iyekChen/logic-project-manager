@@ -35,6 +35,8 @@ import { formatSize, groupBySource, splitExt } from "./bounce-format";
 import { useBounceGroupOption } from "@/core/ui/hooks/use-bounce-group-option";
 import { AssignBounce } from "./unmatched-bounces";
 import { showFailure } from "@/core/ui/shared/toast";
+import { itemLimit, limitGroups } from "@/core/ui/shared/progressive-list";
+import { useProgressiveList } from "@/core/ui/hooks/use-progressive-list";
 
 const settings = getSettings();
 const PROJECTS_ROOT = settings.projectsFolder;
@@ -42,9 +44,6 @@ const PROJECTS_ROOT = settings.projectsFolder;
 const SEARCH_BOUNCES_SORT_STORAGE_KEY = "search-bounces-sort-option";
 // 分组选择现在和别的视图偏好一样存 Cache。键名不变，旧版本存在 LocalStorage 里的值第一次读到时搬过来。
 const SEARCH_BOUNCES_GROUP_STORAGE_KEY = "search-bounces-group-by";
-
-const INITIAL_ITEM_COUNT = 15;
-const FILL_DELAY_MS = 0;
 
 // 全部项目的 bounce 汇总：同一个文件只出现一次，标出它属于哪些项目。
 export function SearchBouncesView() {
@@ -61,7 +60,7 @@ export function SearchBouncesView() {
   const lastWrittenRef = useRef(initialCache);
   // 启动只跑一次：StrictMode 下 effect 会跑两次。
   const startupDoneRef = useRef(false);
-  const [showAll, setShowAll] = useState(false);
+  const { showAll, showAllNow } = useProgressiveList(items.length);
   const [sortBy, setSortBy] = useSortOption(SEARCH_BOUNCES_SORT_STORAGE_KEY, BOUNCES_SORT_OPTIONS, "created-desc");
   // 持久化的分组选择（含 "source"）；存的值不认识时用默认。
   // 旧键用 useLocalStorage 存 JSON，所以迁移时要先 JSON.parse。
@@ -120,14 +119,6 @@ export function SearchBouncesView() {
     lastWrittenRef.current = items;
   }, [isLoading, items]);
 
-  // 首帧只渲染前 INITIAL_ITEM_COUNT 项，这里补全其余部分。
-  // 依赖里带 showAll：StrictMode 模拟卸载后重新挂载时会重新设置计时器，不会被清掉后再也不设。
-  useEffect(() => {
-    if (showAll || items.length === 0) return;
-    const timer = setTimeout(() => setShowAll(true), FILL_DELAY_MS);
-    return () => clearTimeout(timer);
-  }, [showAll, items.length]);
-
   const handleCopy = async (bounce: BounceListItem) => {
     await Clipboard.copy({ file: bounce.path });
     await showToast({ style: Toast.Style.Success, title: strings.bounceCopied, message: bounce.name });
@@ -154,15 +145,7 @@ export function SearchBouncesView() {
         );
 
   // 先渲染前 INITIAL_ITEM_COUNT 项，首帧之后补全。分组和排序已完成，只截掉最后渲染的部分。
-  const itemLimit = showAll ? Number.POSITIVE_INFINITY : INITIAL_ITEM_COUNT;
-  let itemBudget = itemLimit;
-  const renderGroups = groups
-    .map((group) => {
-      const list = group.items.slice(0, Math.max(0, itemBudget));
-      itemBudget -= list.length;
-      return { ...group, items: list };
-    })
-    .filter((group) => group.items.length > 0);
+  const renderGroups = limitGroups(groups, itemLimit(showAll));
 
   return (
     <List
@@ -170,7 +153,7 @@ export function SearchBouncesView() {
       filtering={true}
       onSearchTextChange={(text) => {
         // 一打字就补全，不等计时器。
-        if (text) setShowAll(true);
+        if (text) showAllNow();
       }}
       searchBarPlaceholder={strings.searchBounces}
     >

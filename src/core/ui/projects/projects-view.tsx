@@ -83,6 +83,8 @@ import { LOG_PREFIX } from "@/core/log";
 import { optionKeywords } from "@/core/ui/shared/search-keywords";
 import { findCurrentSet } from "@/core/projects/current-set";
 import { formatDate, formatTime } from "@/core/ui/shared/format";
+import { itemLimit, limitGroups } from "@/core/ui/shared/progressive-list";
+import { useProgressiveList } from "@/core/ui/hooks/use-progressive-list";
 import {
   createdYears,
   filterByDropdown,
@@ -109,9 +111,6 @@ const METADATA_CONCURRENCY = 3;
 // 要读的 Set 少于这个数时不弹进度提示（如在 DAW 里刚存了一个 Set），免得一闪而过。
 const SET_PROGRESS_MIN = 5;
 
-const INITIAL_ITEM_COUNT = 15;
-const FILL_DELAY_MS = 0;
-
 // 每个项目的 current Set 和它的元数据；还没读完时 metadata 为 null。
 type CurrentSetInfo = { set: DawSet; metadata: ProjectFileMetadata | null };
 // 正在由扩展执行 Move to Trash 的项目：已归档，目录监听触发的重载不要再当成 Finder 删除处理。
@@ -133,13 +132,13 @@ export function ProjectsView() {
   const [collectionOptions, setCollectionOptions] = useState<TaxonomyOption[]>([]);
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [searchText, setSearchText] = useState("");
-  // 先渲染前 INITIAL_ITEM_COUNT 项，首帧之后补全；一打字也立刻补全。
-  const [showAll, setShowAll] = useState(false);
   const [sortBy, setSortBy] = useSortOption(SORT_STORAGE_KEY, PROJECT_SORT_OPTIONS, "created-desc");
   const [groupBy, setGroupBy] = useGroupOption(GROUP_STORAGE_KEY, "created");
   // 冷启动先显示上次读到的列表，扫描完再替换。
   const [initialCache] = useState(() => readProjectListCache(PROJECTS_ROOT));
   const [projects, setProjects] = useState<Project[]>(() => initialCache ?? []);
+  // 先渲染前 INITIAL_ITEM_COUNT 项，首帧之后补全；一打字也立刻补全。
+  const { showAll, showAllNow } = useProgressiveList(projects.length);
   // 读到缓存时先不显示加载：扫描完发现没变化就什么都不做。
   const [isLoading, setIsLoading] = useState(initialCache === undefined);
   // 静默启动刷新：只在读到缓存的那一次刷新里为 true，结束后复位。
@@ -381,14 +380,6 @@ export function ProjectsView() {
     writeProjectListCache(PROJECTS_ROOT, projects);
     lastWrittenRef.current = projects;
   }, [isLoading, projects]);
-
-  // 首帧只渲染前 INITIAL_ITEM_COUNT 项，这里补全其余部分。
-  // 依赖里带 showAll：StrictMode 模拟卸载后重新挂载时会重新设置计时器，不会被清掉后再也不设。
-  useEffect(() => {
-    if (showAll || projects.length === 0) return;
-    const timer = setTimeout(() => setShowAll(true), FILL_DELAY_MS);
-    return () => clearTimeout(timer);
-  }, [showAll, projects.length]);
 
   // 监听项目根目录（fs.watch 为 Node 内置，底层走 FSEvents）：Finder 里新建、删除、改名或从废纸篓放回项目时自动重载。
   // 去抖 0.5 秒，合并 Finder 连续触发的多次事件。
@@ -870,16 +861,9 @@ export function ProjectsView() {
     currentSortTitle,
   );
   // 先渲染前 INITIAL_ITEM_COUNT 项，首帧之后补全。分组和排序已完成，只截掉最后渲染的部分。
-  const itemLimit = showAll ? Number.POSITIVE_INFINITY : INITIAL_ITEM_COUNT;
-  const renderPinned = pinnedProjects.slice(0, itemLimit);
-  let itemBudget = itemLimit - renderPinned.length;
-  const renderGroups = groups
-    .map((group) => {
-      const items = group.items.slice(0, Math.max(0, itemBudget));
-      itemBudget -= items.length;
-      return { ...group, items };
-    })
-    .filter((group) => group.items.length > 0);
+  const limit = itemLimit(showAll);
+  const renderPinned = pinnedProjects.slice(0, limit);
+  const renderGroups = limitGroups(groups, limit - renderPinned.length);
 
   return (
     <List
@@ -889,7 +873,7 @@ export function ProjectsView() {
       onSearchTextChange={(text) => {
         setSearchText(text);
         // 一打字就补全，不等计时器。
-        if (text) setShowAll(true);
+        if (text) showAllNow();
       }}
       searchBarPlaceholder={strings.searchProjectsPlaceholder}
       searchBarAccessory={
