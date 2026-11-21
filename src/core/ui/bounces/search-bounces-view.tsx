@@ -11,7 +11,6 @@ import {
   showToast,
 } from "@raycast/api";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useLocalStorage } from "@raycast/utils";
 import { getSettings } from "@/settings";
 import { strings } from "@/strings";
 import { LOG_PREFIX } from "@/core/log";
@@ -31,8 +30,8 @@ import {
 import type { BounceListItem, BounceOwner } from "@/core/projects/bounce-list";
 import type { Project } from "@/core/projects/types";
 import { reloadProjectData } from "@/core/ui/shared/reload-projects";
-import { BOUNCES_SORT_OPTIONS, BounceGroupSubmenu, Bounces, formatSize, isBounceGroup, splitExt } from "./bounces";
-import type { BounceGroup } from "./bounces";
+import { BOUNCES_SORT_OPTIONS, BounceGroupSubmenu, Bounces, formatSize, splitExt } from "./bounces";
+import { useBounceGroupOption } from "@/core/ui/hooks/use-bounce-group-option";
 import { AssignBounce } from "./unmatched-bounces";
 import { showFailure } from "@/core/ui/shared/toast";
 
@@ -40,7 +39,7 @@ const settings = getSettings();
 const PROJECTS_ROOT = settings.projectsFolder;
 
 const SEARCH_BOUNCES_SORT_STORAGE_KEY = "search-bounces-sort-option";
-// useLocalStorage 存的是 JSON，和旧键里的纯字符串不兼容，所以换一个键名。
+// 分组选择现在和别的视图偏好一样存 Cache。键名不变，旧版本存在 LocalStorage 里的值第一次读到时搬过来。
 const SEARCH_BOUNCES_GROUP_STORAGE_KEY = "search-bounces-group-by";
 
 const INITIAL_ITEM_COUNT = 15;
@@ -64,14 +63,18 @@ export function SearchBouncesView() {
   const [showAll, setShowAll] = useState(false);
   const [sortBy, setSortBy] = useSortOption(SEARCH_BOUNCES_SORT_STORAGE_KEY, BOUNCES_SORT_OPTIONS, "created-desc");
   // 持久化的分组选择（含 "source"）；存的值不认识时用默认。
-  const { value: storedGroupBy, setValue: setStoredGroupBy } = useLocalStorage<string>(
-    SEARCH_BOUNCES_GROUP_STORAGE_KEY,
-    "created",
-  );
-  const groupBy: BounceGroup = storedGroupBy && isBounceGroup(storedGroupBy) ? storedGroupBy : "created";
-  const setGroupBy = (next: BounceGroup) => {
-    void setStoredGroupBy(next);
-  };
+  // 旧键用 useLocalStorage 存 JSON，所以迁移时要先 JSON.parse。
+  const [groupBy, setGroupBy] = useBounceGroupOption(SEARCH_BOUNCES_GROUP_STORAGE_KEY, "created", {
+    key: SEARCH_BOUNCES_GROUP_STORAGE_KEY,
+    parse: (raw) => {
+      try {
+        const parsed: unknown = JSON.parse(raw);
+        return typeof parsed === "string" ? parsed : raw;
+      } catch {
+        return raw;
+      }
+    },
+  });
 
   const reload = useCallback(async () => {
     try {
