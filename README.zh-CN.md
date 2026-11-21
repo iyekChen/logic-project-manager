@@ -71,6 +71,7 @@ Logic 有两种保存项目的方式，扩展都会列出：
 | ---------------------------------- | ------------------------------------------------------------------ | ------------------------------------------- |
 | 磁盘上                             | Projects Folder 中的一个 `.logicx`                                 | 一个文件夹，里面有 `.logicx` 和音频文件     |
 | 列表图标                           | Package 图标                                                       | 扩展图标                                    |
+| 在 Search Projects 中按 Enter      | View Alternatives                                                  | View Project Files                          |
 | 重命名                             | 重命名 `.logicx`                                                   | 重命名文件夹，里面的 `.logicx` 保持原名     |
 | Bounce                             | Package 没有自己存放 bounce 的文件夹，请使用 Shared Bounces Folder | 存在项目文件夹里，通常是 `Bounces` 子文件夹 |
 | 笔记和歌词（未设置自定义文件夹时） | 存在 `.logicx` 内部                                                | 存在项目文件夹里                            |
@@ -90,13 +91,13 @@ Duplicate Project 和 Move to Trash 作用于整个 `.logicx` 或整个文件夹
 在 Logic Pro 中使用 Save As 时，新的 `.logicx` 默认存进同一个项目文件夹，所以一个文件夹里可能有一首歌的好几个版本。存成文件夹的项目都这样处理，哪怕里面只有一个 `.logicx`：
 
 - **View Project Files**（Enter）列出文件夹里的每个 `.logicx`，显示缩略图，以及它的 Active Alternative 的调性、BPM 和拍号。和项目列表一样，可以按日期或名称分组和排序。
-- **最新的工程文件**是最近保存的那个。项目的调性、BPM、拍号和 Alternative 数量都取自它，**Open Latest Project File**（⌘O）打开的也是它。
+- **最新的工程文件**是最近保存的那个。项目的调性、BPM 和拍号都取自它，**Open Latest Project File**（⌘O）打开的也是它。
 - 在 View Project Files 中，Enter 在 Logic Pro 中打开工程文件，**View Alternatives**（⌘↵）列出它的 Alternative。
 - 还可以使用 Rename Project File（⌘E）、Duplicate Project File（⌘D）和 Move to Trash（⌃X）。副本保留原件的修改日期，所以不会变成最新的那个。一个项目至少保留一个工程文件，文件夹里的音频文件不会被移动。
 
 ### Overview 与 Detail
 
-Search Projects 有两种视图。Overview 显示每个项目的阶段，以及它有多少个 Alternative 和 bounce；存成文件夹的项目显示工程文件的数量，而不是 Alternative 的数量。Detail 多一个侧边栏，显示项目的笔记、标签和合集、Active Alternative 的调性和 BPM，以及创建和修改日期。
+Search Projects 有两种视图。Overview 显示每个项目的阶段，以及它有多少个 Alternative 和 bounce；存成文件夹的项目显示工程文件的数量，而不是 Alternative 的数量。Detail 多一个侧边栏，显示项目的笔记、标签和合集、Active Alternative 的调性和 BPM（存成文件夹的项目还会显示最新的工程文件），以及创建和修改日期。
 
 - ⌘⇧T 在 Overview 和 Detail 之间切换。
 - 在 Detail 中，⌘⌥⇧T 在笔记和歌词之间切换侧边栏；见[笔记与歌词](#-笔记与歌词)。
@@ -207,7 +208,7 @@ Search Bounces 命令在一个地方列出所有项目的 bounce。属于多个�
 - 如果文件名以项目名开头，后面紧跟空格、`-`、`_`、`.`，或者什么都没有，这个文件就属于该项目。`Song.wav`、`Song v2.wav` 和 `Song-master.wav` 都属于 `Song`，`Songbird.wav` 不属于。不区分大小写。
 - 如果一个文件匹配多个项目，名称最长的胜出：`Demo Package v2.wav` 属于 `Demo Package`，而不是 `Demo`。
 - **Bounce Aliases：** 在 Manage External Bounce 中，添加这个项目的文件名可能使用的其他开头（例如 `Summer Children` 用 `SC`）。别名不能和其他项目的名称或别名相同。只有设置了 Shared Bounces Folder，这个字段才会出现。
-- **重命名的项目：** 重命名后，旧名称只继续匹配重命名之前创建的文件，这样同名的新项目不会把它们抢走。在 Manage External Bounce 的 Previous Names 中取消选择某个名称，就不再用它匹配。
+- **重命名的项目：** 重命名后，旧名称只继续匹配重命名之前创建的文件。如果另一个项目的当前名称或别名与该旧名称相同，则当前名称或别名优先，即使文件是在重命名之前创建的。在 Manage External Bounce 的 Previous Names 中取消选择某个名称，就不再用它匹配。
 
 分配 bounce 永远不会移动或重命名你的文件。
 

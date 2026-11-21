@@ -71,6 +71,7 @@ Logic can save a project in two ways, and the extension lists both:
 | ----------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------- |
 | On disk                             | A single `.logicx` in your Projects Folder                                     | A folder with the `.logicx` and its audio files inside        |
 | Icon in the list                    | A package icon                                                                 | The extension's icon                                          |
+| Enter in Search Projects            | View Alternatives                                                              | View Project Files                                            |
 | Renaming                            | Renames the `.logicx`                                                          | Renames the folder; the `.logicx` inside keeps its name       |
 | Bounces                             | A package has no folder of its own for bounces, so use a Shared Bounces Folder | Saved in the project folder, usually in a `Bounces` subfolder |
 | Notes and lyrics (no custom folder) | Saved inside the `.logicx`                                                     | Saved in the project folder                                   |
@@ -90,13 +91,13 @@ Duplicate Project and Move to Trash work on the whole `.logicx` or the whole fol
 When you use Save As in Logic Pro, the new `.logicx` is saved in the same project folder by default, so one folder can hold several versions of a song. A project saved in a folder always works this way, even with a single `.logicx`:
 
 - **View Project Files** (Enter) lists every `.logicx` in the folder, each with its thumbnail and its Active Alternative's key, BPM, and time signature. Like the project list, it can be grouped and sorted by date or name.
-- **The latest project file** is the one saved most recently. The project's key, BPM, time signature, and Alternative count come from it, and **Open Latest Project File** (⌘O) opens it.
+- **The latest project file** is the one saved most recently. The project's key, BPM, and time signature come from it, and **Open Latest Project File** (⌘O) opens it.
 - In View Project Files, Enter opens a project file in Logic Pro, and **View Alternatives** (⌘↵) lists its Alternatives.
 - You can also use Rename Project File (⌘E), Duplicate Project File (⌘D), and Move to Trash (⌃X). A copy keeps the original's modified date, so it doesn't become the latest. A project always keeps at least one project file, and audio files in the folder are never moved.
 
 ### Overview and Detail
 
-Search Projects has two views. Overview shows each project's stage and how many Alternatives and bounces it has; for a project saved in a folder, it shows how many project files instead of Alternatives. Detail adds a side panel with the project's note, its tags and collections, the Active Alternative's key and BPM, and its created and modified dates.
+Search Projects has two views. Overview shows each project's stage and how many Alternatives and bounces it has; for a project saved in a folder, it shows how many project files instead of Alternatives. Detail adds a side panel with the project's note, its tags and collections, the Active Alternative's key and BPM (plus the latest project file, for a project saved in a folder), and its created and modified dates.
 
 - ⌘⇧T switches between Overview and Detail.
 - In Detail, ⌘⌥⇧T switches the panel between notes and lyrics; see [Notes & lyrics](#-notes--lyrics).
@@ -207,7 +208,7 @@ The Search Bounces command lists the bounces of every project in one place. A fi
 - A file belongs to a project when its name starts with the project name, followed by a space, `-`, `_`, `.`, or nothing else. `Song.wav`, `Song v2.wav`, and `Song-master.wav` all belong to `Song`; `Songbird.wav` doesn't. Case doesn't matter.
 - If a file matches more than one project, the longest name wins: `Demo Package v2.wav` belongs to `Demo Package`, not `Demo`.
 - **Bounce Aliases:** in Manage External Bounce, add other names a project's files start with (e.g. `SC` for `Summer Children`). An alias can't be another project's name or alias. This field only appears when a Shared Bounces Folder is set.
-- **Renamed projects:** after a rename, the old name keeps matching only files created before the rename, so a new project with that name doesn't take them. Deselect a name under Previous Names in Manage External Bounce to stop matching it.
+- **Renamed projects:** after a rename, the old name only matches files created before the rename. If another project's current name or alias matches that old name, the current name or alias wins, including for files created before the rename. Deselect a name under Previous Names in Manage External Bounce to stop matching it.
 
 Assigning bounces never moves or renames your files.
 
