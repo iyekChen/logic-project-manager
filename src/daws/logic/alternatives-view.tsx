@@ -34,9 +34,13 @@ import { alternativesViewStrings } from "./strings";
 import { openWithDaw, resolveDawApp } from "@/core/daw-app";
 import { showFailure } from "@/core/ui/shared/toast";
 import { labels } from "@/daws/labels";
-import { SortBySubmenu, sortItems, sortOptionTitle, useSortOption } from "@/core/ui/sorting";
-import type { SortOption } from "@/core/ui/sorting";
-import { GroupBySubmenu, groupItems, useGroupOption } from "@/core/ui/grouping";
+import { SortBySubmenu } from "@/core/ui/actions/sort-by-submenu";
+import { useSortOption } from "@/core/ui/hooks/use-sort-option";
+import { sortItems, sortOptionTitle } from "@/core/ui/shared/sorting";
+import type { SortOption } from "@/core/ui/shared/sorting";
+import { GroupBySubmenu } from "@/core/ui/actions/group-by-submenu";
+import { useGroupOption } from "@/core/ui/hooks/use-group-option";
+import { groupItems } from "@/core/ui/shared/grouping";
 import { alternativeIndex, duplicateName } from "./alternative-rules";
 import { duplicateAlternative, renameAlternative, setActiveAlternative, trashAlternative } from "./alternative-edits";
 

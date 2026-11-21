@@ -34,9 +34,13 @@ import {
 import { removeProjectFromAllOrders } from "@/core/metadata/collection-order";
 import { removeProjectFromAllRoles } from "@/core/metadata/collection-roles";
 import { strings } from "@/strings";
-import { SortBySubmenu, sortItems, sortOptionTitle, useSortOption } from "@/core/ui/sorting";
-import type { SortOption } from "@/core/ui/sorting";
-import { GroupBySubmenu, groupItems, useGroupOption } from "@/core/ui/grouping";
+import { SortBySubmenu } from "@/core/ui/actions/sort-by-submenu";
+import { useSortOption } from "@/core/ui/hooks/use-sort-option";
+import { sortItems, sortOptionTitle } from "@/core/ui/shared/sorting";
+import type { SortOption } from "@/core/ui/shared/sorting";
+import { GroupBySubmenu } from "@/core/ui/actions/group-by-submenu";
+import { useGroupOption } from "@/core/ui/hooks/use-group-option";
+import { groupItems } from "@/core/ui/shared/grouping";
 import { Bounces, UnmatchedBounces } from "@/core/ui/bounces";
 import { stageTaxonomy, genreTaxonomy, collectionTaxonomy } from "@/core/metadata/taxonomies";
 import type { TaxonomyOption } from "@/core/metadata/taxonomy";
