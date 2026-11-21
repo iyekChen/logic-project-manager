@@ -61,7 +61,7 @@ const ALTERNATIVES_SORT_OPTIONS: SortOption[] = [
 // windowImage：Logic 保存时截下的工程窗口缩略图（Alternatives/NNN/WindowImage.jpg），没有时为 null。
 type ProjectAlternative = DawSet & ProjectFileMetadata & { windowImage: string | null };
 
-function findWindowImage(set: DawSet): string | null {
+export function findWindowImage(set: DawSet): string | null {
   const image = path.join(path.dirname(set.metadataFile), "WindowImage.jpg");
   return fs.existsSync(image) ? image : null;
 }

@@ -45,3 +45,32 @@ const strings: Record<Language, AlternativesViewStrings> = {
 export function getAlternativesViewStrings(language: Language): AlternativesViewStrings {
   return strings[language];
 }
+
+// View Project Files 专用的文字：文件夹形态的项目里有多个 .logicx 时用（多是 Save As 存出来的版本）。
+type ProjectFilesViewStrings = {
+  viewProjectFiles: string;
+  projectFiles: string;
+  searchProjectFiles: string;
+  latestProjectFile: string;
+  copyProjectFileName: string;
+  trashProjectFileHint: string;
+  lastProjectFile: string;
+  trashConfirmMessage: string;
+};
+
+const projectFilesStrings: Record<Language, ProjectFilesViewStrings> = {
+  en: {
+    viewProjectFiles: "View Project Files",
+    projectFiles: "Project Files",
+    searchProjectFiles: "Search Project Files",
+    latestProjectFile: "Saved Most Recently",
+    copyProjectFileName: "Copy Project File Name",
+    trashProjectFileHint: "This moves the project file to the Trash:",
+    lastProjectFile: "A project needs at least one project file",
+    trashConfirmMessage: "Make sure it's closed in Logic Pro. Audio files in the project folder stay where they are.",
+  },
+};
+
+export function getProjectFilesViewStrings(language: Language): ProjectFilesViewStrings {
+  return projectFilesStrings[language];
+}

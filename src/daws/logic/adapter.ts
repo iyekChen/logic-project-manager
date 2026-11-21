@@ -88,7 +88,7 @@ export function lastSavedAt(packagePath: string): number {
 
 // 文件夹形态的主包。用 Save As 做版本时，Logic 默认存进同一个文件夹，所以一个文件夹里常有好几个包。
 // 取最后保存的那个（用户正在做的版本）；保存时间一样时优先和文件夹同名的，再按名字。
-function findPackage(folderPath: string): string | null {
+export function findPackage(folderPath: string): string | null {
   const folderName = path.basename(folderPath);
   const ranked = listPackages(folderPath)
     .map((packagePath) => ({

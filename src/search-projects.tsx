@@ -19,7 +19,7 @@ import {
   openExtensionPreferences,
   type Application,
 } from "@raycast/api";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import fs from "node:fs";
 import { useAudioPlayer } from "@/core/ui/hooks/use-audio-player";
 import { refreshDocFile, useDocWatcher } from "@/core/ui/hooks/use-doc-watcher";
@@ -67,7 +67,8 @@ import {
   loadPersistentProjectFileCache,
   parseSetMetadata,
 } from "@/core/projects/project-file-cache";
-import { SetsView } from "@/daws/ui";
+import { SetsView, projectFileCount } from "@/daws/ui";
+import { getProjectFilesViewStrings } from "@/daws/logic/strings";
 import { getDawLabels } from "@/daws/labels";
 import { projectIcon } from "@/daws/icons";
 import { openWithDaw, resolveDawApp } from "@/core/daw-app";
@@ -86,6 +87,7 @@ import { keyKeywords, keyToken } from "@/core/projects/musical-key";
 const settings = getSettings();
 const t = getTranslations(settings.language);
 const labels = getDawLabels(settings.language);
+const filesText = getProjectFilesViewStrings(settings.language);
 const PROJECTS_ROOT = settings.projectsFolder;
 const SORT_STORAGE_KEY = "project-sort-option";
 const GROUP_STORAGE_KEY = "project-group-option";
@@ -174,6 +176,11 @@ export default function Command() {
   // 每次渲染都更新：load() 的闭包里拿不到最新的 projects state。
   const projectsRef = useRef<Project[]>(projects);
   projectsRef.current = projects;
+  // 每个项目里有几个 .logicx。只在列表变化时重数，不在每次渲染时读磁盘。
+  const projectFileCounts = useMemo(
+    () => new Map(projects.map((project) => [project.id, projectFileCount(project)])),
+    [projects],
+  );
   // 残留数据提示每次打开只弹一次（fs.watch 触发的重载不再重复提示）。
   const leftoverToastShownRef = useRef(false);
   // 首次使用引导每次打开最多弹一个。
@@ -633,6 +640,14 @@ export default function Command() {
     const collectionNames = namesFor(item.collectionIds, collectionOptions);
     const latest = latestSets[item.id];
     const latestBpm = latest?.metadata?.bpm ?? null;
+    const fileCount = projectFileCounts.get(item.id) ?? 1;
+    const fileCountAccessories =
+      fileCount > 1
+        ? [
+            { text: String(fileCount), tooltip: `${fileCount} ${filesText.projectFiles}` },
+            { icon: "package.png", tooltip: `${fileCount} ${filesText.projectFiles}` },
+          ]
+        : [];
     const stagePill = stage ? [{ tag: { value: stage.name, color: stage.color ?? Color.SecondaryText } }] : [];
     const detailBody = !showDetail ? "" : detailDoc === "notes" ? item.notes : item.lyrics;
     const detailPlaceholder = docPlaceholder(detailDoc, item.title, missingDocFolders[detailDoc]);
@@ -664,6 +679,7 @@ export default function Command() {
                 ...stagePill,
                 { text: String(item.setsCount), tooltip: `${item.setsCount} ${labels.sets}` },
                 { icon: Icon.Document, tooltip: `${item.setsCount} ${labels.sets}` },
+                ...fileCountAccessories,
                 { text: String(item.bouncesCount), tooltip: `${item.bouncesCount} Bounces` },
                 { icon: Icon.Waveform, tooltip: `${item.bouncesCount} Bounces` },
               ]
@@ -704,6 +720,9 @@ export default function Command() {
                   )}
                   <List.Item.Detail.Metadata.Separator />
                   <List.Item.Detail.Metadata.Label title="Bounces" text={String(item.bouncesCount)} />
+                  {fileCount > 1 && (
+                    <List.Item.Detail.Metadata.Label title={filesText.projectFiles} text={String(fileCount)} />
+                  )}
                   <List.Item.Detail.Metadata.Label title={labels.sets} text={String(item.setsCount)} />
                   <List.Item.Detail.Metadata.Separator />
                   <List.Item.Detail.Metadata.Label title={labels.latestSet} text={latest?.set.name ?? ""} />
@@ -721,7 +740,7 @@ export default function Command() {
           <ActionPanel>
             <ActionPanel.Section>
               <Action.Push
-                title={labels.viewSets}
+                title={fileCount > 1 ? filesText.viewProjectFiles : labels.viewSets}
                 icon={Icon.Document}
                 target={<SetsView project={item} />}
                 onPop={() => void reloadProjects()}
