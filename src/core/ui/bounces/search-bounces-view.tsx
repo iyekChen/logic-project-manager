@@ -30,7 +30,8 @@ import {
 import type { BounceListItem, BounceOwner } from "@/core/projects/bounce-list";
 import type { Project } from "@/core/projects/types";
 import { reloadProjectData } from "@/core/ui/shared/reload-projects";
-import { BOUNCES_SORT_OPTIONS, BounceGroupSubmenu, Bounces, formatSize, splitExt } from "./bounces";
+import { BOUNCES_SORT_OPTIONS, BounceGroupSubmenu, Bounces } from "./bounces";
+import { formatSize, groupBySource, splitExt } from "./bounce-format";
 import { useBounceGroupOption } from "@/core/ui/hooks/use-bounce-group-option";
 import { AssignBounce } from "./unmatched-bounces";
 import { showFailure } from "@/core/ui/shared/toast";
@@ -139,26 +140,12 @@ export function SearchBouncesView() {
 
   const groups: { key: string; title: string; subtitle: string; items: BounceListItem[] }[] =
     groupBy === "source"
-      ? (["project", "shared", "external", "unmatched"] as const)
-          .map((kind) => {
-            const list = bySort(
-              items.filter((b) => (kind === "unmatched" ? b.unmatched : !b.unmatched && b.source === kind)),
-            );
-            return {
-              key: kind,
-              title:
-                kind === "project"
-                  ? strings.sourceProjectFolder
-                  : kind === "shared"
-                    ? strings.sourceSharedFolder
-                    : kind === "external"
-                      ? strings.sourceExternal
-                      : strings.unmatchedBounces,
-              subtitle: String(list.length),
-              items: list,
-            };
-          })
-          .filter((group) => group.items.length > 0)
+      ? groupBySource(
+          items,
+          ["project", "shared", "external", "unmatched"],
+          (b) => (b.unmatched ? "unmatched" : b.source),
+          bySort,
+        )
       : groupItems(
           bySort(items),
           groupBy,
