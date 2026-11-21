@@ -14,15 +14,15 @@
 
 ## ✨ 功能一览
 
-- **[浏览和打开项目](#-项目)**，并按阶段和风格 **[打标签](#-标签)**。
-- **[查找项目](#-搜索)**：按名称、标签、创建日期、调性、BPM 等条件。
-- **[汇集 bounce](#-bounce)**：来自项目文件夹、统一的导出文件夹或其他任何位置。
-- **[试听 bounce](#播放)**，不用再去 Finder 里翻找。
-- **[规划曲目顺序](#-合集)**：为 EP 或专辑排 Tracklist、给曲目分配角色，并比较每首曲目的能量。
-- **[记笔记和歌词](#-笔记与歌词)**：存成 Markdown 文件，放在各个项目里，或放在 Obsidian 仓库这类文件夹中。
-- **[切换 Alternative](#打开-alternative)**，不用打开 Logic Pro 就能看到哪个是 Active；还能 **[浏览用 Save As 存下的各个版本](#文件夹里的工程文件)**。
+- **[浏览和打开项目](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#-项目)**，并按阶段和风格 **[打标签](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#-标签)**。
+- **[查找项目](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#-搜索)**：按名称、标签、创建日期、调性、BPM 等条件。
+- **[汇集 bounce](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#-bounce)**：来自项目文件夹、统一的导出文件夹或其他任何位置。
+- **[试听 bounce](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#播放)**，不用再去 Finder 里翻找。
+- **[规划曲目顺序](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#-合集)**：为 EP 或专辑排 Tracklist、给曲目分配角色，并比较每首曲目的能量。
+- **[记笔记和歌词](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#-笔记与歌词)**：存成 Markdown 文件，放在各个项目里，或放在 Obsidian 仓库这类文件夹中。
+- 不用打开 Logic Pro 就能 **[切换 Alternative](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#view-alternatives)**，还能 **[浏览用 Save As 存下的工程文件](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#view-project-files)**。
 
-另见：[设置](#-设置) · [已知限制](#-已知限制) · [数据与文件](#-数据与文件)
+另见：[设置](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#-设置) · [已知限制](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#-已知限制) · [数据与文件](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#-数据与文件)
 
 ## 🚀 快速上手
 
@@ -44,13 +44,13 @@
 ### ② 告诉它 bounce 在哪里
 
 - 在 Extension Preferences 中，把 Bounces Subfolder 设为每个项目里存放 bounce 的子文件夹（例如 `Bounces`）；如果 bounce 直接存在项目文件夹里，就留空。
-- 存成 Package 的项目没有自己存放 bounce 的文件夹。请把它们的 bounce 导出到同一个文件夹，并设为 Shared Bounces Folder；见 [Package 与文件夹项目](#package-与文件夹项目)。
-- 可选：如果你还会把所有项目的 bounce 导出到同一个文件夹，把它设为 Shared Bounces Folder。其中的文件按名称匹配到项目，下次打开 Search Projects 时，扩展会提示你检查没有匹配上的文件；见 [Shared Bounces Folder](#shared-bounces-folder)。
+- 存成 Package 的项目没有自己存放 bounce 的文件夹，所以需要设置 Shared Bounces Folder；见 [Package 与文件夹项目](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#package-与文件夹项目)。
+- Shared Bounces Folder（存成文件夹的项目可选）：如果你会把所有项目的 bounce 导出到同一个文件夹，就在这里设置。其中的文件按名称匹配到项目，下次打开 Search Projects 时，扩展会提示你检查没有匹配上的文件；见 [Shared Bounces Folder](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#shared-bounces-folder)。
 - 可选：要加入存放在其他位置的 bounce，在 Search Projects 中选中项目，使用 Manage External Bounce（⌘B）。
 
 ### ③ 给项目打标签
 
-- 在 Manage Tags 中选择一个阶段（Demo、Mix、Released……）或风格，用 Assign to Projects 一次给多个项目打标签；见[标签](#-标签)。
+- 在 Manage Tags 中选择一个阶段（Demo、Mix、Released……）或风格，用 Assign to Projects 一次给多个项目打标签；见[标签](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#-标签)。
 - 要给单个项目打标签，在 Search Projects 中使用 Edit Info。
 
 ### ④ 试一试
@@ -76,17 +76,17 @@ Logic 有两种保存项目的方式，扩展都会列出：
 | Bounce                             | Package 没有自己存放 bounce 的文件夹，请使用 Shared Bounces Folder | 存在项目文件夹里，通常是 `Bounces` 子文件夹 |
 | 笔记和歌词（未设置自定义文件夹时） | 存在 `.logicx` 内部                                                | 存在项目文件夹里                            |
 
-Duplicate Project 和 Move to Trash 作用于整个 `.logicx` 或整个文件夹。一个文件夹里也可以有多个 `.logicx`；见[文件夹里的工程文件](#文件夹里的工程文件)。
+Duplicate Project 和 Move to Trash 作用于整个 `.logicx` 或整个文件夹。一个文件夹里也可以有多个 `.logicx`；见[文件夹里的工程文件](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#view-project-files)。
 
-### 打开 Alternative
+### View Alternatives
 
 - **View Alternatives**（存成 Package 的项目按 Enter）列出项目的所有 Alternative，每个都带有 Logic 随工程保存的工程窗口缩略图。Active Alternative 带有绿色对勾，侧边栏显示每个 Alternative 的调性、BPM 和拍号。
+- **Open Active Alternative**（⌘O）用项目的 Active Alternative 在 Logic Pro 中打开。
 - **Open in Logic Pro** 打开项目。如果你选的 Alternative 不是 Active 的那个，会先把它设为 Active，所以 Logic 打开的就是它。
 - 还可以使用 Set as Active Alternative、Rename Alternative（⌘E）、Duplicate Alternative（⌘D）和 Move to Trash（⌃X）。一个项目至少保留一个 Alternative。如果把 Active 的那个移到废纸篓，相邻的一个会变成 Active。
 - 这些操作会改动项目本身，所以会先让你在 Logic Pro 中关闭项目。如果项目还开着，Logic 下次保存时会覆盖这些改动。
-- **Open Active Alternative**（⌘O）用项目的 Active Alternative 在 Logic Pro 中打开。
 
-### 文件夹里的工程文件
+### View Project Files
 
 在 Logic Pro 中使用 Save As 时，新的 `.logicx` 默认存进同一个项目文件夹，所以一个文件夹里可能有一首歌的好几个版本。存成文件夹的项目都这样处理，哪怕里面只有一个 `.logicx`：
 
@@ -100,7 +100,7 @@ Duplicate Project 和 Move to Trash 作用于整个 `.logicx` 或整个文件夹
 Search Projects 有两种视图。Overview 显示每个项目的阶段，以及它有多少个 Alternative 和 bounce；存成文件夹的项目显示工程文件的数量，而不是 Alternative 的数量。Detail 多一个侧边栏，显示项目的笔记、标签和合集、Active Alternative 的调性和 BPM（存成文件夹的项目还会显示最新的工程文件），以及创建和修改日期。
 
 - ⌘⇧T 在 Overview 和 Detail 之间切换。
-- 在 Detail 中，⌘⌥⇧T 在笔记和歌词之间切换侧边栏；见[笔记与歌词](#-笔记与歌词)。
+- 在 Detail 中，⌘⌥⇧T 在笔记和歌词之间切换侧边栏；见[笔记与歌词](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#-笔记与歌词)。
 
 ### 播放
 
@@ -109,18 +109,18 @@ Search Projects 有两种视图。Overview 显示每个项目的阶段，以及�
 - **Play Latest Bounce**（⌘↵）播放项目的最新 bounce，再按一次暂停或继续。
 - 播放时还可以使用 Stop Playback（⌘-）、Backward 和 Forward（⌥← 和 ⌥→，5 秒），以及 Restart Track（⌘←）。
 - 关闭 Raycast 窗口后播放会继续，退出 Raycast 时停止。
-- **Browse Bounces**（⌥↵）列出项目的所有 bounce，按 Enter 用 Quick Look 预览任意一个；见 [Browse Bounces](#browse-bounces)。
+- **Browse Bounces**（⌥↵）列出项目的所有 bounce，按 Enter 用 Quick Look 预览任意一个；见 [Browse Bounces](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#browse-bounces)。
 
 ### 管理项目
 
-- **Edit Info** 修改项目的名称、阶段、风格和所属合集。要一次给多个项目打标签，使用 Manage Tags 中的 Assign to Projects；见[标签](#-标签)。重命名前需要先在 Logic Pro 中关闭项目。如果项目保存在文件夹里，会重命名这个文件夹，里面的 `.logicx` 保持原名；标签、曲目编号、角色、笔记和歌词都会跟着走。
+- **Edit Info** 修改项目的名称、阶段、风格和所属合集。要一次给多个项目打标签，使用 Manage Tags 中的 Assign to Projects；见[标签](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#-标签)。重命名前需要先在 Logic Pro 中关闭项目。如果项目保存在文件夹里，会重命名这个文件夹，里面的 `.logicx` 保持原名；标签、曲目编号、角色、笔记和歌词都会跟着走。
 - **Duplicate Project** 以新名称（默认为 `Song copy`）复制整个项目，包括其中保存的 bounce、笔记和歌词。标签、合集和置顶状态不会复制。
 - **Pin** 把项目固定在列表顶部。置顶的项目可以用 Move Up 和 Move Down 调整顺序。
-- **Move to Trash** 把整个项目文件夹移到废纸篓。它的数据会保留 30 天，以便你放回；见[项目追踪](#项目追踪)。
+- **Move to Trash** 把整个项目移到废纸篓。它的数据会保留 30 天，以便你放回；见[项目追踪](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#项目追踪)。
 - **New Project**（⌘N）启动 Logic Pro Version 中选择的 Logic Pro；如果它已经在运行，只会把它切到前台。
 - **Copy Latest Bounce** 复制音频文件本身，可以直接粘贴到消息或其他 App 中。也可以复制项目名称或路径，或在 Finder 中打开。
 
-Search Projects 中的其他操作在各自的章节介绍：[合集](#-合集)（⌃↵）、[笔记与歌词](#-笔记与歌词)，以及 [Bounce](#-bounce) 中的 bounce 来源（⌘B）。
+Search Projects 中的其他操作在各自的章节介绍：[合集](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#-合集)（⌃↵）、[笔记与歌词](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#-笔记与歌词)，以及 [Bounce](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#-bounce) 中的 bounce 来源（⌘B）。
 
 ## 🔖 标签
 
@@ -135,7 +135,7 @@ Manage Tags 用来编辑三份标签列表，用搜索栏旁的下拉框在它�
 ### 编辑列表
 
 - **Create**（⌘N）新增选项。**Edit**（⌘E）修改名称和别名，阶段还可以修改颜色。重命名后，所有用到这个选项的项目和曲目都会保留它。同一份列表中的两个选项不能重名。
-- **别名**是用来搜索的其他名称，用逗号分隔（例如 Drum & Bass 用 `dnb`）。见[组合搜索](#组合搜索)。
+- **别名**是用来搜索的其他名称，用逗号分隔（例如 Drum & Bass 用 `dnb`）。见[组合搜索](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#组合搜索)。
 - 用 Move Up（⌘⌥↑）和 Move Down（⌘⌥↓），或 Move to Top（⌘⇧↑）和 Move to Bottom（⌘⇧↓）调整顺序。所有选择标签的地方都按这个顺序显示。
 - **Delete**（⌃X）会先告诉你有多少项目或曲目在用这个选项，确认后从它们身上全部移除。
 - **Reset to Defaults** 把当前查看的列表恢复为默认值。自定义的名称、颜色、别名和顺序都会丢失，用到已不在列表中的选项的项目或曲目会失去这个标签。
@@ -143,7 +143,7 @@ Manage Tags 用来编辑三份标签列表，用搜索栏旁的下拉框在它�
 ### 为项目打标签
 
 - **Assign to Projects**（仅限阶段和风格）列出所有项目，已有这个标签的项目会预先勾选。勾选即添加标签，取消勾选即移除。因为一个项目只有一个阶段，勾选一个处在其他阶段的项目会把它移过来，表单会提示有多少个项目会被移动。
-- 要给单个项目打标签，在 Search Projects 中使用 Edit Info。要给曲目分配角色，在合集里打开 Edit Info；见[合集](#-合集)。
+- 要给单个项目打标签，在 Search Projects 中使用 Edit Info。要给曲目分配角色，在合集里打开 Edit Info；见[合集](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#-合集)。
 
 ## 🔍 搜索
 
@@ -172,7 +172,7 @@ Search Projects 会把你输入的内容与每个项目的名称、阶段、风�
 - **短数字是速度。** 三位数以内的数字一律当作 BPM，所以 `# album 01` 会去找速度为 1 的项目，而不是名为 Album 01 的合集。这种情况请用名称中的文字来搜索。
 - **半速和倍速也算。** `# 140` 也会找到 70 和 280 BPM 的项目。速度会四舍五入，所以 139.6 算作 140。范围包含两端，前后顺序不限（`100-90`）。
 - **调性和拍号整体匹配。** `# cm` 只找 C 小调，不找 C 大调。单独的根音（`a`、`eb`）不算调性搜索，`# a minor` 会被当作两个词。黑键的两种写法都可以：`c#m` 和 `dbm` 找到的项目相同。`6/8` 不会匹配 `6/4`。
-- **调性、BPM 和拍号来自 Active Alternative。** 它们在后台从每个项目的 Active Alternative（如果项目没有记录哪个是 Active，则用最近修改的那个）中读取，然后缓存。存成文件夹的项目用的是[最新的工程文件](#文件夹里的工程文件)。项目的 Alternative 读取完成之前，不会匹配这些词。调性用的是 Logic Pro 中为项目设置的调性，不是从音频识别出来的。
+- **调性、BPM 和拍号来自 Active Alternative。** 它们在后台从每个项目的 Active Alternative（如果项目没有记录哪个是 Active，则用最近修改的那个）中读取，然后缓存。存成文件夹的项目用的是[最新的工程文件](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#view-project-files)。项目的 Alternative 读取完成之前，不会匹配这些词。调性用的是 Logic Pro 中为项目设置的调性，不是从音频识别出来的。
 
 ## 🎧 Bounce
 
@@ -181,7 +181,7 @@ Search Projects 会把你输入的内容与每个项目的名称、阶段、风�
 项目的 bounce 来自：
 
 - 它的 Bounces Subfolder；如果没有设置 Bounces Subfolder，则是项目文件夹本身；
-- [Shared Bounces Folder](#shared-bounces-folder) 中名称与项目匹配的文件；
+- [Shared Bounces Folder](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#shared-bounces-folder) 中名称与项目匹配的文件；
 - 用 Manage External Bounce（在 Search Projects 中按 ⌘B）添加的外部文件夹和文件。暂时无法访问的来源（例如未连接的硬盘）会保留，并显示为不可用，直到你移除它们。如果链接的文件在原位置改了名，或者被移进了 Shared Bounces Folder，只要能唯一匹配，就会自动重新关联。
 
 每个文件夹只读取第一层的音频文件，不读取子文件夹。通过多个来源找到的同一个文件只算一次。最近修改的音频文件（WAV、AIFF、MP3、M4A 或 FLAC）就是最新 bounce：播放、复制、排队和能量分析用的都是它。
@@ -192,7 +192,7 @@ Browse Bounces（在 Search Projects 中按 ⌥↵）列出项目的所有 bounc
 
 - 按 Enter 用 Quick Look 预览，按 ⌘O 用默认 App 打开。
 - 可以重命名 bounce（扩展名保持不变）、复制文件本身、在 Finder 中显示，或移到废纸篓。
-- **Not This Project**：Shared Bounces Folder 中的文件被匹配到了错误的项目时，用它把文件退回 [Unmatched Bounces](#unmatched-bounces)。
+- **Not This Project**：Shared Bounces Folder 中的文件被匹配到了错误的项目时，用它把文件退回 [Unmatched Bounces](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#unmatched-bounces)。
 - 对于不可用的外部来源，**Remove External Source** 会把它从项目中移除，文件本身不会被删除。
 
 ### Search Bounces
@@ -214,7 +214,7 @@ Search Bounces 命令在一个地方列出所有项目的 bounce。属于多个�
 
 ### Unmatched Bounces
 
-设置了 Shared Bounces Folder 后，其中不属于任何项目的文件会列在 Unmatched Bounces（在 Search Projects 中按 ⌘⇧B）中，并在 [Search Bounces](#search-bounces) 中带有标记。设置或更改这个文件夹后，第一次打开 Search Projects 时，扩展会提示你检查找到的未匹配文件。
+设置了 Shared Bounces Folder 后，其中不属于任何项目的文件会列在 Unmatched Bounces（在 Search Projects 中按 ⌘⇧B）中，并在 [Search Bounces](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#search-bounces) 中带有标记。设置或更改这个文件夹后，第一次打开 Search Projects 时，扩展会提示你检查找到的未匹配文件。
 
 用 Assign to Project 把文件分配给项目：
 
@@ -237,15 +237,15 @@ Search Bounces 命令在一个地方列出所有项目的 bounce。属于多个�
 
 - **Tracklist** 按顺序列出已编号的曲目，显示每首曲目的角色、编号、时长和能量，顶部显示总时长。**Unsorted** 按字母顺序列出其余曲目。
 - 用 Swap Up 和 Swap Down，或 Move to Top 和 Move to Bottom 调整顺序。Remove from Tracklist 把曲目退回 Unsorted，并清除它的角色。如果两首曲目编号相同，两者都会带上警告图标。
-- **角色：** 在合集里打开 Edit Info 给曲目分配角色，例如 Intro 或 Interlude。角色列表在 [Manage Tags](#-标签) 中编辑。
+- **角色：** 在合集里打开 Edit Info 给曲目分配角色，例如 Intro 或 Interlude。角色列表在 [Manage Tags](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#-标签) 中编辑。
 - 用下拉框可以只显示某个阶段或风格。Detail 视图显示每首曲目的笔记、阶段、时长、角色、BPM、调性、拍号和能量。
 - **Remove from Collection** 把曲目移出合集，同时清除它在这个合集中的编号和角色。项目本身不受影响。
 - 在 Browse Collections 的任何位置，Back to Search Projects（⌃↵）都能回到项目列表。
 
 ### 试听合集
 
-- 用 ⌘↵ 播放任意曲目的最新 bounce，和[播放](#播放)中一样。
-- **Queue Collection in Player**（⌘⇧↵）把 Tracklist 中每首曲目的最新 bounce 按顺序生成 `.m3u` 播放列表，在默认播放器中打开。Unsorted 中的曲目和没有 bounce 的曲目会被跳过，Tracklist 为空时这个操作不会显示。播放器支持情况见[已知限制](#-已知限制)。
+- 用 ⌘↵ 播放任意曲目的最新 bounce，和[播放](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#播放)中一样。
+- **Queue Collection in Player**（⌘⇧↵）把 Tracklist 中每首曲目的最新 bounce 按顺序生成 `.m3u` 播放列表，在默认播放器中打开。Unsorted 中的曲目和没有 bounce 的曲目会被跳过，Tracklist 为空时这个操作不会显示。播放器支持情况见[已知限制](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#-已知限制)。
 
 ### Energy 怎么算
 
@@ -271,8 +271,8 @@ Energy（能量）通过比较每首曲目和合集中其他曲目在密度、�
 
 每个项目可以有一份笔记和一份歌词，都存成普通的 Markdown 文件。
 
-- **保存位置：** 默认是项目文件夹中的 `Notes.md` 和 `Lyrics.md`（存成 Package 的项目则在 `.logicx` 内部）。设置 Notes Folder 或 Lyrics Folder 可以存到别处，比如 Obsidian 仓库；见[文件名](#文件名)。
-- **查看：** 在 Search Projects 的 [Detail 视图](#overview-与-detail)（⌘⇧T）中，侧边栏显示笔记，⌘⌥⇧T 切换到歌词。
+- **保存位置：** 默认是项目文件夹中的 `Notes.md` 和 `Lyrics.md`（存成 Package 的项目则在 `.logicx` 内部）。设置 Notes Folder 或 Lyrics Folder 可以存到别处，比如 Obsidian 仓库；见[文件名](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#文件名)。
+- **查看：** 在 Search Projects 的 [Detail 视图](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#overview-与-detail)（⌘⇧T）中，侧边栏显示笔记，⌘⌥⇧T 切换到歌词。
 - **编辑：** 用 Edit Note（⌘⌥N）和 Edit Lyrics（⌘⌥L）在 Raycast 中编辑，或用 Open Note（⌘⇧N）和 Open Lyrics（⌘⇧L）在你的 Markdown App 中打开文件。这些操作在合集里的曲目上同样可用。
 - **在别处编辑：** 在其他 App 中的修改会立即显示。如果你在 Raycast 中编辑时，文件在别的 App 里被改了，保存前会先询问你，再覆盖那些修改。
 
@@ -313,14 +313,14 @@ tags:
 | ------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | **Logic Pro Version**     | 用哪个 Logic Pro 打开项目：Logic Pro 或 Logic Pro (Creator Studio)。                                         |
 | **Projects Folder**       | 存放 Logic Pro 项目的文件夹。                                                                                |
-| **Shared Bounces Folder** | 存放所有项目 bounce 的统一文件夹。文件按名称匹配到项目；见 [Shared Bounces Folder](#shared-bounces-folder)。 |
+| **Shared Bounces Folder** | 存放所有项目 bounce 的统一文件夹。文件按名称匹配到项目；见 [Shared Bounces Folder](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#shared-bounces-folder)。 |
 | **Bounces Subfolder**     | 每个项目中存放 bounce 的子文件夹（例如 `Bounces`）。留空则直接在项目文件夹中查找。                           |
 | **Notes Folder**          | 以 `.md` 文件保存笔记的文件夹（例如 Obsidian 仓库）。留空则在每个项目文件夹中保存 `Notes.md`。               |
 | **Lyrics Folder**         | 以 `.md` 文件保存歌词的文件夹。留空则在每个项目文件夹中保存 `Lyrics.md`。                                    |
-| **Notes Template**        | 可选，作为新笔记初始内容的 `.md` 文件；见[笔记模板](#笔记模板)。                                             |
-| **Lyrics Template**       | 可选，作为新歌词初始内容的 `.md` 文件；见[笔记模板](#笔记模板)。                                             |
+| **Notes Template**        | 可选，作为新笔记初始内容的 `.md` 文件；见[笔记模板](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#笔记模板)。                                             |
+| **Lyrics Template**       | 可选，作为新歌词初始内容的 `.md` 文件；见[笔记模板](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#笔记模板)。                                             |
 | **Strict Line Breaks**    | 关闭：保留单个换行。开启：遵循标准 Markdown 换行规则（行尾两个空格或空一行）。只影响预览，不会改动你的文件。 |
-| **Energy: Density**       | 密度（波峰因数）对能量分数的影响程度；见 [Energy 怎么算](#energy-怎么算)。只有三个权重之间的比例有意义。     |
+| **Energy: Density**       | 密度（波峰因数）对能量分数的影响程度；见 [Energy 怎么算](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#energy-怎么算)。只有三个权重之间的比例有意义。     |
 | **Energy: Brightness**    | 明亮度（频谱质心）对能量分数的影响程度。                                                                     |
 | **Energy: Movement**      | 活跃度（频谱通量）对能量分数的影响程度。                                                                     |
 
@@ -344,7 +344,7 @@ tags:
 - 切换 Active Alternative；
 - 把东西移到废纸篓。
 
-重命名项目或改动 Alternative 前，需要先在 Logic Pro 中关闭项目。笔记和歌词只在你编辑它们时写入，或者在文件还不存在时使用 Open Note 或 Open Lyrics 创建。它们会随项目一起重命名或归档，详见[项目追踪](#项目追踪)。
+重命名项目或改动 Alternative 前，需要先在 Logic Pro 中关闭项目。笔记和歌词只在你编辑它们时写入，或者在文件还不存在时使用 Open Note 或 Open Lyrics 创建。它们会随项目一起重命名或归档，详见[项目追踪](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#项目追踪)。
 
 ### 存储
 

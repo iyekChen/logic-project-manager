@@ -14,15 +14,15 @@
 
 ## ✨ What it does
 
-- **[Browse and open your projects](#-projects)**, and **[tag them](#-tags)** by stage and genre.
-- **[Find projects](#-search)** by name, tag, created date, key, BPM, and more.
-- **[Gather your bounces](#-bounces)** from project folders, a shared export folder, or anywhere else.
-- **[Listen to your bounces](#playback)** without digging through Finder.
-- **[Plan the tracklist](#-collections)** for an EP or album, give tracks roles, and compare each track's energy.
-- **[Keep notes and lyrics](#-notes--lyrics)** as Markdown files, in each project or in a folder such as an Obsidian vault.
-- **[Switch Alternatives](#opening-alternatives)** and see which one is active, without opening Logic Pro, and **[browse the versions you save with Save As](#project-files-in-a-folder)**.
+- **[Browse and open your projects](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#-projects)**, and **[tag them](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#-tags)** by stage and genre.
+- **[Find projects](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#-search)** by name, tag, created date, key, BPM, and more.
+- **[Gather your bounces](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#-bounces)** from project folders, a shared export folder, or anywhere else.
+- **[Listen to your bounces](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#playback)** without digging through Finder.
+- **[Plan the tracklist](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#-collections)** for an EP or album, give tracks roles, and compare each track's energy.
+- **[Keep notes and lyrics](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#-notes--lyrics)** as Markdown files, in each project or in a folder such as an Obsidian vault.
+- **[Switch Alternatives](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#view-alternatives)** without opening Logic Pro, and **[browse the project files](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#view-project-files)** you save with Save As.
 
-See also: [Configuration](#-configuration) · [Known limitations](#-known-limitations) · [Data & files](#-data--files)
+See also: [Configuration](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#-configuration) · [Known limitations](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#-known-limitations) · [Data & files](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#-data--files)
 
 ## 🚀 Quick start
 
@@ -44,13 +44,13 @@ Most of the time you'll use Search Projects. To get it ready:
 ### ② Tell it where your bounces are
 
 - In Extension Preferences, set Bounces Subfolder to the subfolder inside each project where you save bounces (e.g. `Bounces`), or leave it empty if they're saved directly in each project folder.
-- Projects saved as packages have no folder of their own for bounces. Export their bounces to one folder and set it as the Shared Bounces Folder; see [Package and folder projects](#package-and-folder-projects).
-- Optional: if you also export bounces from all your projects into one folder, set it as the Shared Bounces Folder. Files there are matched to projects by name, and the next time you open Search Projects, it offers to review any that don't match; see [Shared Bounces Folder](#shared-bounces-folder).
+- Projects saved as packages have no folder of their own for bounces, so they need a Shared Bounces Folder; see [Package and folder projects](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#package-and-folder-projects).
+- Shared Bounces Folder (optional for projects saved in folders): if you export bounces from all your projects into one folder, set it here. Files there are matched to projects by name, and the next time you open Search Projects, it offers to review any that don't match; see [Shared Bounces Folder](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#shared-bounces-folder).
 - Optional: to include bounces stored anywhere else, select a project in Search Projects and use Manage External Bounce (⌘B).
 
 ### ③ Tag your projects
 
-- In Manage Tags, select a stage (Demo, Mix, Released…) or genre and use Assign to Projects to tag several projects at once; see [Tags](#-tags).
+- In Manage Tags, select a stage (Demo, Mix, Released…) or genre and use Assign to Projects to tag several projects at once; see [Tags](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#-tags).
 - To tag a single project, use Edit Info in Search Projects.
 
 ### ④ Try it
@@ -76,17 +76,17 @@ Logic can save a project in two ways, and the extension lists both:
 | Bounces                             | A package has no folder of its own for bounces, so use a Shared Bounces Folder | Saved in the project folder, usually in a `Bounces` subfolder |
 | Notes and lyrics (no custom folder) | Saved inside the `.logicx`                                                     | Saved in the project folder                                   |
 
-Duplicate Project and Move to Trash work on the whole `.logicx` or the whole folder. A folder can also hold more than one `.logicx`; see [Project files in a folder](#project-files-in-a-folder).
+Duplicate Project and Move to Trash work on the whole `.logicx` or the whole folder. A folder can also hold more than one `.logicx`; see [Project files in a folder](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#view-project-files).
 
-### Opening Alternatives
+### View Alternatives
 
 - **View Alternatives** (Enter for a project saved as a package) lists a project's Alternatives, each with the thumbnail of the project window that Logic saves with it. The Active Alternative is marked with a green check, and the side panel shows each Alternative's key, BPM, and time signature.
+- **Open Active Alternative** (⌘O) opens the project in Logic Pro with its Active Alternative.
 - **Open in Logic Pro** opens the project. If the Alternative you picked isn't the active one, it's set as active first, so that's the one Logic opens.
 - You can also use Set as Active Alternative, Rename Alternative (⌘E), Duplicate Alternative (⌘D), and Move to Trash (⌃X). A project always keeps at least one Alternative. If you move the active one to the Trash, a neighboring one becomes active.
 - These actions change the project itself, so you're asked to close it in Logic Pro first. If it's still open, Logic overwrites the change the next time it saves.
-- **Open Active Alternative** (⌘O) opens the project in Logic Pro with its Active Alternative.
 
-### Project files in a folder
+### View Project Files
 
 When you use Save As in Logic Pro, the new `.logicx` is saved in the same project folder by default, so one folder can hold several versions of a song. A project saved in a folder always works this way, even with a single `.logicx`:
 
@@ -100,7 +100,7 @@ When you use Save As in Logic Pro, the new `.logicx` is saved in the same projec
 Search Projects has two views. Overview shows each project's stage and how many Alternatives and bounces it has; for a project saved in a folder, it shows how many project files instead of Alternatives. Detail adds a side panel with the project's note, its tags and collections, the Active Alternative's key and BPM (plus the latest project file, for a project saved in a folder), and its created and modified dates.
 
 - ⌘⇧T switches between Overview and Detail.
-- In Detail, ⌘⌥⇧T switches the panel between notes and lyrics; see [Notes & lyrics](#-notes--lyrics).
+- In Detail, ⌘⌥⇧T switches the panel between notes and lyrics; see [Notes & lyrics](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#-notes--lyrics).
 
 ### Playback
 
@@ -109,18 +109,18 @@ There are two ways to listen: the built-in player plays a project's latest bounc
 - **Play Latest Bounce** (⌘↵) plays the project's latest bounce. Press it again to pause or resume.
 - While something is playing, you can also use Stop Playback (⌘-), Backward and Forward (⌥← and ⌥→, 5 seconds), and Restart Track (⌘←).
 - Playback keeps going when you close the Raycast window, and stops when Raycast quits.
-- **Browse Bounces** (⌥↵) lists all of the project's bounces. Press Enter to preview any of them with Quick Look; see [Browse Bounces](#browse-bounces).
+- **Browse Bounces** (⌥↵) lists all of the project's bounces. Press Enter to preview any of them with Quick Look; see [Browse Bounces](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#browse-bounces).
 
 ### Managing projects
 
-- **Edit Info** changes a project's name, stage, genres, and collections. To tag several projects at once, use Assign to Projects in Manage Tags; see [Tags](#-tags). Renaming asks you to close the project in Logic Pro first. For a project saved in a folder, the folder is renamed and the `.logicx` inside keeps its name; tags, track numbers, roles, notes, and lyrics move with it.
+- **Edit Info** changes a project's name, stage, genres, and collections. To tag several projects at once, use Assign to Projects in Manage Tags; see [Tags](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#-tags). Renaming asks you to close the project in Logic Pro first. For a project saved in a folder, the folder is renamed and the `.logicx` inside keeps its name; tags, track numbers, roles, notes, and lyrics move with it.
 - **Duplicate Project** copies the whole project under a new name (`Song copy` by default), including any bounces, notes, and lyrics saved inside it. Tags, collections, and pins aren't copied.
 - **Pin** keeps a project at the top of the list. Pinned projects can be reordered with Move Up and Move Down.
-- **Move to Trash** moves the whole project folder to the Trash. Its data is kept for 30 days in case you put it back; see [Project tracking](#project-tracking).
+- **Move to Trash** moves the whole project to the Trash. Its data is kept for 30 days in case you put it back; see [Project tracking](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#project-tracking).
 - **New Project** (⌘N) launches the Logic Pro chosen in Logic Pro Version, or brings it to the front if it's already running.
 - **Copy Latest Bounce** copies the audio file itself, so you can paste it into a message or another app. You can also copy the project's name or path, or open it in Finder.
 
-Other actions in Search Projects have their own chapters: [Collections](#-collections) (⌃↵), [Notes & lyrics](#-notes--lyrics), and bounce sources in [Bounces](#-bounces) (⌘B).
+Other actions in Search Projects have their own chapters: [Collections](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#-collections) (⌃↵), [Notes & lyrics](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#-notes--lyrics), and bounce sources in [Bounces](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#-bounces) (⌘B).
 
 ## 🔖 Tags
 
@@ -135,7 +135,7 @@ Manage Tags edits the three lists you tag with. Use the dropdown next to the sea
 ### Editing the lists
 
 - **Create** (⌘N) adds an option. **Edit** (⌘E) changes its name, aliases, and, for stages, its color. Renaming keeps the option on every project and track that uses it. Two options in the same list can't share a name.
-- **Aliases** are other names to search by, separated by commas (e.g. `dnb` for Drum & Bass). See [Combined search](#combined-search).
+- **Aliases** are other names to search by, separated by commas (e.g. `dnb` for Drum & Bass). See [Combined search](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#combined-search).
 - Reorder with Move Up (⌘⌥↑) and Move Down (⌘⌥↓), or Move to Top (⌘⇧↑) and Move to Bottom (⌘⇧↓). The same order is used everywhere you pick a tag.
 - **Delete** (⌃X) asks first, telling you how many projects or tracks use the option, and then removes it from all of them.
 - **Reset to Defaults** restores the default list for the list you're viewing. Your custom names, colors, aliases, and order are lost, and projects or tracks using an option that's no longer in the list lose it.
@@ -143,7 +143,7 @@ Manage Tags edits the three lists you tag with. Use the dropdown next to the sea
 ### Tagging projects
 
 - **Assign to Projects** (stages and genres only) shows every project, with the ones that already have the tag checked. Check projects to add the tag and uncheck them to remove it. Because a project has only one stage, checking a project that's in another stage moves it, and the form tells you how many will move.
-- To tag a single project, use Edit Info in Search Projects. To give a track a role, open Edit Info from inside a collection; see [Collections](#-collections).
+- To tag a single project, use Edit Info in Search Projects. To give a track a role, open Edit Info from inside a collection; see [Collections](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#-collections).
 
 ## 🔍 Search
 
@@ -172,7 +172,7 @@ Things that are easy to miss:
 - **Short numbers are tempos.** Numbers with up to three digits are always read as BPM, so `# album 01` looks for a tempo of 1 instead of a collection called Album 01. Search by the words in the name instead.
 - **Half and double tempo count.** `# 140` also finds projects at 70 and 280 BPM, and tempos are rounded, so 139.6 counts as 140. A range includes both ends and can be written either way round (`100-90`).
 - **Keys and time signatures match whole.** `# cm` finds C minor only, not C major. A root on its own (`a`, `eb`) isn't a key search, and `# a minor` is read as two separate words. Both spellings of a black key work: `c#m` and `dbm` find the same projects. `6/8` doesn't match `6/4`.
-- **Key, BPM, and time signature come from the Active Alternative.** They're read in the background from each project's Active Alternative (or its most recently modified one, if the project doesn't record which is active), then cached. For a project saved in a folder, the [latest project file](#project-files-in-a-folder) is used. Until a project's Alternative has been read, it doesn't match these words. The key is the one set for the project in Logic Pro, not detected from the audio.
+- **Key, BPM, and time signature come from the Active Alternative.** They're read in the background from each project's Active Alternative (or its most recently modified one, if the project doesn't record which is active), then cached. For a project saved in a folder, the [latest project file](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#view-project-files) is used. Until a project's Alternative has been read, it doesn't match these words. The key is the one set for the project in Logic Pro, not detected from the audio.
 
 ## 🎧 Bounces
 
@@ -181,7 +181,7 @@ Things that are easy to miss:
 A project's bounces are collected from:
 
 - its Bounces Subfolder, or the project folder itself if Bounces Subfolder isn't set;
-- the [Shared Bounces Folder](#shared-bounces-folder), for files whose names match the project;
+- the [Shared Bounces Folder](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#shared-bounces-folder), for files whose names match the project;
 - external folders and files added with Manage External Bounce (⌘B in Search Projects). Sources that can't be reached (e.g. an unplugged drive) are kept and shown as unavailable until you remove them. If a linked file is renamed in place or moved into your Shared Bounces Folder, it's re-linked automatically when there's a single match.
 
 Only audio files directly inside each folder are read; subfolders aren't. A file reached through more than one source counts once. The most recently modified audio file (WAV, AIFF, MP3, M4A, or FLAC) is the latest bounce: it's the one that's played, copied, queued, and used for energy analysis.
@@ -192,7 +192,7 @@ Browse Bounces (⌥↵ in Search Projects) lists all of a project's bounces, gro
 
 - Press Enter to preview a bounce with Quick Look, or ⌘O to open it in its default app.
 - Rename a bounce (its extension stays the same), copy the file itself, show it in Finder, or move it to the Trash.
-- **Not This Project** sends a file from the Shared Bounces Folder back to [Unmatched Bounces](#unmatched-bounces) when it was matched to the wrong project.
+- **Not This Project** sends a file from the Shared Bounces Folder back to [Unmatched Bounces](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#unmatched-bounces) when it was matched to the wrong project.
 - For an unavailable external source, **Remove External Source** removes it from the project. The file itself isn't deleted.
 
 ### Search Bounces
@@ -214,7 +214,7 @@ Assigning bounces never moves or renames your files.
 
 ### Unmatched bounces
 
-When a Shared Bounces Folder is set, files in it that don't belong to any project are listed in Unmatched Bounces (⌘⇧B in Search Projects) and marked in [Search Bounces](#search-bounces). The first time you open Search Projects after setting or changing the folder, the extension offers to review any unmatched files it finds.
+When a Shared Bounces Folder is set, files in it that don't belong to any project are listed in Unmatched Bounces (⌘⇧B in Search Projects) and marked in [Search Bounces](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#search-bounces). The first time you open Search Projects after setting or changing the folder, the extension offers to review any unmatched files it finds.
 
 Use Assign to Project to give a file to a project:
 
@@ -237,15 +237,15 @@ In Browse Collections, you can rename, pin, or delete collections. Deleting a co
 
 - **Tracklist** lists numbered tracks in order, with each track's role, number, duration, and energy. Its header shows the total duration. **Unsorted** lists the other tracks alphabetically.
 - Reorder with Swap Up and Swap Down, or Move to Top and Move to Bottom. Remove from Tracklist sends a track back to Unsorted and clears its role. If two tracks share a number, both are marked with a warning icon.
-- **Roles:** open Edit Info from inside a collection to give a track a role, such as Intro or Interlude. Edit the list of roles in [Manage Tags](#-tags).
+- **Roles:** open Edit Info from inside a collection to give a track a role, such as Intro or Interlude. Edit the list of roles in [Manage Tags](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#-tags).
 - Use the dropdown to show only one stage or genre. The Detail view shows each track's note, stage, duration, role, BPM, key, time signature, and energy.
 - **Remove from Collection** removes a track from the collection, along with its number and role there. The project itself isn't affected.
 - Back to Search Projects (⌃↵) returns to your project list from anywhere in Browse Collections.
 
 ### Listening to a collection
 
-- Play any track's latest bounce with ⌘↵, as in [Playback](#playback).
-- **Queue Collection in Player** (⌘⇧↵) opens the latest bounce of every track in the Tracklist, in order, as an `.m3u` playlist in your default player. Unsorted tracks and tracks without a bounce are skipped, and the action is hidden while the Tracklist is empty. See [Known limitations](#-known-limitations) for player support.
+- Play any track's latest bounce with ⌘↵, as in [Playback](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#playback).
+- **Queue Collection in Player** (⌘⇧↵) opens the latest bounce of every track in the Tracklist, in order, as an `.m3u` playlist in your default player. Unsorted tracks and tracks without a bounce are skipped, and the action is hidden while the Tracklist is empty. See [Known limitations](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#-known-limitations) for player support.
 
 ### How energy is calculated
 
@@ -271,8 +271,8 @@ Each feature is then scaled from 0 to 1 across the tracks in the collection's Tr
 
 Each project can have a note and a lyrics file, saved as ordinary Markdown files.
 
-- **Where they're saved:** `Notes.md` and `Lyrics.md` in the project folder by default (inside the `.logicx` for a project saved as a package). Set a Notes Folder or Lyrics Folder to keep them elsewhere, such as an Obsidian vault; see [File names](#file-names).
-- **Viewing:** in Search Projects' [Detail view](#overview-and-detail) (⌘⇧T), the side panel shows the note, and ⌘⌥⇧T switches it to the lyrics.
+- **Where they're saved:** `Notes.md` and `Lyrics.md` in the project folder by default (inside the `.logicx` for a project saved as a package). Set a Notes Folder or Lyrics Folder to keep them elsewhere, such as an Obsidian vault; see [File names](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#file-names).
+- **Viewing:** in Search Projects' [Detail view](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#overview-and-detail) (⌘⇧T), the side panel shows the note, and ⌘⌥⇧T switches it to the lyrics.
 - **Editing:** use Edit Note (⌘⌥N) and Edit Lyrics (⌘⌥L) to edit in Raycast, or Open Note (⌘⇧N) and Open Lyrics (⌘⇧L) to open the file in your Markdown app. These actions also work on tracks inside a collection.
 - **Editing elsewhere:** changes made in other apps show up right away. If a file changes in another app while you're editing it in Raycast, you're asked before your save replaces those changes.
 
@@ -313,14 +313,14 @@ tags:
 | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Logic Pro Version**     | Which Logic Pro opens your projects: Logic Pro or Logic Pro (Creator Studio).                                                                                          |
 | **Projects Folder**       | The folder containing your Logic Pro projects.                                                                                                                         |
-| **Shared Bounces Folder** | One folder for bounces from all your projects. Files are matched to projects by name; see [Shared Bounces Folder](#shared-bounces-folder).                             |
+| **Shared Bounces Folder** | One folder for bounces from all your projects. Files are matched to projects by name; see [Shared Bounces Folder](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#shared-bounces-folder).                             |
 | **Bounces Subfolder**     | The subfolder inside each project where bounces are saved (e.g. `Bounces`). Leave empty to look directly in each project folder.                                       |
 | **Notes Folder**          | The folder where notes are saved as `.md` files (e.g. an Obsidian vault). Leave empty to save `Notes.md` in each project folder.                                       |
 | **Lyrics Folder**         | The folder where lyrics are saved as `.md` files. Leave empty to save `Lyrics.md` in each project folder.                                                              |
-| **Notes Template**        | Optional `.md` file used as the starting point for new notes; see [Note templates](#note-templates).                                                                   |
-| **Lyrics Template**       | Optional `.md` file used as the starting point for new lyrics; see [Note templates](#note-templates).                                                                  |
+| **Notes Template**        | Optional `.md` file used as the starting point for new notes; see [Note templates](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#note-templates).                                                                   |
+| **Lyrics Template**       | Optional `.md` file used as the starting point for new lyrics; see [Note templates](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#note-templates).                                                                  |
 | **Strict Line Breaks**    | Off: preserve single line breaks. On: follow standard Markdown line breaks (two trailing spaces or a blank line). Affects the preview only; your files aren't changed. |
-| **Energy: Density**       | How much density (crest factor) affects the energy score; see [How energy is calculated](#how-energy-is-calculated). Only the ratio between the three weights matters. |
+| **Energy: Density**       | How much density (crest factor) affects the energy score; see [How energy is calculated](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#how-energy-is-calculated). Only the ratio between the three weights matters. |
 | **Energy: Brightness**    | How much brightness (spectral centroid) affects the energy score.                                                                                                      |
 | **Energy: Movement**      | How much movement (spectral flux) affects the energy score.                                                                                                            |
 
@@ -344,7 +344,7 @@ The extension changes project files only when you ask:
 - switching the Active Alternative;
 - moving something to the Trash.
 
-Renaming a project or changing an Alternative asks you to close the project in Logic Pro first. Notes and lyrics are written only when you edit them, or when you use Open Note or Open Lyrics before the file exists. They're renamed or archived along with their project, as described in [Project tracking](#project-tracking).
+Renaming a project or changing an Alternative asks you to close the project in Logic Pro first. Notes and lyrics are written only when you edit them, or when you use Open Note or Open Lyrics before the file exists. They're renamed or archived along with their project, as described in [Project tracking](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#project-tracking).
 
 ### Storage
 
