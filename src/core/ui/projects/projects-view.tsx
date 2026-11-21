@@ -17,7 +17,6 @@ import {
   Alert,
   confirmAlert,
   openExtensionPreferences,
-  type Application,
 } from "@raycast/api";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import fs from "node:fs";
@@ -49,8 +48,6 @@ import { GroupBySubmenu } from "@/core/ui/actions/group-by-submenu";
 import { useGroupOption } from "@/core/ui/hooks/use-group-option";
 import { groupItems } from "@/core/ui/shared/grouping";
 import { Bounces, UnmatchedBounces } from "@/core/ui/bounces";
-import { stageTaxonomy, genreTaxonomy, collectionTaxonomy } from "@/core/metadata/taxonomies";
-import type { TaxonomyOption } from "@/core/metadata/taxonomy";
 import { displayDoc, missingDocFolder } from "@/core/docs/docs";
 import { docPlaceholder } from "@/core/docs/doc-actions";
 import { archiveDeletedProject, assertDeletionWritable } from "@/core/fs/deleted-projects";
@@ -78,7 +75,9 @@ import {
 import { SetsView, projectFilesInfo } from "@/daws/ui";
 import { labels } from "@/daws/labels";
 import { projectIcon } from "@/daws/icons";
-import { openWithDaw, resolveDawApp } from "@/core/daw-app";
+import { openWithDaw } from "@/core/daw-app";
+import { useDawApp } from "@/core/ui/hooks/use-daw-app";
+import { useTaxonomies } from "@/core/ui/projects/use-taxonomies";
 import { LOG_PREFIX } from "@/core/log";
 import { optionKeywords } from "@/core/ui/shared/search-keywords";
 import { findCurrentSet } from "@/core/projects/current-set";
@@ -127,9 +126,7 @@ const PROJECT_SORT_OPTIONS: SortOption[] = [
 
 export function ProjectsView() {
   const { push } = useNavigation();
-  const [stageOptions, setStageOptions] = useState<TaxonomyOption[]>([]);
-  const [genreOptions, setGenreOptions] = useState<TaxonomyOption[]>([]);
-  const [collectionOptions, setCollectionOptions] = useState<TaxonomyOption[]>([]);
+  const { stageOptions, genreOptions, collectionOptions, reloadCollections } = useTaxonomies();
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [searchText, setSearchText] = useState("");
   const [sortBy, setSortBy] = useSortOption(SORT_STORAGE_KEY, PROJECT_SORT_OPTIONS, "created-desc");
@@ -152,7 +149,7 @@ export function ProjectsView() {
     detailDocKey: DETAIL_DOC_STORAGE_KEY,
     defaultMode: "detail",
   });
-  const [dawApp, setDawApp] = useState<Application | null>(null);
+  const dawApp = useDawApp();
   const [currentSets, setCurrentSets] = useState<Record<string, CurrentSetInfo>>({});
   const [readingSets, setReadingSets] = useState(false);
   // 每次读取编号：新一轮开始后，旧一轮的结果不再写入。
@@ -179,21 +176,10 @@ export function ProjectsView() {
       playerPath: PLAYER_PATH,
     });
 
-  // 找到 DAW 应用，用于新建项目（启动它）和图标：偏好设置里选了版本就用那个版本。
-  useEffect(() => {
-    void resolveDawApp().then(setDawApp);
-  }, []);
-
   // 常驻 Toast：只在播放时显示，title=曲名，message=进度；暂停或停止时隐藏。
   const toastRef = useRef<Toast | null>(null);
   const toastBusyRef = useRef(false);
   const toastActiveRef = useRef(false);
-
-  useEffect(() => {
-    void stageTaxonomy.get().then(setStageOptions);
-    void genreTaxonomy.get().then(setGenreOptions);
-    void collectionTaxonomy.get().then(setCollectionOptions);
-  }, []);
 
   // 静默启动刷新：内容没变就保留原引用，不触发重渲染，也不重写缓存。
   const commitProjects = useCallback((updated: Project[]) => {
@@ -697,7 +683,7 @@ export function ProjectsView() {
                 onPop={() => {
                   // 在合集里改过的名字、标签、成员，以及新建/改名的合集，返回时一并刷新。
                   void reloadProjects();
-                  void collectionTaxonomy.get().then(setCollectionOptions);
+                  reloadCollections();
                 }}
               />
               <Action

@@ -14,7 +14,6 @@ import {
   Toast,
   trash,
   useNavigation,
-  type Application,
 } from "@raycast/api";
 import fs from "node:fs";
 import path from "node:path";
@@ -39,7 +38,8 @@ import { strings } from "@/strings";
 import type { Project } from "@/core/projects/types";
 import { LOG_PREFIX } from "@/core/log";
 import { alternativesViewStrings, projectFilesViewStrings } from "./strings";
-import { openWithDaw, resolveDawApp } from "@/core/daw-app";
+import { openWithDaw } from "@/core/daw-app";
+import { useDawApp } from "@/core/ui/hooks/use-daw-app";
 import { showFailure } from "@/core/ui/shared/toast";
 import { ShowInFinderAction } from "@/core/ui/actions/show-in-finder";
 import { labels } from "@/daws/labels";
@@ -160,15 +160,10 @@ function RenameProjectFileForm({ file, onRenamed }: { file: ProjectFile; onRenam
 export function ProjectFilesView({ project }: { project: Project }) {
   const [files, setFiles] = useState<ProjectFile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [logicApp, setLogicApp] = useState<Application | null>(null);
+  const logicApp = useDawApp();
   const [sortBy, setSortBy] = useSortOption(PROJECT_FILES_SORT_STORAGE_KEY, PROJECT_FILES_SORT_OPTIONS, "created-desc");
   const [groupBy, setGroupBy] = useGroupOption(PROJECT_FILES_GROUP_STORAGE_KEY, "created");
   const [reloadToken, setReloadToken] = useState(0);
-
-  // 解析 Logic Pro，用于 Open in Logic Pro 的图标：偏好设置里选了版本就用那个版本。
-  useEffect(() => {
-    void resolveDawApp().then(setLogicApp);
-  }, []);
 
   useEffect(() => {
     let cancelled = false;

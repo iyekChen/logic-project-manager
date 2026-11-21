@@ -13,7 +13,6 @@ import {
   showToast,
   Toast,
   useNavigation,
-  type Application,
 } from "@raycast/api";
 import fs from "node:fs";
 import path from "node:path";
@@ -31,7 +30,8 @@ import { strings } from "@/strings";
 import type { Project } from "@/core/projects/types";
 import { LOG_PREFIX } from "@/core/log";
 import { alternativesViewStrings } from "./strings";
-import { openWithDaw, resolveDawApp } from "@/core/daw-app";
+import { openWithDaw } from "@/core/daw-app";
+import { useDawApp } from "@/core/ui/hooks/use-daw-app";
 import { showFailure } from "@/core/ui/shared/toast";
 import { ShowInFinderAction } from "@/core/ui/actions/show-in-finder";
 import { labels } from "@/daws/labels";
@@ -127,15 +127,10 @@ function RenameAlternativeForm({ alternative, onRenamed }: { alternative: Projec
 export function AlternativesView({ project }: { project: Project }) {
   const [alternatives, setAlternatives] = useState<ProjectAlternative[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [logicApp, setLogicApp] = useState<Application | null>(null);
+  const logicApp = useDawApp();
   const [sortBy, setSortBy] = useSortOption(ALTERNATIVES_SORT_STORAGE_KEY, ALTERNATIVES_SORT_OPTIONS, "created-desc");
   const [groupBy, setGroupBy] = useGroupOption(ALTERNATIVES_GROUP_STORAGE_KEY, "created");
   const [reloadToken, setReloadToken] = useState(0);
-
-  // 解析 Logic Pro，用于 Open in Logic Pro 的图标：偏好设置里选了版本就用那个版本。
-  useEffect(() => {
-    void resolveDawApp().then(setLogicApp);
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
