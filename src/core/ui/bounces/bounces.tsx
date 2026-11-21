@@ -20,6 +20,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { strings } from "@/strings";
 import { SortBySubmenu } from "@/core/ui/actions/sort-by-submenu";
+import { CopyBounceSection } from "@/core/ui/actions/copy-bounce-section";
 import { useSortOption } from "@/core/ui/hooks/use-sort-option";
 import { sortItems, sortOptionTitle } from "@/core/ui/shared/sorting";
 import type { SortOption } from "@/core/ui/shared/sorting";
@@ -374,28 +375,7 @@ export function Bounces(props: {
                         />
                       </ActionPanel.Section>
                     )}
-                    {b.available && (
-                      <ActionPanel.Section title={strings.sectionCopy}>
-                        <Action
-                          title={strings.copyBounce}
-                          icon={Icon.CopyClipboard}
-                          shortcut={Keyboard.Shortcut.Common.Copy}
-                          onAction={() => handleCopy(b)}
-                        />
-                        <Action.CopyToClipboard
-                          content={b.name}
-                          title={strings.copyBounceName}
-                          icon={Icon.CopyClipboard}
-                          shortcut={Keyboard.Shortcut.Common.CopyName}
-                        />
-                        <Action.CopyToClipboard
-                          content={b.path}
-                          title={strings.copyBouncePath}
-                          icon={Icon.CopyClipboard}
-                          shortcut={Keyboard.Shortcut.Common.CopyPath}
-                        />
-                      </ActionPanel.Section>
-                    )}
+                    {b.available && <CopyBounceSection name={b.name} path={b.path} onCopy={() => handleCopy(b)} />}
                     <ActionPanel.Section title={strings.sectionArrange}>
                       <BounceGroupSubmenu value={groupBy} onChange={setGroupBy} />
                       <SortBySubmenu allowed={BOUNCES_SORT_OPTIONS} value={sortBy} onChange={setSortBy} />

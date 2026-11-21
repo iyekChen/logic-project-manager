@@ -37,6 +37,7 @@ import { strings } from "@/strings";
 import { PlayToggleAction } from "@/core/ui/actions/play-toggle";
 import { PlaybackControlsSection } from "@/core/ui/actions/playback-controls";
 import { DocActions } from "@/core/ui/actions/doc-actions";
+import { CopyProjectSection } from "@/core/ui/actions/copy-project-section";
 import { SortBySubmenu } from "@/core/ui/actions/sort-by-submenu";
 import { useSortOption } from "@/core/ui/hooks/use-sort-option";
 import { sortItems, sortOptionTitle } from "@/core/ui/shared/sorting";
@@ -881,28 +882,7 @@ export function ProjectsView() {
                 />
               )}
             </ActionPanel.Section>
-            <ActionPanel.Section title={strings.sectionCopy}>
-              {item.bouncesCount > 0 && (
-                <Action
-                  title={strings.copyLatestBounce}
-                  icon={Icon.CopyClipboard}
-                  shortcut={Keyboard.Shortcut.Common.Copy}
-                  onAction={() => copyLatestBounce(item)}
-                />
-              )}
-              <Action.CopyToClipboard
-                content={item.title}
-                title={strings.copyProjectName}
-                icon={Icon.CopyClipboard}
-                shortcut={Keyboard.Shortcut.Common.CopyName}
-              />
-              <Action.CopyToClipboard
-                content={item.folderPath}
-                title={strings.copyProjectPath}
-                icon={Icon.CopyClipboard}
-                shortcut={Keyboard.Shortcut.Common.CopyPath}
-              />
-            </ActionPanel.Section>
+            <CopyProjectSection project={item} onCopyLatestBounce={() => copyLatestBounce(item)} />
             <ActionPanel.Section title={strings.sectionPin}>
               <Action
                 title={item.pinned ? strings.unpinProject : strings.pinProject}

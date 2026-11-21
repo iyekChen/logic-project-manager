@@ -25,6 +25,7 @@ import { slugify, type TaxonomyOption } from "@/core/metadata/taxonomy";
 import { PlayToggleAction } from "@/core/ui/actions/play-toggle";
 import { PlaybackControlsSection } from "@/core/ui/actions/playback-controls";
 import { DocActions } from "@/core/ui/actions/doc-actions";
+import { CopyProjectSection } from "@/core/ui/actions/copy-project-section";
 import { viewPrefs } from "@/core/ui/shared/view-prefs";
 import {
   TrackMap,
@@ -716,28 +717,7 @@ function CollectionPanel({
     );
 
   const renderCopySection = (p: Project) => (
-    <ActionPanel.Section title={strings.sectionCopy}>
-      {p.bouncesCount > 0 && (
-        <Action
-          title={strings.copyLatestBounce}
-          icon={Icon.CopyClipboard}
-          shortcut={Keyboard.Shortcut.Common.Copy}
-          onAction={() => copyLatestBounce(p)}
-        />
-      )}
-      <Action.CopyToClipboard
-        content={p.title}
-        title={strings.copyProjectName}
-        icon={Icon.CopyClipboard}
-        shortcut={Keyboard.Shortcut.Common.CopyName}
-      />
-      <Action.CopyToClipboard
-        content={p.folderPath}
-        title={strings.copyProjectPath}
-        icon={Icon.CopyClipboard}
-        shortcut={Keyboard.Shortcut.Common.CopyPath}
-      />
-    </ActionPanel.Section>
+    <CopyProjectSection project={p} onCopyLatestBounce={() => copyLatestBounce(p)} />
   );
 
   const tracked = members
