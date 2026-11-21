@@ -1,15 +1,15 @@
 <p align="center">
-  <img src="assets/icon.png" width="128" height="128" alt="Ableton Project Manager icon" />
+  <img src="assets/icon.png" width="128" height="128" alt="Logic Project Manager icon" />
 </p>
 
-<h1 align="center">Ableton Project Manager</h1>
+<h1 align="center">Logic Project Manager</h1>
 
 <p align="center">
-  Browse, tag and listen to your Ableton Live projects and bounces, and organize them into collections on your Mac.
+  Browse, tag and listen to your Logic Pro projects and bounces, and organize them into collections on your Mac.
 </p>
 
 <p align="center">
-  English | <a href="https://github.com/iyekChen/ableton-project-manager/blob/main/README.zh-CN.md">简体中文</a>
+  English | <a href="https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md">简体中文</a>
 </p>
 
 ## ✨ What it does
@@ -20,7 +20,7 @@
 - **[Listen to your bounces](#playback)** without digging through Finder.
 - **[Plan the tracklist](#-collections)** for an EP or album, give tracks roles, and compare each track's energy.
 - **[Keep notes and lyrics](#-notes--lyrics)** as Markdown files, in each project or in a folder such as an Obsidian vault.
-- **[Start new Live Sets](#-new-live-sets)** from your templates.
+- **[Switch Alternatives](#opening-alternatives)** and see which one is active, without opening Logic Pro.
 
 See also: [Configuration](#-configuration) · [Known limitations](#-known-limitations) · [Data & files](#-data--files)
 
@@ -38,8 +38,8 @@ Most of the time you'll use Search Projects. To get it ready:
 
 ### ① Set your Projects Folder
 
-- Open Search Projects. On first launch, Raycast asks you to select the folder containing your Ableton Live projects.
-- Each folder directly inside it that contains at least one `.als` file counts as a project. Folders nested deeper aren't found, so choose the folder that directly contains your project folders.
+- Open Search Projects. On first launch, Raycast asks you to select the folder containing your Logic Pro projects.
+- Each Logic project (`.logicx`) directly inside it counts as a project, and so does each folder directly inside it that contains one. Anything nested deeper isn't found, so choose the folder that directly contains your projects.
 
 ### ② Tell it where your bounces are
 
@@ -54,7 +54,7 @@ Most of the time you'll use Search Projects. To get it ready:
 
 ### ④ Try it
 
-- Select a project in Search Projects: Enter shows its Sets, ⌘O opens the latest one, and ⌘↵ plays its latest bounce. Press ⌘K to see every other action.
+- Select a project in Search Projects: Enter shows its Alternatives, ⌘O opens it in Logic Pro, and ⌘↵ plays its latest bounce. Press ⌘K to see every other action.
 
 **You're all set.** Everything below covers each feature in detail, for when you want to dig deeper.
 
@@ -62,14 +62,17 @@ Most of the time you'll use Search Projects. To get it ready:
 
 Search Projects lists every project in your Projects Folder. Pinned projects stay at the top. The rest can be grouped by created or modified date and sorted by date or name.
 
-### Opening Sets
+### Opening Alternatives
 
-- **View Sets** (Enter) lists a project's Sets. Open one in Ableton Live, or rename, duplicate, or move it to the Trash. Renaming asks you to close the Set in Live first.
-- **Open Latest Set** (⌘O) opens the project's most recently modified Set.
+- **View Alternatives** (Enter) lists a project's Alternatives, each with the thumbnail of the project window that Logic saves with it. The Active Alternative is marked with a green check, and the side panel shows each Alternative's key, BPM, and time signature.
+- **Open in Logic Pro** opens the project. If the Alternative you picked isn't the active one, it's set as active first, so that's the one Logic opens.
+- You can also use Set as Active Alternative, Rename Alternative (⌘E), Duplicate Alternative (⌘D), and Move to Trash (⌃X). A project always keeps at least one Alternative. If you move the active one to the Trash, a neighboring one becomes active.
+- These actions change the project itself, so you're asked to close it in Logic Pro first. If it's still open, Logic overwrites the change the next time it saves.
+- **Open Active Alternative** (⌘O) opens the project in Logic Pro with its Active Alternative.
 
 ### Overview and Detail
 
-Search Projects has two views. Overview shows each project's stage and how many Sets and bounces it has. Detail adds a side panel with the project's note, its tags and collections, the latest Set's key and BPM, and its created and modified dates.
+Search Projects has two views. Overview shows each project's stage and how many Alternatives and bounces it has. Detail adds a side panel with the project's note, its tags and collections, the Active Alternative's key and BPM, and its created and modified dates.
 
 - ⌘⇧T switches between Overview and Detail.
 - In Detail, ⌘⌥⇧T switches the panel between notes and lyrics; see [Notes & lyrics](#-notes--lyrics).
@@ -85,13 +88,14 @@ There are two ways to listen: the built-in player plays a project's latest bounc
 
 ### Managing projects
 
-- **Edit Info** changes a project's name, stage, genres, and collections. To tag several projects at once, use Assign to Projects in Manage Tags; see [Tags](#-tags). Renaming asks you to close the project in Live first, then renames its folder; tags, track numbers, roles, notes, and lyrics move with it.
-- **Duplicate Project** copies the whole project folder under a new name (`Song copy` by default), including any bounces, notes, and lyrics saved inside it. Tags, collections, and pins aren't copied.
+- **Edit Info** changes a project's name, stage, genres, and collections. To tag several projects at once, use Assign to Projects in Manage Tags; see [Tags](#-tags). Renaming asks you to close the project in Logic Pro first. For a project saved in a folder, the folder is renamed and the `.logicx` inside keeps its name; tags, track numbers, roles, notes, and lyrics move with it.
+- **Duplicate Project** copies the whole project under a new name (`Song copy` by default), including any bounces, notes, and lyrics saved inside it. Tags, collections, and pins aren't copied.
 - **Pin** keeps a project at the top of the list. Pinned projects can be reordered with Move Up and Move Down.
 - **Move to Trash** moves the whole project folder to the Trash. Its data is kept for 30 days in case you put it back; see [Project tracking](#project-tracking).
+- **New Project** (⌘N) launches the Logic Pro chosen in Logic Pro Version, or brings it to the front if it's already running.
 - **Copy Latest Bounce** copies the audio file itself, so you can paste it into a message or another app. You can also copy the project's name or path, or open it in Finder.
 
-Other actions in Search Projects have their own chapters: [Collections](#-collections) (⌃↵), [Notes & lyrics](#-notes--lyrics), bounce sources in [Bounces](#-bounces) (⌘B), and [New Live Sets](#-new-live-sets).
+Other actions in Search Projects have their own chapters: [Collections](#-collections) (⌃↵), [Notes & lyrics](#-notes--lyrics), and bounce sources in [Bounces](#-bounces) (⌘B).
 
 ## 🔖 Tags
 
@@ -118,7 +122,7 @@ Manage Tags edits the three lists you tag with. Use the dropdown next to the sea
 
 ## 🔍 Search
 
-Search Projects matches what you type against each project's name, stage, genres, collections, and created year and month, as well as the key of its latest Set. To search by BPM or time signature, or to require every word to match, use combined search. Use the dropdown next to the search bar to show only one stage, genre, or year.
+Search Projects matches what you type against each project's name, stage, genres, collections, and created year and month, as well as the key of its Active Alternative. To search by BPM or time signature, or to require every word to match, use combined search. Use the dropdown next to the search bar to show only one stage, genre, or year.
 
 ### Combined search
 
@@ -143,7 +147,7 @@ Things that are easy to miss:
 - **Short numbers are tempos.** Numbers with up to three digits are always read as BPM, so `# album 01` looks for a tempo of 1 instead of a collection called Album 01. Search by the words in the name instead.
 - **Half and double tempo count.** `# 140` also finds projects at 70 and 280 BPM, and tempos are rounded, so 139.6 counts as 140. A range includes both ends and can be written either way round (`100-90`).
 - **Keys and time signatures match whole.** `# cm` finds C minor only, not C major. A root on its own (`a`, `eb`) isn't a key search, and `# a minor` is read as two separate words. Both spellings of a black key work: `c#m` and `dbm` find the same projects. `6/8` doesn't match `6/4`.
-- **Key, BPM, and time signature come from the latest Set.** They're read from each project's most recently modified Set in the background, then cached. Until a project's Set has been read, it doesn't match these words. The key comes from the Set's key and scale in Live, not from the audio, so a Set without a scale has no key.
+- **Key, BPM, and time signature come from the Active Alternative.** They're read in the background from each project's Active Alternative (or its most recently modified one, if the project doesn't record which is active), then cached. Until a project's Alternative has been read, it doesn't match these words. The key is the one set for the project in Logic Pro, not detected from the audio.
 
 ## 🎧 Bounces
 
@@ -177,7 +181,6 @@ The Search Bounces command lists the bounces of every project in one place. A fi
 ### Shared Bounces Folder
 
 - A file belongs to a project when its name starts with the project name, followed by a space, `-`, `_`, `.`, or nothing else. `Song.wav`, `Song v2.wav`, and `Song-master.wav` all belong to `Song`; `Songbird.wav` doesn't. Case doesn't matter.
-- Live names a new project's folder `<Name> Project`, so `Song.wav` doesn't match a project called `Song Project`. Rename the project, or add `Song` as a bounce alias (see below).
 - If a file matches more than one project, the longest name wins: `Demo Package v2.wav` belongs to `Demo Package`, not `Demo`.
 - **Bounce Aliases:** in Manage External Bounce, add other names a project's files start with (e.g. `SC` for `Summer Children`). An alias can't be another project's name or alias. This field only appears when a Shared Bounces Folder is set.
 - **Renamed projects:** after a rename, the old name keeps matching only files created before the rename, so a new project with that name doesn't take them. Deselect a name under Previous Names in Manage External Bounce to stop matching it.
@@ -268,7 +271,7 @@ title: "{{title}}"
 date: "{{date}}"
 time: "{{time}}"
 tags:
-  - ableton_live
+  - logic_pro
   - project-note
 ---
 ```
@@ -279,27 +282,14 @@ tags:
 - Renaming a project in the extension or in Finder also renames its note and lyrics files.
 - Characters that are unsafe in file names or special in Obsidian (`/ \ : * ? " < > | # ^ [ ]`) are replaced with full-width look-alikes, so `Beat #3` becomes `Beat ＃3.md`. If two project names would still end up with the same file, the extension won't read or write it until you rename one of them.
 
-## 🎹 New Live Sets
-
-In Search Projects:
-
-- **New Live Set** (⌘N) launches Ableton Live, which opens a new Set from your Default Set. If Live is already running, it's brought to the front instead.
-- **New Live Set from Template** (⌘⌥⌃N) lists your templates. Choose one to open it in Ableton Live as a new Set: saving asks for a new name, so the template itself stays unchanged.
-
-### Templates
-
-- Templates are the `.als` files in your Templates Folder, which defaults to `~/Music/Ableton/User Library/Templates`.
-- Templates at the top level form one group, and each subfolder forms its own group. Folders nested deeper aren't read.
-- You can rename a template or move it to the Trash from the list.
-
 ## 🔧 Configuration
 
 | Preference                | Description                                                                                                                                                            |
 | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Projects Folder**       | The folder containing your Ableton Live projects.                                                                                                                      |
+| **Logic Pro Version**     | Which Logic Pro opens your projects: Logic Pro or Logic Pro (Creator Studio).                                                                                          |
+| **Projects Folder**       | The folder containing your Logic Pro projects.                                                                                                                         |
 | **Shared Bounces Folder** | One folder for bounces from all your projects. Files are matched to projects by name; see [Shared Bounces Folder](#shared-bounces-folder).                             |
 | **Bounces Subfolder**     | The subfolder inside each project where bounces are saved (e.g. `Bounces`). Leave empty to look directly in each project folder.                                       |
-| **Templates Folder**      | The folder that holds your Live templates. Leave empty to use `~/Music/Ableton/User Library/Templates`; see [Templates](#templates).                                   |
 | **Notes Folder**          | The folder where notes are saved as `.md` files (e.g. an Obsidian vault). Leave empty to save `Notes.md` in each project folder.                                       |
 | **Lyrics Folder**         | The folder where lyrics are saved as `.md` files. Leave empty to save `Lyrics.md` in each project folder.                                                              |
 | **Notes Template**        | Optional `.md` file used as the starting point for new notes; see [Note templates](#note-templates).                                                                   |
@@ -311,6 +301,7 @@ In Search Projects:
 
 ## 🚧 Known limitations
 
+- **Changing Alternatives while a project is open:** Logic overwrites changes to its Alternatives (switching, renaming, duplicating, or moving to the Trash) the next time it saves the project. Close the project in Logic Pro first.
 - **Queue Collection in Player:** use a player that supports `.m3u` playlists, such as IINA, VLC, or Swinsian. QuickTime Player doesn't.
 - **Renaming files externally:** if you rename a note or lyrics `.md` file yourself, the extension can no longer find it.
 - **Moving custom folders:** if a custom notes or lyrics folder is renamed or moved, the extension shows a warning and won't write anything until you choose the folder again in Extension Preferences.
@@ -323,11 +314,12 @@ In Search Projects:
 
 The extension changes project files only when you ask:
 
-- renaming a project (in Edit Info), a Set, a bounce, or a template;
-- duplicating a project or a Set;
+- renaming a project (in Edit Info), an Alternative, or a bounce;
+- duplicating a project or an Alternative;
+- switching the Active Alternative;
 - moving something to the Trash.
 
-Renaming a project or Set asks you to close it in Ableton Live first. Notes and lyrics are written only when you edit them, or when you use Open Note or Open Lyrics before the file exists. They're renamed or archived along with their project, as described in [Project tracking](#project-tracking).
+Renaming a project or changing an Alternative asks you to close the project in Logic Pro first. Notes and lyrics are written only when you edit them, or when you use Open Note or Open Lyrics before the file exists. They're renamed or archived along with their project, as described in [Project tracking](#project-tracking).
 
 ### Storage
 
@@ -336,7 +328,7 @@ The extension stores its own data in Raycast:
 - **LocalStorage:**
   - Your data: stages, genres, roles, and collections; each project's tags, collections, pin, external bounce sources, and Shared Bounces Folder matching (bounce aliases, previous names, and files marked Not This Project); track numbers and roles; pinned collections.
   - Records: grouping choices in Browse Bounces and Search Bounces; the project list used to detect Finder changes; records of deleted projects.
-  - Caches: Set metadata and bounce analysis.
+  - Caches: Alternative metadata and bounce analysis.
 - **Cache:** view mode, sort, and grouping choices in Search Projects; bounce counts; and the last project and bounce lists, so Search Projects and Search Bounces show your list right away while they check for changes.
 
 Raycast keeps this data per extension. Uninstalling the extension deletes it, so run Export Data first if you might reinstall. Your projects, notes, and lyrics are ordinary files and aren't affected.

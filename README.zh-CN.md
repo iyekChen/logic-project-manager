@@ -1,15 +1,15 @@
 <p align="center">
-  <img src="assets/icon.png" width="128" height="128" alt="Ableton Project Manager 图标" />
+  <img src="assets/icon.png" width="128" height="128" alt="Logic Project Manager 图标" />
 </p>
 
-<h1 align="center">Ableton Project Manager</h1>
+<h1 align="center">Logic Project Manager</h1>
 
 <p align="center">
-  在 Mac 上浏览、标记和试听你的 Ableton Live 项目与 bounce，并把它们整理成合集。
+  在 Mac 上浏览、标记和试听你的 Logic Pro 项目与 bounce，并把它们整理成合集。
 </p>
 
 <p align="center">
-  <a href="https://github.com/iyekChen/ableton-project-manager/blob/main/README.md">English</a> | 简体中文
+  <a href="https://github.com/iyekChen/logic-project-manager/blob/main/README.md">English</a> | 简体中文
 </p>
 
 ## ✨ 功能一览
@@ -20,7 +20,7 @@
 - **[试听 bounce](#播放)**，不用再去 Finder 里翻找。
 - **[规划曲目顺序](#-合集)**：为 EP 或专辑排 Tracklist、给曲目分配角色，并比较每首曲目的能量。
 - **[记笔记和歌词](#-笔记与歌词)**：存成 Markdown 文件，放在各个项目里，或放在 Obsidian 仓库这类文件夹中。
-- **[新建 Live Set](#-新建-live-set)**，可以从你的模板开始。
+- **[切换 Alternative](#打开-alternative)**，不用打开 Logic Pro 就能看到哪个是 Active。
 
 另见：[设置](#-设置) · [已知限制](#-已知限制) · [数据与文件](#-数据与文件)
 
@@ -38,8 +38,8 @@
 
 ### ① 设置 Projects Folder
 
-- 打开 Search Projects。首次启动时，Raycast 会让你选择存放 Ableton Live 项目的文件夹。
-- 这个文件夹下第一层中，含有至少一个 `.als` 文件的文件夹都算作一个项目。更深层的文件夹不会被找到，所以请选择直接包含各个项目文件夹的那一层。
+- 打开 Search Projects。首次启动时，Raycast 会让你选择存放 Logic Pro 项目的文件夹。
+- 直接放在这个文件夹里的每个 Logic 工程（`.logicx`）都算作一个项目；直接放在里面的文件夹，只要其中含有一个工程，也算作一个项目。更深层的不会被找到，所以请选择直接包含各个项目的那一层。
 
 ### ② 告诉它 bounce 在哪里
 
@@ -54,7 +54,7 @@
 
 ### ④ 试一试
 
-- 在 Search Projects 中选中一个项目：Enter 显示它的 Set，⌘O 打开最新的 Set，⌘↵ 播放最新的 bounce。按 ⌘K 查看其他所有操作。
+- 在 Search Projects 中选中一个项目：Enter 显示它的 Alternative，⌘O 在 Logic Pro 中打开，⌘↵ 播放最新的 bounce。按 ⌘K 查看其他所有操作。
 
 **准备就绪。** 下面会详细介绍每个功能，想深入了解时再看。
 
@@ -62,14 +62,17 @@
 
 Search Projects 列出 Projects Folder 中的所有项目。置顶的项目始终排在最上面，其余项目可以按创建或修改日期分组，按日期或名称排序。
 
-### 打开 Set
+### 打开 Alternative
 
-- **View Sets**（Enter）列出项目的所有 Set。可以在 Ableton Live 中打开，也可以重命名、复制或移到废纸篓。重命名前需要先在 Live 中关闭这个 Set。
-- **Open Latest Set**（⌘O）打开项目中最近修改的 Set。
+- **View Alternatives**（Enter）列出项目的所有 Alternative，每个都带有 Logic 随工程保存的工程窗口缩略图。Active Alternative 带有绿色对勾，侧边栏显示每个 Alternative 的调性、BPM 和拍号。
+- **Open in Logic Pro** 打开项目。如果你选的 Alternative 不是 Active 的那个，会先把它设为 Active，所以 Logic 打开的就是它。
+- 还可以使用 Set as Active Alternative、Rename Alternative（⌘E）、Duplicate Alternative（⌘D）和 Move to Trash（⌃X）。一个项目至少保留一个 Alternative。如果把 Active 的那个移到废纸篓，相邻的一个会变成 Active。
+- 这些操作会改动项目本身，所以会先让你在 Logic Pro 中关闭项目。如果项目还开着，Logic 下次保存时会覆盖这些改动。
+- **Open Active Alternative**（⌘O）用项目的 Active Alternative 在 Logic Pro 中打开。
 
 ### Overview 与 Detail
 
-Search Projects 有两种视图。Overview 显示每个项目的阶段，以及它有多少个 Set 和 bounce。Detail 多一个侧边栏，显示项目的笔记、标签和合集、最新 Set 的调性和 BPM，以及创建和修改日期。
+Search Projects 有两种视图。Overview 显示每个项目的阶段，以及它有多少个 Alternative 和 bounce。Detail 多一个侧边栏，显示项目的笔记、标签和合集、Active Alternative 的调性和 BPM，以及创建和修改日期。
 
 - ⌘⇧T 在 Overview 和 Detail 之间切换。
 - 在 Detail 中，⌘⌥⇧T 在笔记和歌词之间切换侧边栏；见[笔记与歌词](#-笔记与歌词)。
@@ -85,13 +88,14 @@ Search Projects 有两种视图。Overview 显示每个项目的阶段，以及�
 
 ### 管理项目
 
-- **Edit Info** 修改项目的名称、阶段、风格和所属合集。要一次给多个项目打标签，使用 Manage Tags 中的 Assign to Projects；见[标签](#-标签)。重命名前需要先在 Live 中关闭项目，之后会重命名它的文件夹，标签、曲目编号、角色、笔记和歌词都会跟着走。
-- **Duplicate Project** 以新名称（默认为 `Song copy`）复制整个项目文件夹，包括其中保存的 bounce、笔记和歌词。标签、合集和置顶状态不会复制。
+- **Edit Info** 修改项目的名称、阶段、风格和所属合集。要一次给多个项目打标签，使用 Manage Tags 中的 Assign to Projects；见[标签](#-标签)。重命名前需要先在 Logic Pro 中关闭项目。如果项目保存在文件夹里，会重命名这个文件夹，里面的 `.logicx` 保持原名；标签、曲目编号、角色、笔记和歌词都会跟着走。
+- **Duplicate Project** 以新名称（默认为 `Song copy`）复制整个项目，包括其中保存的 bounce、笔记和歌词。标签、合集和置顶状态不会复制。
 - **Pin** 把项目固定在列表顶部。置顶的项目可以用 Move Up 和 Move Down 调整顺序。
 - **Move to Trash** 把整个项目文件夹移到废纸篓。它的数据会保留 30 天，以便你放回；见[项目追踪](#项目追踪)。
+- **New Project**（⌘N）启动 Logic Pro Version 中选择的 Logic Pro；如果它已经在运行，只会把它切到前台。
 - **Copy Latest Bounce** 复制音频文件本身，可以直接粘贴到消息或其他 App 中。也可以复制项目名称或路径，或在 Finder 中打开。
 
-Search Projects 中的其他操作在各自的章节介绍：[合集](#-合集)（⌃↵）、[笔记与歌词](#-笔记与歌词)、[Bounce](#-bounce) 中的 bounce 来源（⌘B），以及[新建 Live Set](#-新建-live-set)。
+Search Projects 中的其他操作在各自的章节介绍：[合集](#-合集)（⌃↵）、[笔记与歌词](#-笔记与歌词)，以及 [Bounce](#-bounce) 中的 bounce 来源（⌘B）。
 
 ## 🔖 标签
 
@@ -118,7 +122,7 @@ Manage Tags 用来编辑三份标签列表，用搜索栏旁的下拉框在它�
 
 ## 🔍 搜索
 
-Search Projects 会把你输入的内容与每个项目的名称、阶段、风格、合集、创建年份和月份，以及最新 Set 的调性进行匹配。要按 BPM 或拍号搜索，或者要求每个词都匹配，请使用组合搜索。用搜索栏旁的下拉框可以只显示某个阶段、风格或年份。
+Search Projects 会把你输入的内容与每个项目的名称、阶段、风格、合集、创建年份和月份，以及 Active Alternative 的调性进行匹配。要按 BPM 或拍号搜索，或者要求每个词都匹配，请使用组合搜索。用搜索栏旁的下拉框可以只显示某个阶段、风格或年份。
 
 ### 组合搜索
 
@@ -143,7 +147,7 @@ Search Projects 会把你输入的内容与每个项目的名称、阶段、风�
 - **短数字是速度。** 三位数以内的数字一律当作 BPM，所以 `# album 01` 会去找速度为 1 的项目，而不是名为 Album 01 的合集。这种情况请用名称中的文字来搜索。
 - **半速和倍速也算。** `# 140` 也会找到 70 和 280 BPM 的项目。速度会四舍五入，所以 139.6 算作 140。范围包含两端，前后顺序不限（`100-90`）。
 - **调性和拍号整体匹配。** `# cm` 只找 C 小调，不找 C 大调。单独的根音（`a`、`eb`）不算调性搜索，`# a minor` 会被当作两个词。黑键的两种写法都可以：`c#m` 和 `dbm` 找到的项目相同。`6/8` 不会匹配 `6/4`。
-- **调性、BPM 和拍号来自最新的 Set。** 它们在后台从每个项目最近修改的 Set 中读取，然后缓存。项目的 Set 读取完成之前，不会匹配这些词。调性来自 Live 中 Set 的调性和音阶设置，而不是从音频识别，所以没有设置音阶的 Set 没有调性。
+- **调性、BPM 和拍号来自 Active Alternative。** 它们在后台从每个项目的 Active Alternative（如果项目没有记录哪个是 Active，则用最近修改的那个）中读取，然后缓存。项目的 Alternative 读取完成之前，不会匹配这些词。调性用的是 Logic Pro 中为项目设置的调性，不是从音频识别出来的。
 
 ## 🎧 Bounce
 
@@ -177,7 +181,6 @@ Search Bounces 命令在一个地方列出所有项目的 bounce。属于多个�
 ### Shared Bounces Folder
 
 - 如果文件名以项目名开头，后面紧跟空格、`-`、`_`、`.`，或者什么都没有，这个文件就属于该项目。`Song.wav`、`Song v2.wav` 和 `Song-master.wav` 都属于 `Song`，`Songbird.wav` 不属于。不区分大小写。
-- Live 会把新项目的文件夹命名为 `<Name> Project`，所以 `Song.wav` 匹配不到名为 `Song Project` 的项目。可以重命名项目，或者把 `Song` 添加为 bounce 别名（见下文）。
 - 如果一个文件匹配多个项目，名称最长的胜出：`Demo Package v2.wav` 属于 `Demo Package`，而不是 `Demo`。
 - **Bounce Aliases：** 在 Manage External Bounce 中，添加这个项目的文件名可能使用的其他开头（例如 `Summer Children` 用 `SC`）。别名不能和其他项目的名称或别名相同。只有设置了 Shared Bounces Folder，这个字段才会出现。
 - **重命名的项目：** 重命名后，旧名称只继续匹配重命名之前创建的文件，这样同名的新项目不会把它们抢走。在 Manage External Bounce 的 Previous Names 中取消选择某个名称，就不再用它匹配。
@@ -268,7 +271,7 @@ title: "{{title}}"
 date: "{{date}}"
 time: "{{time}}"
 tags:
-  - ableton_live
+  - logic_pro
   - project-note
 ---
 ```
@@ -279,27 +282,14 @@ tags:
 - 在扩展中或在 Finder 中重命名项目，都会同时重命名它的笔记和歌词文件。
 - 文件名中不安全的字符，以及在 Obsidian 中有特殊含义的字符（`/ \ : * ? " < > | # ^ [ ]`），会替换为外观相近的全角字符，所以 `Beat #3` 会变成 `Beat ＃3.md`。如果替换后两个项目仍然对应同一个文件，在你重命名其中一个之前，扩展不会读写这个文件。
 
-## 🎹 新建 Live Set
-
-在 Search Projects 中：
-
-- **New Live Set**（⌘N）启动 Ableton Live，Live 会基于你的 Default Set 打开一个新 Set。如果 Live 已经在运行，只会把它切到前台。
-- **New Live Set from Template**（⌘⌥⌃N）列出你的模板。选择一个，它会在 Ableton Live 中作为新 Set 打开：保存时会要求输入新名称，所以模板本身不会被改动。
-
-### 模板
-
-- 模板是 Templates Folder 中的 `.als` 文件，默认位置是 `~/Music/Ableton/User Library/Templates`。
-- 顶层的模板为一组，每个子文件夹各成一组。更深层的文件夹不会读取。
-- 可以在列表中重命名模板，或把它移到废纸篓。
-
 ## 🔧 设置
 
 | 设置项                    | 说明                                                                                                         |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| **Projects Folder**       | 存放 Ableton Live 项目的文件夹。                                                                             |
+| **Logic Pro Version**     | 用哪个 Logic Pro 打开项目：Logic Pro 或 Logic Pro (Creator Studio)。                                         |
+| **Projects Folder**       | 存放 Logic Pro 项目的文件夹。                                                                                |
 | **Shared Bounces Folder** | 存放所有项目 bounce 的统一文件夹。文件按名称匹配到项目；见 [Shared Bounces Folder](#shared-bounces-folder)。 |
 | **Bounces Subfolder**     | 每个项目中存放 bounce 的子文件夹（例如 `Bounces`）。留空则直接在项目文件夹中查找。                           |
-| **Templates Folder**      | 存放 Live 模板的文件夹。留空则使用 `~/Music/Ableton/User Library/Templates`；见[模板](#模板)。               |
 | **Notes Folder**          | 以 `.md` 文件保存笔记的文件夹（例如 Obsidian 仓库）。留空则在每个项目文件夹中保存 `Notes.md`。               |
 | **Lyrics Folder**         | 以 `.md` 文件保存歌词的文件夹。留空则在每个项目文件夹中保存 `Lyrics.md`。                                    |
 | **Notes Template**        | 可选，作为新笔记初始内容的 `.md` 文件；见[笔记模板](#笔记模板)。                                             |
@@ -311,6 +301,7 @@ tags:
 
 ## 🚧 已知限制
 
+- **项目开着时改动 Alternative：** Logic 下次保存项目时，会覆盖对 Alternative 的改动（切换、重命名、复制或移到废纸篓）。请先在 Logic Pro 中关闭项目。
 - **Queue Collection in Player：** 请使用支持 `.m3u` 播放列表的播放器，例如 IINA、VLC 或 Swinsian。QuickTime Player 不支持。
 - **在外部重命名文件：** 如果你自己重命名了笔记或歌词的 `.md` 文件，扩展将找不到它。
 - **移动自定义文件夹：** 如果自定义的笔记或歌词文件夹被重命名或移动，扩展会显示警告。在你于 Extension Preferences 中重新选择文件夹之前，不会写入任何内容。
@@ -323,11 +314,12 @@ tags:
 
 只有在你主动操作时，扩展才会改动项目文件：
 
-- 重命名项目（在 Edit Info 中）、Set、bounce 或模板；
-- 复制项目或 Set；
+- 重命名项目（在 Edit Info 中）、Alternative 或 bounce；
+- 复制项目或 Alternative；
+- 切换 Active Alternative；
 - 把东西移到废纸篓。
 
-重命名项目或 Set 前，需要先在 Ableton Live 中关闭它。笔记和歌词只在你编辑它们时写入，或者在文件还不存在时使用 Open Note 或 Open Lyrics 创建。它们会随项目一起重命名或归档，详见[项目追踪](#项目追踪)。
+重命名项目或改动 Alternative 前，需要先在 Logic Pro 中关闭项目。笔记和歌词只在你编辑它们时写入，或者在文件还不存在时使用 Open Note 或 Open Lyrics 创建。它们会随项目一起重命名或归档，详见[项目追踪](#项目追踪)。
 
 ### 存储
 
@@ -336,7 +328,7 @@ tags:
 - **LocalStorage：**
   - 你的数据：阶段、风格、角色和合集；每个项目的标签、所属合集、置顶状态、外部 bounce 来源和 Shared Bounces Folder 匹配设置（bounce 别名、旧名称和标记为 Not This Project 的文件）；曲目编号和角色；置顶的合集。
   - 记录：Browse Bounces 和 Search Bounces 中的分组选择；用于检测 Finder 改动的项目列表；已删除项目的记录。
-  - 缓存：Set 元数据和 bounce 分析结果。
+  - 缓存：Alternative 元数据和 bounce 分析结果。
 - **Cache：** Search Projects 中的视图模式、排序和分组选择；bounce 数量；以及上一次的项目和 bounce 列表，这样 Search Projects 和 Search Bounces 能先立即显示列表，再检查变化。
 
 Raycast 按扩展分别保存这些数据。卸载扩展会删除它们，所以如果你可能重新安装，请先运行 Export Data。你的项目、笔记和歌词都是普通文件，不受影响。
