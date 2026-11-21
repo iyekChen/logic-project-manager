@@ -2,7 +2,6 @@ import {
   Action,
   ActionPanel,
   Alert,
-  Clipboard,
   Color,
   Form,
   Icon,
@@ -68,6 +67,7 @@ import {
   saveProjectMetadata,
 } from "@/core/metadata/project-metadata";
 import { showFailure } from "@/core/ui/shared/toast";
+import { copyLatestBounce, playProjectBounce } from "@/core/ui/shared/bounce-actions";
 import { onFinderRenames } from "@/core/fs/finder-sync";
 import { EditInfo, type ProjectRename } from "@/core/ui/components/edit-info";
 import { optionKeywords } from "@/core/ui/shared/search-keywords";
@@ -387,38 +387,11 @@ function CollectionPanel({
   const { playbackStatus, playingId, play, pause, resume, stop, seek, restart } = useAudioPlayer({
     playerPath: PLAYER_PATH,
   });
-  function playProjectBounce(project: Project) {
-    const latestBouncePath = findLatestProjectBounce(project);
-    if (!latestBouncePath) {
-      void showToast({ style: Toast.Style.Failure, title: strings.noBounces });
-      return;
-    }
-    play(project.id, latestBouncePath, {
-      onError: (message) => {
-        void showFailure(strings.playbackFailed, message);
-      },
-    });
-  }
-
-  // 主操作：未播→播；本行正在播→暂停/续播。放每个 item 的第二个 Action（拿 ⌘Enter）。
-  async function copyLatestBounce(project: Project) {
-    const latestBouncePath = findLatestProjectBounce(project);
-    if (!latestBouncePath) {
-      void showToast({ style: Toast.Style.Failure, title: strings.noBounces });
-      return;
-    }
-    await Clipboard.copy({ file: latestBouncePath });
-    void showToast({
-      style: Toast.Style.Success,
-      title: strings.bounceCopied,
-      message: latestBouncePath.split("/").pop() ?? "",
-    });
-  }
   const renderPlayToggle = (p: Project) => (
     <PlayToggleAction
       isThisPlaying={playingId === p.id}
       playbackStatus={playbackStatus}
-      onPlay={() => playProjectBounce(p)}
+      onPlay={() => playProjectBounce(p, play)}
       onPause={pause}
       onResume={resume}
     />

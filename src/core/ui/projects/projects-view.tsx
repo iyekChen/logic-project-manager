@@ -1,7 +1,6 @@
 import {
   ActionPanel,
   Action,
-  Clipboard,
   closeMainWindow,
   Color,
   Icon,
@@ -50,13 +49,14 @@ import { displayDoc, missingDocFolder } from "@/core/docs/docs";
 import { docPlaceholder } from "@/core/docs/doc-actions";
 import { archiveDeletedProject, assertDeletionWritable } from "@/core/fs/deleted-projects";
 import { showFailure } from "@/core/ui/shared/toast";
+import { copyLatestBounce, playProjectBounce } from "@/core/ui/shared/bounce-actions";
 import { CollectionList } from "@/core/ui/collections";
 import { CleanUpRemovedProjects } from "@/core/ui/cleanup";
 import { EditInfo } from "@/core/ui/components/edit-info";
 import { DuplicateProject } from "@/core/ui/projects/duplicate-project";
 import { ManageExternalBounces } from "@/core/ui/components/manage-external-bounces";
 import type { Project } from "@/core/projects/types";
-import { findLatestProjectBounce, resolveSharedBouncesFolder } from "@/core/projects/bounces";
+import { resolveSharedBouncesFolder } from "@/core/projects/bounces";
 import { daw } from "@/daws";
 import { SetsView, projectFilesInfo } from "@/daws/ui";
 import { labels } from "@/daws/labels";
@@ -174,35 +174,6 @@ export function ProjectsView() {
 
   // 外部编辑器改了笔记 / 歌词：只重读那一份，详情面板马上跟着变。
   useDocWatcher(PROJECTS_ROOT, refreshDoc);
-
-  const playProjectBounce = useCallback(
-    (project: Project) => {
-      const latestBouncePath = findLatestProjectBounce(project);
-      if (!latestBouncePath) {
-        void showToast({ style: Toast.Style.Failure, title: strings.noBounces });
-        return;
-      }
-      play(project.id, latestBouncePath, {
-        onError: (message) => {
-          void showFailure(strings.playbackFailed, message);
-        },
-      });
-    },
-    [play],
-  );
-  const copyLatestBounce = useCallback(async (project: Project) => {
-    const latestBouncePath = findLatestProjectBounce(project);
-    if (!latestBouncePath) {
-      await showToast({ style: Toast.Style.Failure, title: strings.noBounces });
-      return;
-    }
-    await Clipboard.copy({ file: latestBouncePath });
-    await showToast({
-      style: Toast.Style.Success,
-      title: strings.bounceCopied,
-      message: latestBouncePath.split("/").pop() ?? "",
-    });
-  }, []);
 
   // 和打开 Set 的其他入口一样：打开后关掉 Raycast 窗口。
   const openCurrentSet = useCallback(async (project: Project) => {
@@ -401,7 +372,7 @@ export function ProjectsView() {
                 isThisPlaying={isThisPlaying}
                 playbackStatus={playbackStatus}
                 shortcut={{ modifiers: ["cmd"], key: "return" }}
-                onPlay={() => playProjectBounce(item)}
+                onPlay={() => playProjectBounce(item, play)}
                 onPause={pause}
                 onResume={resume}
               />
