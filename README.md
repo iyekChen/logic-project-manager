@@ -20,7 +20,7 @@
 - **[Listen to your bounces](#playback)** without digging through Finder.
 - **[Plan the tracklist](#-collections)** for an EP or album, give tracks roles, and compare each track's energy.
 - **[Keep notes and lyrics](#-notes--lyrics)** as Markdown files, in each project or in a folder such as an Obsidian vault.
-- **[Switch Alternatives](#opening-alternatives)** and see which one is active, without opening Logic Pro.
+- **[Switch Alternatives](#opening-alternatives)** and see which one is active, without opening Logic Pro, and **[browse the versions you save with Save As](#multiple-project-files)**.
 
 See also: [Configuration](#-configuration) · [Known limitations](#-known-limitations) · [Data & files](#-data--files)
 
@@ -55,7 +55,7 @@ Most of the time you'll use Search Projects. To get it ready:
 
 ### ④ Try it
 
-- Select a project in Search Projects: Enter shows its Alternatives, ⌘O opens it in Logic Pro, and ⌘↵ plays its latest bounce. Press ⌘K to see every other action.
+- Select a project in Search Projects: Enter shows its Alternatives (or its project files, if its folder holds more than one), ⌘O opens it in Logic Pro, and ⌘↵ plays its latest bounce. Press ⌘K to see every other action.
 
 **You're all set.** Everything below covers each feature in detail, for when you want to dig deeper.
 
@@ -75,7 +75,7 @@ Logic can save a project in two ways, and the extension lists both:
 | Bounces                             | A package has no folder of its own for bounces, so use a Shared Bounces Folder | Saved in the project folder, usually in a `Bounces` subfolder |
 | Notes and lyrics (no custom folder) | Saved inside the `.logicx`                                                     | Saved in the project folder                                   |
 
-Duplicate Project and Move to Trash work on the whole `.logicx` or the whole folder.
+Duplicate Project and Move to Trash work on the whole `.logicx` or the whole folder. A folder can also hold more than one `.logicx`; see [Multiple project files](#multiple-project-files).
 
 ### Opening Alternatives
 
@@ -85,9 +85,18 @@ Duplicate Project and Move to Trash work on the whole `.logicx` or the whole fol
 - These actions change the project itself, so you're asked to close it in Logic Pro first. If it's still open, Logic overwrites the change the next time it saves.
 - **Open Active Alternative** (⌘O) opens the project in Logic Pro with its Active Alternative.
 
+### Multiple project files
+
+When you use Save As in Logic Pro, the new `.logicx` is saved in the same project folder by default, so one folder can hold several versions of a song. For such a project:
+
+- **View Project Files** (Enter) lists every `.logicx` in the folder, each with its thumbnail and its Active Alternative's key, BPM, and time signature. Like the project list, it can be grouped and sorted by date or name.
+- **The latest project file** is the one saved most recently. The project's key, BPM, time signature, and Alternative count come from it, and **Open Latest Project File** (⌘O) opens it.
+- In View Project Files, Enter opens a project file in Logic Pro, and **View Alternatives** (⌘↵) lists its Alternatives.
+- You can also use Rename Project File (⌘E), Duplicate Project File (⌘D), and Move to Trash (⌃X). A copy keeps the original's modified date, so it doesn't become the latest. A project always keeps at least one project file, and audio files in the folder are never moved.
+
 ### Overview and Detail
 
-Search Projects has two views. Overview shows each project's stage and how many Alternatives and bounces it has. Detail adds a side panel with the project's note, its tags and collections, the Active Alternative's key and BPM, and its created and modified dates.
+Search Projects has two views. Overview shows each project's stage and how many Alternatives and bounces it has, plus how many project files, if there's more than one. Detail adds a side panel with the project's note, its tags and collections, the Active Alternative's key and BPM, and its created and modified dates.
 
 - ⌘⇧T switches between Overview and Detail.
 - In Detail, ⌘⌥⇧T switches the panel between notes and lyrics; see [Notes & lyrics](#-notes--lyrics).
@@ -162,7 +171,7 @@ Things that are easy to miss:
 - **Short numbers are tempos.** Numbers with up to three digits are always read as BPM, so `# album 01` looks for a tempo of 1 instead of a collection called Album 01. Search by the words in the name instead.
 - **Half and double tempo count.** `# 140` also finds projects at 70 and 280 BPM, and tempos are rounded, so 139.6 counts as 140. A range includes both ends and can be written either way round (`100-90`).
 - **Keys and time signatures match whole.** `# cm` finds C minor only, not C major. A root on its own (`a`, `eb`) isn't a key search, and `# a minor` is read as two separate words. Both spellings of a black key work: `c#m` and `dbm` find the same projects. `6/8` doesn't match `6/4`.
-- **Key, BPM, and time signature come from the Active Alternative.** They're read in the background from each project's Active Alternative (or its most recently modified one, if the project doesn't record which is active), then cached. Until a project's Alternative has been read, it doesn't match these words. The key is the one set for the project in Logic Pro, not detected from the audio.
+- **Key, BPM, and time signature come from the Active Alternative.** They're read in the background from each project's Active Alternative (or its most recently modified one, if the project doesn't record which is active), then cached. For a folder with [more than one project file](#multiple-project-files), the latest one is used. Until a project's Alternative has been read, it doesn't match these words. The key is the one set for the project in Logic Pro, not detected from the audio.
 
 ## 🎧 Bounces
 
@@ -329,8 +338,8 @@ tags:
 
 The extension changes project files only when you ask:
 
-- renaming a project (in Edit Info), an Alternative, or a bounce;
-- duplicating a project or an Alternative;
+- renaming a project (in Edit Info), a project file, an Alternative, or a bounce;
+- duplicating a project, a project file, or an Alternative;
 - switching the Active Alternative;
 - moving something to the Trash.
 

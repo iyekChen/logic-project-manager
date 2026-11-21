@@ -20,7 +20,7 @@
 - **[试听 bounce](#播放)**，不用再去 Finder 里翻找。
 - **[规划曲目顺序](#-合集)**：为 EP 或专辑排 Tracklist、给曲目分配角色，并比较每首曲目的能量。
 - **[记笔记和歌词](#-笔记与歌词)**：存成 Markdown 文件，放在各个项目里，或放在 Obsidian 仓库这类文件夹中。
-- **[切换 Alternative](#打开-alternative)**，不用打开 Logic Pro 就能看到哪个是 Active。
+- **[切换 Alternative](#打开-alternative)**，不用打开 Logic Pro 就能看到哪个是 Active；还能 **[浏览用 Save As 存下的各个版本](#多个工程文件)**。
 
 另见：[设置](#-设置) · [已知限制](#-已知限制) · [数据与文件](#-数据与文件)
 
@@ -55,7 +55,7 @@
 
 ### ④ 试一试
 
-- 在 Search Projects 中选中一个项目：Enter 显示它的 Alternative，⌘O 在 Logic Pro 中打开，⌘↵ 播放最新的 bounce。按 ⌘K 查看其他所有操作。
+- 在 Search Projects 中选中一个项目：Enter 显示它的 Alternative（如果项目文件夹里有不止一个工程文件，则显示这些工程文件），⌘O 在 Logic Pro 中打开，⌘↵ 播放最新的 bounce。按 ⌘K 查看其他所有操作。
 
 **准备就绪。** 下面会详细介绍每个功能，想深入了解时再看。
 
@@ -75,7 +75,7 @@ Logic 有两种保存项目的方式，扩展都会列出：
 | Bounce                             | Package 没有自己存放 bounce 的文件夹，请使用 Shared Bounces Folder | 存在项目文件夹里，通常是 `Bounces` 子文件夹 |
 | 笔记和歌词（未设置自定义文件夹时） | 存在 `.logicx` 内部                                                | 存在项目文件夹里                            |
 
-Duplicate Project 和 Move to Trash 作用于整个 `.logicx` 或整个文件夹。
+Duplicate Project 和 Move to Trash 作用于整个 `.logicx` 或整个文件夹。一个文件夹里也可以有多个 `.logicx`；见[多个工程文件](#多个工程文件)。
 
 ### 打开 Alternative
 
@@ -85,9 +85,18 @@ Duplicate Project 和 Move to Trash 作用于整个 `.logicx` 或整个文件夹
 - 这些操作会改动项目本身，所以会先让你在 Logic Pro 中关闭项目。如果项目还开着，Logic 下次保存时会覆盖这些改动。
 - **Open Active Alternative**（⌘O）用项目的 Active Alternative 在 Logic Pro 中打开。
 
+### 多个工程文件
+
+在 Logic Pro 中使用 Save As 时，新的 `.logicx` 默认存进同一个项目文件夹，所以一个文件夹里可能有一首歌的好几个版本。对于这样的项目：
+
+- **View Project Files**（Enter）列出文件夹里的每个 `.logicx`，显示缩略图，以及它的 Active Alternative 的调性、BPM 和拍号。和项目列表一样，可以按日期或名称分组和排序。
+- **最新的工程文件**是最近保存的那个。项目的调性、BPM、拍号和 Alternative 数量都取自它，**Open Latest Project File**（⌘O）打开的也是它。
+- 在 View Project Files 中，Enter 在 Logic Pro 中打开工程文件，**View Alternatives**（⌘↵）列出它的 Alternative。
+- 还可以使用 Rename Project File（⌘E）、Duplicate Project File（⌘D）和 Move to Trash（⌃X）。副本保留原件的修改日期，所以不会变成最新的那个。一个项目至少保留一个工程文件，文件夹里的音频文件不会被移动。
+
 ### Overview 与 Detail
 
-Search Projects 有两种视图。Overview 显示每个项目的阶段，以及它有多少个 Alternative 和 bounce。Detail 多一个侧边栏，显示项目的笔记、标签和合集、Active Alternative 的调性和 BPM，以及创建和修改日期。
+Search Projects 有两种视图。Overview 显示每个项目的阶段，以及它有多少个 Alternative 和 bounce；如果工程文件不止一个，还会显示工程文件的数量。Detail 多一个侧边栏，显示项目的笔记、标签和合集、Active Alternative 的调性和 BPM，以及创建和修改日期。
 
 - ⌘⇧T 在 Overview 和 Detail 之间切换。
 - 在 Detail 中，⌘⌥⇧T 在笔记和歌词之间切换侧边栏；见[笔记与歌词](#-笔记与歌词)。
@@ -162,7 +171,7 @@ Search Projects 会把你输入的内容与每个项目的名称、阶段、风�
 - **短数字是速度。** 三位数以内的数字一律当作 BPM，所以 `# album 01` 会去找速度为 1 的项目，而不是名为 Album 01 的合集。这种情况请用名称中的文字来搜索。
 - **半速和倍速也算。** `# 140` 也会找到 70 和 280 BPM 的项目。速度会四舍五入，所以 139.6 算作 140。范围包含两端，前后顺序不限（`100-90`）。
 - **调性和拍号整体匹配。** `# cm` 只找 C 小调，不找 C 大调。单独的根音（`a`、`eb`）不算调性搜索，`# a minor` 会被当作两个词。黑键的两种写法都可以：`c#m` 和 `dbm` 找到的项目相同。`6/8` 不会匹配 `6/4`。
-- **调性、BPM 和拍号来自 Active Alternative。** 它们在后台从每个项目的 Active Alternative（如果项目没有记录哪个是 Active，则用最近修改的那个）中读取，然后缓存。项目的 Alternative 读取完成之前，不会匹配这些词。调性用的是 Logic Pro 中为项目设置的调性，不是从音频识别出来的。
+- **调性、BPM 和拍号来自 Active Alternative。** 它们在后台从每个项目的 Active Alternative（如果项目没有记录哪个是 Active，则用最近修改的那个）中读取，然后缓存。如果文件夹里有[多个工程文件](#多个工程文件)，用的是最新的那个。项目的 Alternative 读取完成之前，不会匹配这些词。调性用的是 Logic Pro 中为项目设置的调性，不是从音频识别出来的。
 
 ## 🎧 Bounce
 
@@ -329,8 +338,8 @@ tags:
 
 只有在你主动操作时，扩展才会改动项目文件：
 
-- 重命名项目（在 Edit Info 中）、Alternative 或 bounce；
-- 复制项目或 Alternative；
+- 重命名项目（在 Edit Info 中）、工程文件、Alternative 或 bounce；
+- 复制项目、工程文件或 Alternative；
 - 切换 Active Alternative；
 - 把东西移到废纸篓。
 
