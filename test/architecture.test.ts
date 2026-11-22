@@ -8,6 +8,11 @@ const TYPE_FOLDERS = ["actions", "components", "hooks", "shared"];
 const FEATURES = ["projects", "bounces", "collections", "cleanup"];
 const SRC_ROOT = path.resolve(process.cwd(), "src");
 const UI_ROOT = path.join(SRC_ROOT, "core/ui");
+// 共用代码在两个仓库里放在同一个位置。下面的文件在另一个仓库里还有别处用到，
+// 在本仓库看起来只被一个功能用，但不能挪。
+// hooks/use-daw-app：LPM 的 src/daws/logic 也用。
+const USED_IN_OTHER_REPO = ["hooks/use-daw-app"];
+
 
 /** 递归列出目录下的 .ts / .tsx 文件。 */
 function listSourceFiles(dir: string): string[] {
@@ -70,7 +75,8 @@ describe("类型文件夹的归属", () => {
       if (!fs.existsSync(dir)) continue;
       for (const file of listSourceFiles(dir)) {
         const key = keyOf(file);
-        const owners = key === null ? undefined : users.get(key);
+        if (key === null || USED_IN_OTHER_REPO.includes(key)) continue;
+        const owners = users.get(key);
         if (owners?.size !== 1) continue;
         const [only] = [...owners];
         if (only === "other") continue;
