@@ -315,9 +315,12 @@ export function ProjectFilesView({ project }: { project: Project }) {
                       <List.Item.Detail.Metadata.Label title={labels.sets} text={String(file.alternativeCount)} />
                       <List.Item.Detail.Metadata.Label title={labels.currentSet} text={file.active?.name ?? ""} />
                       <List.Item.Detail.Metadata.Separator />
-                      <List.Item.Detail.Metadata.Label title="Key" text={file.key ?? ""} />
-                      <List.Item.Detail.Metadata.Label title="BPM" text={file.bpm === null ? "" : String(file.bpm)} />
-                      <List.Item.Detail.Metadata.Label title="Time Signature" text={file.timeSignature ?? ""} />
+                      <List.Item.Detail.Metadata.Label title={strings.key} text={file.key ?? ""} />
+                      <List.Item.Detail.Metadata.Label
+                        title={strings.bpm}
+                        text={file.bpm === null ? "" : String(file.bpm)}
+                      />
+                      <List.Item.Detail.Metadata.Label title={strings.timeSignature} text={file.timeSignature ?? ""} />
                     </List.Item.Detail.Metadata>
                   }
                 />

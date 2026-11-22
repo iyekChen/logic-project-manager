@@ -331,12 +331,15 @@ export function AlternativesView({ project }: { project: Project }) {
                         <List.Item.Detail.Metadata.Label title={alternativesViewStrings.activeAlternative} text="" />
                       )}
                       <List.Item.Detail.Metadata.Separator />
-                      <List.Item.Detail.Metadata.Label title="Key" text={alternative.key ?? ""} />
+                      <List.Item.Detail.Metadata.Label title={strings.key} text={alternative.key ?? ""} />
                       <List.Item.Detail.Metadata.Label
-                        title="BPM"
+                        title={strings.bpm}
                         text={alternative.bpm === null ? "" : String(alternative.bpm)}
                       />
-                      <List.Item.Detail.Metadata.Label title="Time Signature" text={alternative.timeSignature ?? ""} />
+                      <List.Item.Detail.Metadata.Label
+                        title={strings.timeSignature}
+                        text={alternative.timeSignature ?? ""}
+                      />
                     </List.Item.Detail.Metadata>
                   }
                 />
