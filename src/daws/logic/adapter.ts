@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { LOG_PREFIX } from "@/core/log";
 import { isPlistDict, readPlistFile, type PlistValue } from "./bplist";
-import type { DawAdapter, DawSet, ProjectFileMetadata } from "../types";
+import type { DawAdapter, DawSet, ProjectFileMetadata } from "@/daws/types";
 
 /** Logic 的项目包后缀。 */
 export const PACKAGE_EXTENSION = ".logicx";

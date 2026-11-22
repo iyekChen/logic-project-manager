@@ -1,5 +1,5 @@
 import path from "node:path";
-import type { DawSet } from "../types";
+import type { DawSet } from "@/daws/types";
 import { PROJECT_NAME_TOKEN } from "./adapter";
 
 // 编号文件夹 Alternatives/NNN 的数字就是 Alternative 的编号。

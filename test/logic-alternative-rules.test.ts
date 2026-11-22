@@ -4,7 +4,7 @@ import {
   duplicateName,
   nameForV2,
   nextFreeIndex,
-} from "../src/daws/logic/alternative-rules";
+} from "@/daws/logic/alternative-rules";
 
 describe("nextFreeIndex", () => {
   it("取最小的空号", () => {

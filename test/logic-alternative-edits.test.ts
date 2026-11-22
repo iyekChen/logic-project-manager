@@ -3,13 +3,13 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { isPlistDict, readPlistFile } from "../src/daws/logic/bplist";
+import { isPlistDict, readPlistFile } from "@/daws/logic/bplist";
 import {
   duplicateAlternative,
   renameAlternative,
   setActiveAlternative,
-} from "../src/daws/logic/alternative-edits";
-import type { DawSet } from "../src/daws/types";
+} from "@/daws/logic/alternative-edits";
+import type { DawSet } from "@/daws/types";
 
 type Fixture = string | number | boolean | Fixture[] | { [key: string]: Fixture };
 

@@ -1,6 +1,6 @@
 import path from "node:path";
 import type { Project } from "@/core/projects/types";
-import type { ProjectFilesInfo } from "../types";
+import type { ProjectFilesInfo } from "@/daws/types";
 import { PACKAGE_EXTENSION } from "./adapter";
 import { projectFilesViewStrings } from "./strings";
 import { AlternativesView } from "./alternatives-view";

@@ -3,8 +3,8 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { logicAdapter } from "../src/daws/logic/adapter";
-import { parseBinaryPlist, readPlistFile } from "../src/daws/logic/bplist";
+import { logicAdapter } from "@/daws/logic/adapter";
+import { parseBinaryPlist, readPlistFile } from "@/daws/logic/bplist";
 
 type Fixture = string | number | boolean | Fixture[] | { [key: string]: Fixture };
 

@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
 import { trash } from "@raycast/api";
-import type { DawSet } from "../types";
+import type { DawSet } from "@/daws/types";
 import { isPlistDict, readPlistFile, type PlistValue } from "./bplist";
 import { PACKAGE_EXTENSION } from "./adapter";
 import { activeAfterRemoval, alternativeIndex, nameForV2, nextFreeIndex } from "./alternative-rules";
