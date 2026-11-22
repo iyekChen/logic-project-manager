@@ -176,6 +176,11 @@ export const logicAdapter: DawAdapter = {
     return listPackages(entryPath).length > 0 ? { id: entryName, folderPath: entryPath, kind: "folder" } : null;
   },
 
+  // 文件夹形态的项目里可以有多个 .logicx（Save As 存出来的版本）；Package 形态没有这一层，返回 null。
+  countProjectFiles({ folderPath, kind }) {
+    return kind === "folder" ? listPackages(folderPath).length : null;
+  },
+
   listSets({ folderPath, kind }) {
     const packagePath = kind === "package" ? folderPath : findPackage(folderPath);
     if (!packagePath) return [];

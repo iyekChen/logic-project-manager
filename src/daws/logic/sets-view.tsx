@@ -1,21 +1,19 @@
 import path from "node:path";
 import type { Project } from "@/core/projects/types";
 import type { ProjectFilesInfo } from "../types";
-import { listPackages, PACKAGE_EXTENSION } from "./adapter";
+import { PACKAGE_EXTENSION } from "./adapter";
 import { projectFilesViewStrings } from "./strings";
 import { AlternativesView } from "./alternatives-view";
 import { ProjectFilesView } from "./project-files-view";
 
-/** 项目里有几个 .logicx：Package 形态算 1 个。 */
-export function projectFileCount(project: Pick<Project, "kind" | "folderPath">): number {
-  return project.kind === "folder" ? listPackages(project.folderPath).length : 1;
-}
-
-/** Search Projects 用：文件夹形态的项目有「工程文件」这一层，Package 没有。 */
-export function projectFilesInfo(project: Pick<Project, "kind" | "folderPath">): ProjectFilesInfo | null {
-  if (project.kind !== "folder") return null;
+/** Search Projects 用：文件夹形态的项目有「工程文件」这一层，Package 没有。
+ *  个数在加载项目时由 adapter 的 countProjectFiles 算好，这里只读字段，不碰磁盘。 */
+export function projectFilesInfo(project: Pick<Project, "projectFilesCount">): ProjectFilesInfo | null {
+  // 旧版列表缓存里没有这个字段，读到 undefined 时按没有这一层处理，等扫描完再显示。
+  const count = project.projectFilesCount ?? null;
+  if (count === null) return null;
   return {
-    count: projectFileCount(project),
+    count,
     // Logic 的 Set 路径就是 .logicx 包的路径。
     latestName: (currentSetPath) => path.basename(currentSetPath, PACKAGE_EXTENSION),
     labels: projectFilesViewStrings,
