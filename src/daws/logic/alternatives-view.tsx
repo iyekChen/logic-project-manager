@@ -118,7 +118,7 @@ function RenameAlternativeForm({ alternative, onRenamed }: { alternative: Projec
         </ActionPanel>
       }
     >
-      <Form.TextField id="name" title={strings.name} value={name} onChange={setName} />
+      <Form.TextField id="name" title={strings.name} placeholder={alternative.name} value={name} onChange={setName} />
     </Form>
   );
 }

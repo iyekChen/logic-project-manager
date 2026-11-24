@@ -150,7 +150,7 @@ function RenameProjectFileForm({ file, onRenamed }: { file: ProjectFile; onRenam
         </ActionPanel>
       }
     >
-      <Form.TextField id="name" title={strings.name} value={name} onChange={setName} />
+      <Form.TextField id="name" title={strings.name} placeholder={file.name} value={name} onChange={setName} />
     </Form>
   );
 }
