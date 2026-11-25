@@ -1,6 +1,3 @@
-import { execFile } from "node:child_process";
-import { ensureAudioPlayerBinary } from "@/core/audio/audio-player-path";
-
 export type AudioAnalysis = {
   duration: number; // 秒
   rms: number; // 0..1，整体响度
@@ -9,42 +6,43 @@ export type AudioAnalysis = {
   flux: number; // 0..1，spectral flux（活动量）；-1 表示 n/a
 };
 
+// 分析超时：与原来 execFile 的 30 秒一致，卡住的文件不拖住整个列表。
+const ANALYZE_TIMEOUT_MS = 30_000;
+
 /**
- * 调用播放器二进制的 analyze 模式，返回音频的时长、RMS 与峰值。
- * 输出格式与 swift/AudioPlayer.swift 的 analyze 模式配对，修改字段要两边同步。
+ * 调用 Swift 的 analyzeAudio，返回音频的时长、RMS 与峰值。
+ * 返回字段与 swift/audio-player/Sources/AudioPlayer.swift 的 AudioAnalysis 配对，修改字段要两边同步。
  */
-export function analyzeAudio(audioPath: string): Promise<AudioAnalysis> {
-  return new Promise((resolve, reject) => {
-    const playerPath = ensureAudioPlayerBinary();
+export async function analyzeAudio(audioPath: string): Promise<AudioAnalysis> {
+  const { analyzeAudio: analyzeAudioInSwift } = await import("swift:../../../swift/audio-player");
 
-    execFile(playerPath, ["analyze", audioPath], { encoding: "utf8", timeout: 30_000 }, (error, stdout, stderr) => {
-      if (error) {
-        reject(new Error(stderr.trim() || error.message));
-        return;
-      }
-
-      try {
-        const parsed = JSON.parse(stdout.trim()) as Partial<AudioAnalysis>;
-        if (
-          typeof parsed.duration !== "number" ||
-          typeof parsed.rms !== "number" ||
-          typeof parsed.peak !== "number" ||
-          typeof parsed.centroid !== "number" ||
-          typeof parsed.flux !== "number"
-        ) {
-          reject(new Error(`Unexpected analyze output: ${stdout.trim()}`));
-          return;
-        }
-        resolve({
-          duration: parsed.duration,
-          rms: parsed.rms,
-          peak: parsed.peak,
-          centroid: parsed.centroid,
-          flux: parsed.flux,
-        });
-      } catch (parseError) {
-        reject(parseError instanceof Error ? parseError : new Error(String(parseError)));
-      }
-    });
+  let timeoutTimer: ReturnType<typeof setTimeout> | null = null;
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutTimer = setTimeout(() => reject(new Error("Audio analysis timed out.")), ANALYZE_TIMEOUT_MS);
   });
+
+  try {
+    const parsed = (await Promise.race([analyzeAudioInSwift(audioPath), timeout])) as Partial<AudioAnalysis> | null;
+    if (
+      !parsed ||
+      typeof parsed.duration !== "number" ||
+      typeof parsed.rms !== "number" ||
+      typeof parsed.peak !== "number" ||
+      typeof parsed.centroid !== "number" ||
+      typeof parsed.flux !== "number"
+    ) {
+      throw new Error(`Unexpected analyze output: ${JSON.stringify(parsed)}`);
+    }
+    return {
+      duration: parsed.duration,
+      rms: parsed.rms,
+      peak: parsed.peak,
+      centroid: parsed.centroid,
+      flux: parsed.flux,
+    };
+  } finally {
+    if (timeoutTimer !== null) {
+      clearTimeout(timeoutTimer);
+    }
+  }
 }

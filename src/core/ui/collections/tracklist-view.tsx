@@ -42,7 +42,6 @@ import { RoleMap, assignRole, clearRole, getRoleMap, setRoleMap } from "@/core/m
 import { ENERGY_ENABLED, TrackInfo, loadTrackInfos } from "@/core/projects/track-info";
 import { useAudioPlayer } from "@/core/ui/hooks/use-audio-player";
 import { refreshDocFile, useDocWatcher } from "@/core/ui/hooks/use-doc-watcher";
-import { ensureAudioPlayerBinary } from "@/core/audio/audio-player-path";
 import { findLatestProjectBounce } from "@/core/projects/bounces";
 import { displayDoc, readDocFile, stripFrontmatter } from "@/core/docs/docs";
 import { docPlaceholder } from "@/core/docs/doc-actions";
@@ -69,7 +68,6 @@ import { projectIcon } from "@/daws/icons";
 
 const VIEW_MODE_STORAGE_KEY = "view-mode:collections";
 const DETAIL_DOC_STORAGE_KEY = "detail-doc:collections";
-const PLAYER_PATH = ensureAudioPlayerBinary();
 
 // 固定的冷→暖位置色模板：每个圆点槽位颜色固定，所有 Project 一致。
 // 槽位 1→5：最冷 → 次冷 → 中性 → 次暖 → 最暖。
@@ -121,9 +119,7 @@ export function CollectionPanel({
   const [selectedFilter, setSelectedFilter] = useState("all");
   // 笔记 / 歌词文件夹是否失效：只在打开时查一次，渲染路径不碰磁盘。
   const missingDocFolders = useMissingDocFolders();
-  const { playbackStatus, playingId, play, pause, resume, stop, seek, restart } = useAudioPlayer({
-    playerPath: PLAYER_PATH,
-  });
+  const { playbackStatus, playingId, play, pause, resume, stop, seek, restart } = useAudioPlayer();
   const renderPlayToggle = (p: Project) => (
     <PlayToggleAction
       isThisPlaying={playingId === p.id}

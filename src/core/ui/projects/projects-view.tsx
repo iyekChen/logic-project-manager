@@ -23,7 +23,6 @@ import { useProjectList } from "@/core/ui/projects/use-project-list";
 import { resetToFirstRun } from "@/core/ui/projects/reset-to-first-run";
 import { useDocWatcher } from "@/core/ui/hooks/use-doc-watcher";
 import { useMissingDocFolders } from "@/core/ui/hooks/use-missing-doc-folders";
-import { ensureAudioPlayerBinary } from "@/core/audio/audio-player-path";
 import { getSettings } from "@/settings";
 import { deleteProjectMetadata, movePinnedProject, setProjectPinned } from "@/core/metadata/project-metadata";
 import { removeProjectFromAllOrders } from "@/core/metadata/collection-order";
@@ -84,7 +83,6 @@ const SORT_STORAGE_KEY = "project-sort-option";
 const GROUP_STORAGE_KEY = "project-group-option";
 const VIEW_MODE_STORAGE_KEY = "view-mode:projects";
 const DETAIL_DOC_STORAGE_KEY = "detail-doc:projects";
-const PLAYER_PATH = ensureAudioPlayerBinary();
 
 // 正在由扩展执行 Move to Trash 的项目：已归档，目录监听触发的重载不要再当成 Finder 删除处理。
 const trashingIds = new Set<string>();
@@ -149,9 +147,7 @@ export function ProjectsView() {
   const { showAll, showAllNow } = useProgressiveList(projects.length);
 
   const { playbackStatus, playingId, positionSeconds, durationSeconds, play, pause, resume, stop, seek, restart } =
-    useAudioPlayer({
-      playerPath: PLAYER_PATH,
-    });
+    useAudioPlayer();
 
   const { isPlaybackToastActive } = usePlaybackToast(projects, {
     playbackStatus,
