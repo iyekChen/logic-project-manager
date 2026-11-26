@@ -138,6 +138,7 @@ Manage Tags 用来编辑三份标签列表，用搜索栏旁的下拉框在它�
 - **别名**是用来搜索的其他名称，用逗号分隔（例如 Drum & Bass 用 `dnb`）。见[组合搜索](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#组合搜索)。
 - 用 Move Up（⌘⌥↑）和 Move Down（⌘⌥↓），或 Move to Top（⌘⇧↑）和 Move to Bottom（⌘⇧↓）调整顺序。所有选择标签的地方都按这个顺序显示。
 - **Delete**（⌃X）会先告诉你有多少项目或曲目在用这个选项，确认后从它们身上全部移除。
+- **Delete All**（⌃⇧X）会先告诉你删掉几个选项、有多少项目或曲目在用它们，确认后清空当前查看的列表，并从这些项目或曲目上全部移除。列表里至少有一个选项时才出现。
 - **Reset to Defaults** 把当前查看的列表恢复为默认值。自定义的名称、颜色、别名和顺序都会丢失，用到已不在列表中的选项的项目或曲目会失去这个标签。
 
 ### 为项目打标签

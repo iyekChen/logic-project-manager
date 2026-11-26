@@ -147,6 +147,9 @@ type TranslationKeys = {
   role: string;
   create: string;
   delete: string;
+  deleteAll: string;
+  deleteAllConfirmTitle: string;
+  deleteAllFailed: string;
   created: string;
   renamed: string;
   deleted: string;
@@ -489,6 +492,9 @@ export const strings: TranslationKeys = {
   role: "Role",
   create: "Create",
   delete: "Delete",
+  deleteAll: "Delete All",
+  deleteAllConfirmTitle: "Delete all {count} options?",
+  deleteAllFailed: "Couldn't Delete All",
   created: "Created",
   renamed: "Renamed",
   deleted: "Deleted",

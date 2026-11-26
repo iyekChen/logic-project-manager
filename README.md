@@ -138,6 +138,7 @@ Manage Tags edits the three lists you tag with. Use the dropdown next to the sea
 - **Aliases** are other names to search by, separated by commas (e.g. `dnb` for Drum & Bass). See [Combined search](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#combined-search).
 - Reorder with Move Up (⌘⌥↑) and Move Down (⌘⌥↓), or Move to Top (⌘⇧↑) and Move to Bottom (⌘⇧↓). The same order is used everywhere you pick a tag.
 - **Delete** (⌃X) asks first, telling you how many projects or tracks use the option, and then removes it from all of them.
+- **Delete All** (⌃⇧X) asks first, telling you how many options it removes and how many projects or tracks use them, and then empties the list you're viewing and removes those options from all of them. It only appears when the list has at least one option.
 - **Reset to Defaults** restores the default list for the list you're viewing. Your custom names, colors, aliases, and order are lost, and projects or tracks using an option that's no longer in the list lose it.
 
 ### Tagging projects
