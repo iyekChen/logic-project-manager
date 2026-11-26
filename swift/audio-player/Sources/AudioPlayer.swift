@@ -265,7 +265,11 @@ final class AudioPlayerDelegate: NSObject, AVAudioPlayerDelegate {
       exit(EXIT_FAILURE)
     }
 
+    var isStopping = false
+
+    // 开始停止后不再写状态：淡出的 0.25 秒里还在写进度，换一首播时新的一首会先闪一下旧进度。
     func writeStatus() {
+      if isStopping { return }
       let state = player.isPlaying ? "PLAYING" : "PAUSED"
       writeStatusFile(statusURL, "\(player.currentTime) \(player.duration) \(state)\n")
     }
@@ -277,8 +281,6 @@ final class AudioPlayerDelegate: NSObject, AVAudioPlayerDelegate {
       writeStatus()
     }
     RunLoop.main.add(progressTimer, forMode: .common)
-
-    var isStopping = false
 
     func stopPlayback() {
       guard !isStopping else { return }

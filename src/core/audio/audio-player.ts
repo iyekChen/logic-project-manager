@@ -3,6 +3,7 @@ import { environment } from "@raycast/api";
 import fs from "node:fs";
 import path from "node:path";
 import { LOG_PREFIX } from "@/core/log";
+import { missingProcessOutcome, pollIntervalMs } from "./player-poll";
 
 // 跨进程共享的后台播放器 PID 文件：命令进程被回收后，
 // 其他进程(重开命令 / 菜单栏)仍能据此找到并停止后台播放。
@@ -18,6 +19,10 @@ const STATUS_FILE = path.join(environment.supportPath, "audio-player.status");
 
 // 轮询状态文件的间隔：worker 每 0.5s 写一次，这里比它密一些，好尽快拿到第一行状态。
 const STATUS_POLL_INTERVAL_MS = 200;
+
+// 启动后的轮询间隔：worker 起来后要过一会儿才写第一行状态，用更密的间隔读，
+// 0:00 才不会比声音晚出现。读到第一行状态后换回 STATUS_POLL_INTERVAL_MS。
+const STARTUP_POLL_INTERVAL_MS = 40;
 
 // 启动宽限期：进程已经不在、又没写过任何状态时，等这么久再报失败，
 // 让 worker 退出前写下的 FAILED 行有机会被读到。
@@ -265,6 +270,8 @@ export function startAudioPlayer(options: AudioPlayerOptions): AudioPlayerContro
   let startedAt = 0;
   // 是否读到过第一行有效状态：读到过就说明播放真的开始了，之后进程消失是正常播完。
   let sawStatus = false;
+  // 用户是否按过停止：按过之后进程消失是正常停止，不是启动失败。
+  let stopRequested = false;
 
   console.log(`${logPrefix} MOUNT ${new Date().toISOString()}`);
 
@@ -282,6 +289,13 @@ export function startAudioPlayer(options: AudioPlayerOptions): AudioPlayerContro
       clearInterval(pollTimer);
       pollTimer = null;
     }
+  }
+
+  // 启动阶段用更密的间隔，读到第一行状态后换回常规间隔。
+  function startPolling() {
+    stopPolling();
+    pollTimer = setInterval(poll, pollIntervalMs(sawStatus, STARTUP_POLL_INTERVAL_MS, STATUS_POLL_INTERVAL_MS));
+    pollTimer.unref?.();
   }
 
   // 确认身份后发 SIGTERM 让 worker 淡出退出，1 秒后还在就 SIGKILL。
@@ -324,10 +338,13 @@ export function startAudioPlayer(options: AudioPlayerOptions): AudioPlayerContro
       return;
     }
 
-    if (line?.kind === "status") {
+    // 已经按了停止就不再理会状态行：worker 可能刚好在退出前写下了最后一行，
+    // 报成 Playing 或把进度推回去都不对。
+    if (line?.kind === "status" && !stopRequested) {
       if (!sawStatus) {
         sawStatus = true;
         onStatusChange("Playing");
+        startPolling();
       }
       onProgress?.(line.positionSeconds, line.durationSeconds);
     }
@@ -336,17 +353,21 @@ export function startAudioPlayer(options: AudioPlayerOptions): AudioPlayerContro
       return;
     }
 
-    // 进程已经不在：读到过状态就是正常播完，否则是启动阶段就退出了。
-    if (sawStatus) {
-      stopPolling();
-      clearPidFile(pid);
-      onStatusChange("Stopped");
+    const outcome = missingProcessOutcome({
+      sawStatus,
+      stopRequested,
+      elapsedMs: Date.now() - startedAt,
+      graceMs: START_GRACE_MS,
+    });
+    if (outcome === "wait") {
       return;
     }
 
-    if (Date.now() - startedAt >= START_GRACE_MS) {
-      stopPolling();
-      clearPidFile(pid);
+    stopPolling();
+    clearPidFile(pid);
+    if (outcome === "stopped") {
+      onStatusChange("Stopped");
+    } else {
       reportError("The player stopped before it started playing.");
     }
   }
@@ -383,8 +404,9 @@ export function startAudioPlayer(options: AudioPlayerOptions): AudioPlayerContro
         }),
       );
 
-      pollTimer = setInterval(poll, STATUS_POLL_INTERVAL_MS);
-      pollTimer.unref?.();
+      startPolling();
+      // 立刻读一次：worker 可能已经写好第一行状态，不必等满一个间隔。
+      poll();
     } catch (error) {
       reportError(error instanceof Error ? error.message : String(error));
     }
@@ -409,6 +431,7 @@ export function startAudioPlayer(options: AudioPlayerOptions): AudioPlayerContro
     }
 
     onStatusChange("Stopping");
+    stopRequested = true;
 
     // 发信号后继续轮询：进程消失时由 poll 收尾成 Stopped。
     if (!killPlayer(pid)) {
