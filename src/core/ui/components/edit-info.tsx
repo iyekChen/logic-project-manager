@@ -90,6 +90,9 @@ export function EditInfo({
   const [role, setRole] = useState(currentRole ?? "none");
   // Role 选项读完前不渲染下拉：选项为空时 Raycast 会退回 None 并触发 onChange，把当前角色覆盖掉。
   const [rolesLoaded, setRolesLoaded] = useState(false);
+  // 保存的标签、合集读完前不许提交：那时 stageId / genreIds / collectionIds 还是空默认值，
+  // 一提交就会把项目原有的标签清掉，合集成员关系也会被当成「移出」。
+  const [loaded, setLoaded] = useState(false);
   useEffect(() => {
     async function load() {
       const [stages, genres, collections, metadata] = await Promise.all([
@@ -112,11 +115,14 @@ export function EditInfo({
         setRole(currentRole ?? "none");
         setRolesLoaded(true);
       }
+      setLoaded(true);
     }
 
     void load();
   }, [project.id, collectionId, currentRole]);
   async function handleSubmit() {
+    if (!loaded) return;
+
     const trimmedName = name.trim();
     const nameChanged = trimmedName !== "" && trimmedName !== project.title;
 
@@ -279,6 +285,7 @@ export function EditInfo({
   return (
     <Form
       navigationTitle={`${strings.editInfo} — ${project.title}`}
+      isLoading={!loaded}
       actions={
         <ActionPanel>
           <Action.SubmitForm title={strings.save} icon={Icon.Check} onSubmit={handleSubmit} />
