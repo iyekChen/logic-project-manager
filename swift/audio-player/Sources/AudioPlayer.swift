@@ -30,12 +30,36 @@ struct AudioAnalysis: Encodable {
   let flux: Double // 0..1，spectral flux（活动量）；-1 表示 n/a
 }
 
-@raycast func analyzeAudio(path: String) throws -> AudioAnalysis {
+// 分析超时：由 Swift 自己按音频时长算时限，到点抛错。
+// 只靠 TypeScript 那边的 Promise.race 不够：它 reject 之后 Swift 仍会读到文件末尾，白占 CPU。
+// 桥接层用 String(describing:) 把错误写进 stderr，所以 description 也要给同一句话，
+// 否则 TypeScript 拿到的是 "AnalysisTimeoutError(seconds: 1.0)" 这种反射输出。
+struct AnalysisTimeoutError: LocalizedError, CustomStringConvertible {
+  let seconds: Double
+
+  var errorDescription: String? { description }
+
+  var description: String {
+    "Audio analysis timed out after \(Int(seconds.rounded())) seconds."
+  }
+}
+
+@raycast func analyzeAudio(
+  path: String,
+  minSeconds: Double,
+  maxSeconds: Double,
+  secondsPerAudioSecond: Double
+) throws -> AudioAnalysis {
+  let start = Date()
   let file = try AVAudioFile(forReading: URL(fileURLWithPath: path))
   let format = file.processingFormat
   let sampleRate = format.sampleRate
   let duration = sampleRate > 0 ? Double(file.length) / sampleRate : 0
   let channelCount = Int(format.channelCount)
+
+  // 时限按音频时长放宽：长文件需要更多时间，但不超过 maxSeconds。
+  let limit = min(maxSeconds, max(minSeconds, duration * secondsPerAudioSecond))
+  let deadline = start.addingTimeInterval(limit)
 
   var sumOfSquares = 0.0
   var sampleCount = 0
@@ -47,6 +71,9 @@ struct AudioAnalysis: Encodable {
   let endTolerance = max(Int64(chunkFrames), file.length / 100)
 
   while true {
+    if Date() >= deadline {
+      throw AnalysisTimeoutError(seconds: limit)
+    }
     guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: chunkFrames) else {
       break
     }
