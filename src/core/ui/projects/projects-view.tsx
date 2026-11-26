@@ -21,6 +21,7 @@ import { usePlaybackToast } from "@/core/ui/projects/use-playback-toast";
 import { useCurrentSets } from "@/core/ui/projects/use-current-sets";
 import { useOnboarding } from "@/core/ui/projects/use-onboarding";
 import { useProjectList } from "@/core/ui/projects/use-project-list";
+import { useReplacedProjects } from "@/core/ui/projects/use-replaced-projects";
 import { resetToFirstRun } from "@/core/ui/projects/reset-to-first-run";
 import { useDocWatcher } from "@/core/ui/hooks/use-doc-watcher";
 import { useMissingDocFolders } from "@/core/ui/hooks/use-missing-doc-folders";
@@ -128,6 +129,8 @@ export function ProjectsView() {
       onStartupLoadedRef,
     });
   reloadProjectsRef.current = reloadProjects;
+  // 同名旧项目的设置已归档的项目：这些行多出 Restore Previous Settings。
+  const { ids: replacedIds, revalidate: revalidateReplaced } = useReplacedProjects(projects);
 
   // 出错页面上的 Try Again：重读期间显示加载，读完再收起。
   const [retrying, setRetrying] = useState(false);
@@ -356,7 +359,14 @@ export function ProjectsView() {
               onRestart={restart}
               onResume={resume}
             />
-            <ProjectDetailsSection project={item} onSaved={reloadProjects} />
+            <ProjectDetailsSection
+              project={item}
+              onSaved={() => {
+                void reloadProjects();
+                revalidateReplaced();
+              }}
+              hasPreviousSettings={replacedIds.has(item.id)}
+            />
             <ProjectFileSection
               project={item}
               dawApp={dawApp}

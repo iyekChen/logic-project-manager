@@ -103,6 +103,13 @@ type TranslationKeys = {
   manyProjectsMissingHint: string;
   openProjectsFolder: string;
   ambiguousFinderChanges: string;
+  newProjectLooksNew: string;
+  newProjectsLookNew: string;
+  newProjectLooksNewHint: string;
+  restorePreviousSettings: string;
+  restorePreviousSettingsConfirmTitle: string;
+  restorePreviousSettingsConfirmMessage: string;
+  previousSettingsRestored: string;
   docShared: string;
   docSharedHint: string;
   docNameTaken: string;
@@ -436,6 +443,14 @@ export const strings: TranslationKeys = {
     "Most projects disappeared at once. Is the drive connected? If you moved the folder, update it in preferences.",
   openProjectsFolder: "Open Projects Folder",
   ambiguousFinderChanges: "Some Finder changes skipped",
+  newProjectLooksNew: "“{name}” looks like a new project",
+  newProjectsLookNew: "{count} projects look new",
+  newProjectLooksNewHint: "Previous settings were archived. Use Restore Previous Settings to bring them back.",
+  restorePreviousSettings: "Restore Previous Settings",
+  restorePreviousSettingsConfirmTitle: "Restore previous settings?",
+  restorePreviousSettingsConfirmMessage:
+    "This brings back the previous project's tags, collections, track numbers, roles, notes and lyrics. Anything already set on this project is kept.",
+  previousSettingsRestored: "Previous Settings Restored",
   docShared: "Shares a note file with another project",
   docSharedHint:
     "This project's notes / lyrics file would be the same as {names}'s. Rename this project so each keeps its own file — nothing is read or written until then.",
