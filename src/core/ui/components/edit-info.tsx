@@ -287,7 +287,7 @@ export function EditInfo({
       isLoading={isLoading}
       actions={
         <ActionPanel>
-          <Action.SubmitForm title={strings.save} icon={Icon.Check} onSubmit={handleSubmit} />
+          {loaded && <Action.SubmitForm title={strings.save} icon={Icon.Check} onSubmit={handleSubmit} />}
         </ActionPanel>
       }
     >
