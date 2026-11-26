@@ -47,6 +47,7 @@ import { displayDoc, readDocFile, stripFrontmatter } from "@/core/docs/docs";
 import { docPlaceholder } from "@/core/docs/doc-actions";
 import { addProjectsToCollection, getAllProjectMetadata, saveProjectMetadata } from "@/core/metadata/project-metadata";
 import { showFailure } from "@/core/ui/shared/toast";
+import { saveThenApply } from "./save-then-apply";
 import { copyLatestBounce, playProjectBounce } from "@/core/ui/shared/bounce-actions";
 import { onFinderRenames } from "@/core/fs/finder-sync";
 import { EditInfo, type ProjectRename } from "@/core/ui/components/edit-info";
@@ -178,14 +179,29 @@ export function CollectionPanel({
     };
   }, [collection.id, analysisSignature]);
 
-  async function apply(next: TrackMap) {
-    setMap(next);
-    await setTrackMap(collection.id, next);
+  // 先写盘，成功后才改界面：写失败时列表保持原顺序，并提示错误。
+  async function apply(next: TrackMap): Promise<boolean> {
+    const result = await saveThenApply(
+      () => setTrackMap(collection.id, next),
+      () => setMap(next),
+    );
+    if (!result.ok) {
+      await showFailure(strings.saveFailed, result.error);
+      return false;
+    }
+    return true;
   }
 
-  async function applyRoles(next: RoleMap) {
-    setRoles(next);
-    await setRoleMap(collection.id, next);
+  async function applyRoles(next: RoleMap): Promise<boolean> {
+    const result = await saveThenApply(
+      () => setRoleMap(collection.id, next),
+      () => setRoles(next),
+    );
+    if (!result.ok) {
+      await showFailure(strings.saveFailed, result.error);
+      return false;
+    }
+    return true;
   }
 
   // Edit Info 存盘后：从 LocalStorage 重读成员的 Stage/Genre/Collection（含成员增减）。
@@ -237,10 +253,10 @@ export function CollectionPanel({
     setProjectList((prev) => prev.map((p) => (p.id === project.id ? { ...p, [kind]: body } : p)));
   }
 
-  // 从 tracklist 移出时，连带清掉该曲目在本 collection 的角色。
-  async function removeFromTracklist(id: string) {
-    await apply(removeNumber(map, id));
-    await applyRoles(clearRole(roles, id));
+  // 从 tracklist 移出时，连带清掉该曲目在本 collection 的角色。返回是否保存成功。
+  async function removeFromTracklist(id: string): Promise<boolean> {
+    if (!(await apply(removeNumber(map, id)))) return false;
+    return applyRoles(clearRole(roles, id));
   }
 
   // 置顶：本曲排 1，其余已排序曲目按原顺序依次后移（顺带把撞号 / 断号压回 1..n）。
@@ -724,22 +740,31 @@ function AddProjectsForm({
   );
 }
 
-function SetTrackNumberForm({ current, onSubmit }: { current?: number; onSubmit: (n: number | null) => void }) {
+function SetTrackNumberForm({
+  current,
+  onSubmit,
+}: {
+  current?: number;
+  /** 返回是否保存成功：失败时表单不关，保留输入。 */
+  onSubmit: (n: number | null) => Promise<boolean>;
+}) {
   const { pop } = useNavigation();
   const [value, setValue] = useState("");
-  function handleSubmit() {
+  async function handleSubmit() {
     const trimmed = value.trim();
     if (trimmed === "") {
-      if (current !== undefined) onSubmit(current); // 留空 = 采用占位(建议号)
+      // 留空 = 采用占位(建议号)
+      if (current !== undefined && !(await onSubmit(current))) return;
       pop();
       return;
     }
     const n = parseInt(trimmed, 10);
     if (isNaN(n) || n < 0) {
-      showToast({ style: Toast.Style.Failure, title: strings.invalidPosition });
+      await showToast({ style: Toast.Style.Failure, title: strings.invalidPosition });
       return;
     }
-    onSubmit(n === 0 ? null : n); // 0 = 移出
+    // 0 = 移出
+    if (!(await onSubmit(n === 0 ? null : n))) return;
     pop();
   }
   return (
