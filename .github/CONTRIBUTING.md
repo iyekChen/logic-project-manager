@@ -22,12 +22,12 @@ In development mode, Search Projects has an extra **Reset Onboarding (Dev)** act
 ```bash
 npm run lint          # ESLint + Prettier
 npm run fix-lint      # Auto-fix lint and formatting issues
-npm test              # Run unit tests with Vitest
-npm run test:watch    # Re-run tests on every change
 npm run build         # Build the production extension
 ```
 
-Before opening a PR, run lint, tests, and build. CI runs the same steps on macOS with Node 22, installing with `npm ci`.
+Before opening a PR, run lint and build. CI runs the same steps on macOS with Node 22, installing with `npm ci`.
+
+The unit tests live in a separate private repository, so this repository doesn't include them.
 
 ## Project layout
 
@@ -36,7 +36,6 @@ Before opening a PR, run lint, tests, and build. CI runs the same steps on macOS
 - `src/daws/logic/` holds the Logic-specific parts: reading `.logicx` packages, the Alternatives view, and editing Alternatives. They plug into the rest through the `DawAdapter` interface in `src/daws/types.ts`.
 - Most UI text lives in `src/strings.ts`. Logic-specific wording is in `src/daws/labels.ts` and `src/daws/logic/strings.ts`, and command and preference titles are in `package.json`.
 - `swift/audio-player/` is the audio player's Swift package, built by `ray build`.
-- `test/` holds the Vitest unit tests.
 
 ## Audio player
 
