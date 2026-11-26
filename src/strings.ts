@@ -188,6 +188,7 @@ type TranslationKeys = {
   genreAliasesPlaceholder: string;
   roleAliasesPlaceholder: string;
   retry: string;
+  tryAgain: string;
   openExtensionPreferences: string;
   noNotesYet: string;
   noLyricsYet: string;
@@ -523,6 +524,7 @@ export const strings: TranslationKeys = {
   genreAliasesPlaceholder: "e.g. dnb, drum n bass",
   roleAliasesPlaceholder: "e.g. opener, closer",
   retry: "Retry",
+  tryAgain: "Try Again",
   openExtensionPreferences: "Open Extension Preferences",
   noNotesYet: "_No notes yet_",
   noLyricsYet: "_No lyrics yet_",

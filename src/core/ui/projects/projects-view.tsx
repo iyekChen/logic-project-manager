@@ -2,6 +2,7 @@ import {
   ActionPanel,
   Action,
   closeMainWindow,
+  Color,
   Icon,
   Keyboard,
   List,
@@ -62,6 +63,7 @@ import {
 import { openWithDaw } from "@/core/daw-app";
 import { useDawApp } from "@/core/ui/hooks/use-daw-app";
 import { useTaxonomies } from "@/core/ui/projects/use-taxonomies";
+import { listEmptyState } from "@/core/ui/shared/list-empty-state";
 import { optionKeywords } from "@/core/ui/shared/search-keywords";
 import { findCurrentSet } from "@/core/projects/current-set";
 import { itemLimit, limitGroups } from "@/core/ui/shared/progressive-list";
@@ -118,13 +120,27 @@ export function ProjectsView() {
   const reloadProjectsRef = useRef<() => Promise<string[]>>(async () => []);
   const onStartupLoadedRef = useRef<(orphans: string[]) => Promise<void>>(async () => {});
 
-  const { projects, isLoading, orphanIds, reloadProjects, applyMetadata, refreshDoc, getProjects } = useProjectList({
-    root: PROJECTS_ROOT,
-    trashingIds,
-    onAppliedRef: refreshCurrentSetsRef,
-    onStartupLoadedRef,
-  });
+  const { projects, isLoading, loadError, orphanIds, reloadProjects, applyMetadata, refreshDoc, getProjects } =
+    useProjectList({
+      root: PROJECTS_ROOT,
+      trashingIds,
+      onAppliedRef: refreshCurrentSetsRef,
+      onStartupLoadedRef,
+    });
   reloadProjectsRef.current = reloadProjects;
+
+  // 出错页面上的 Try Again：重读期间显示加载，读完再收起。
+  const [retrying, setRetrying] = useState(false);
+  const retryLoad = useCallback(async () => {
+    setRetrying(true);
+    try {
+      await reloadProjects();
+    } finally {
+      setRetrying(false);
+    }
+  }, [reloadProjects]);
+
+  const emptyState = listEmptyState(isLoading || retrying, projects.length, loadError);
 
   // 首次加载完：残留数据提示只弹一次，然后跑引导。时机和原来一样（加载状态关掉之后）。
   onStartupLoadedRef.current = async (orphans) => {
@@ -404,7 +420,7 @@ export function ProjectsView() {
 
   return (
     <List
-      isLoading={isLoading || readingSets}
+      isLoading={isLoading || retrying || readingSets}
       isShowingDetail={showDetail}
       filtering={!isTagSearch}
       onSearchTextChange={(text) => {
@@ -454,7 +470,20 @@ export function ProjectsView() {
         </List.Dropdown>
       }
     >
-      {!isLoading && projects.length === 0 && (
+      {emptyState === "error" && (
+        <List.EmptyView
+          icon={{ source: Icon.ExclamationMark, tintColor: Color.Red }}
+          title={strings.loadProjectsFailed}
+          description={loadError ?? undefined}
+          actions={
+            <ActionPanel>
+              <Action title={strings.tryAgain} icon={Icon.ArrowClockwise} onAction={retryLoad} />
+              <Action title={strings.openExtensionPreferences} icon={Icon.Gear} onAction={openExtensionPreferences} />
+            </ActionPanel>
+          }
+        />
+      )}
+      {emptyState === "empty" && (
         <List.EmptyView
           icon="icon.png"
           title={labels.noProjectsFound}
