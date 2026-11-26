@@ -193,6 +193,7 @@ type TranslationKeys = {
   loadProjectsFailed: string;
   loadProjectsFailedHint: string;
   loadBounceSettingsFailed: string;
+  loadTagsFailed: string;
   bounceAliasesPlaceholder: string;
   stageAliasesPlaceholder: string;
   genreAliasesPlaceholder: string;
@@ -539,6 +540,7 @@ export const strings: TranslationKeys = {
   loadProjectsFailed: "Couldn't Load Projects",
   loadProjectsFailedHint: "Check that your Projects folder exists and that Raycast can access it.",
   loadBounceSettingsFailed: "Couldn't Load Bounce Settings",
+  loadTagsFailed: "Couldn't Load Tags",
   bounceAliasesPlaceholder: "e.g. ND, Night Drive Remix",
   stageAliasesPlaceholder: "e.g. wip, rough",
   genreAliasesPlaceholder: "e.g. dnb, drum n bass",

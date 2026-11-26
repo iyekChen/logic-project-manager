@@ -8,6 +8,7 @@ import {
   Icon,
   Keyboard,
   List,
+  openExtensionPreferences,
   showToast,
   Toast,
   useNavigation,
@@ -27,7 +28,9 @@ import {
 import { clearTagEverywhere, deleteAllTags } from "@/core/metadata/tag-cleanup";
 import { loadProjects } from "@/core/projects/load-projects";
 import type { Project } from "@/core/projects/types";
-import { showFailure } from "@/core/ui/shared/toast";
+import { showFailure, errorMessage } from "@/core/ui/shared/toast";
+import { listEmptyState } from "@/core/ui/shared/list-empty-state";
+import { LOG_PREFIX } from "@/core/log";
 import { optionKeywords } from "@/core/ui/shared/search-keywords";
 import { getSettings } from "./settings";
 import { strings } from "@/strings";
@@ -241,11 +244,21 @@ export default function Command() {
   const [kind, setKind] = useState<CategoryKind>("stage");
   const [options, setOptions] = useState<TaxonomyOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  // 读取失败的原因：列表为空时据此显示出错页面，而不是看起来像没有标签。
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   async function reload(currentKind: CategoryKind) {
     setIsLoading(true);
-    setOptions(await TAXONOMIES[currentKind].get());
-    setIsLoading(false);
+    try {
+      setOptions(await TAXONOMIES[currentKind].get());
+      setLoadError(null);
+    } catch (error) {
+      console.error(`${LOG_PREFIX} Failed to load tags:`, error);
+      // 保留已读到的选项：读不到时不该看起来像没有标签。
+      setLoadError(errorMessage(error));
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -437,6 +450,8 @@ export default function Command() {
       />
     );
 
+  const emptyState = listEmptyState(isLoading, options.length, loadError);
+
   return (
     <List
       isLoading={isLoading}
@@ -449,16 +464,31 @@ export default function Command() {
         </List.Dropdown>
       }
     >
-      <List.EmptyView
-        title={strings.noCategories}
-        icon={Icon.Tag}
-        actions={
-          <ActionPanel>
-            {createAction}
-            {resetAction}
-          </ActionPanel>
-        }
-      />
+      {emptyState === "error" && (
+        <List.EmptyView
+          icon={{ source: Icon.ExclamationMark, tintColor: Color.Red }}
+          title={strings.loadTagsFailed}
+          description={loadError ?? undefined}
+          actions={
+            <ActionPanel>
+              <Action title={strings.tryAgain} icon={Icon.ArrowClockwise} onAction={() => void reload(kind)} />
+              <Action title={strings.openExtensionPreferences} icon={Icon.Gear} onAction={openExtensionPreferences} />
+            </ActionPanel>
+          }
+        />
+      )}
+      {emptyState === "empty" && (
+        <List.EmptyView
+          title={strings.noCategories}
+          icon={Icon.Tag}
+          actions={
+            <ActionPanel>
+              {createAction}
+              {resetAction}
+            </ActionPanel>
+          }
+        />
+      )}
 
       {options.map((option, index) => (
         <List.Item
