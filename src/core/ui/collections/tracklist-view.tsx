@@ -352,7 +352,7 @@ export function CollectionPanel({
     tracked.length > 0 && (
       <Action
         title={strings.queueCollection}
-        icon={Icon.AppWindow}
+        icon={Icon.Headphones}
         shortcut={{ modifiers: ["cmd", "shift"], key: "return" }}
         onAction={queueCollection}
       />
@@ -481,7 +481,7 @@ export function CollectionPanel({
         <ActionPanel.Section title={strings.sectionTracklist}>
           <Action
             title={strings.addToTracklist}
-            icon={Icon.Plus}
+            icon={Icon.Hashtag}
             shortcut={Keyboard.Shortcut.Common.Pin}
             onAction={() => apply(assignNumber(map, p.id, nextNumber(map)))}
           />
@@ -536,7 +536,7 @@ export function CollectionPanel({
   const renderAddProjects = () => (
     <Action.Push
       title={strings.addProjects}
-      icon={Icon.Plus}
+      icon={Icon.PlusCircle}
       shortcut={Keyboard.Shortcut.Common.New}
       target={
         <AddProjectsForm
@@ -594,7 +594,7 @@ export function CollectionPanel({
       <ActionPanel.Section title={strings.sectionDangerZone}>
         <Action
           title={strings.removeFromCollection}
-          icon={Icon.Trash}
+          icon={Icon.MinusCircle}
           style={Action.Style.Destructive}
           shortcut={Keyboard.Shortcut.Common.Remove}
           onAction={() => removeFromCollection(p)}
@@ -718,7 +718,7 @@ function AddProjectsForm({
         <ActionPanel>
           <Action.SubmitForm
             title={strings.add}
-            icon={Icon.Plus}
+            icon={Icon.PlusCircle}
             onSubmit={async () => {
               await onSubmit(ids);
               pop();

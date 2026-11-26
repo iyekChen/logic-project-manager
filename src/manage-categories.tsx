@@ -334,7 +334,7 @@ export default function Command() {
   // 恢复默认：写回默认种子，并清掉项目上指向已不存在选项的引用（Role 按名字，Stage/Genre 按 id）。
   async function resetOptions() {
     const confirmed = await confirmAlert({
-      icon: { source: Icon.ArrowCounterClockwise, tintColor: Color.Red },
+      icon: { source: Icon.Undo, tintColor: Color.Red },
       title: `${strings.resetToDefaults}?`,
       message: strings.resetToDefaultsHint,
       primaryAction: { title: strings.resetToDefaults, style: Alert.ActionStyle.Destructive },
@@ -379,12 +379,7 @@ export default function Command() {
   );
 
   const resetAction = (
-    <Action
-      title={strings.resetToDefaults}
-      icon={Icon.ArrowCounterClockwise}
-      style={Action.Style.Destructive}
-      onAction={resetOptions}
-    />
+    <Action title={strings.resetToDefaults} icon={Icon.Undo} style={Action.Style.Destructive} onAction={resetOptions} />
   );
 
   const assignAction = (option: TaxonomyOption) =>
@@ -480,14 +475,16 @@ export default function Command() {
                   />
                 )}
               </ActionPanel.Section>
-              <Action
-                title={strings.delete}
-                icon={Icon.Trash}
-                style={Action.Style.Destructive}
-                shortcut={Keyboard.Shortcut.Common.Remove}
-                onAction={() => deleteOption(option)}
-              />
-              {resetAction}
+              <ActionPanel.Section title={strings.sectionDangerZone}>
+                {resetAction}
+                <Action
+                  title={strings.delete}
+                  icon={Icon.Trash}
+                  style={Action.Style.Destructive}
+                  shortcut={Keyboard.Shortcut.Common.Remove}
+                  onAction={() => deleteOption(option)}
+                />
+              </ActionPanel.Section>
             </ActionPanel>
           }
         />

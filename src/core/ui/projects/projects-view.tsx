@@ -395,10 +395,10 @@ export function ProjectsView() {
               onTrash={() => handleTrashProject(item)}
             />
             {environment.isDevelopment && (
-              <ActionPanel.Section>
+              <ActionPanel.Section title={strings.dev}>
                 <Action
-                  title={strings.resetToFirstRunDev}
-                  icon={Icon.ArrowCounterClockwise}
+                  title={strings.resetToFirstRun}
+                  icon={{ source: Icon.Power, tintColor: Color.Orange }}
                   onAction={async () => {
                     await resetToFirstRun();
                     // 缓存已清空，当前窗口里的列表还是旧的：关掉窗口，重开才是第一次打开的样子。
@@ -513,7 +513,7 @@ export function ProjectsView() {
           description={strings.advancedSearchHint}
           actions={
             <ActionPanel>
-              <Action.OpenInBrowser title={strings.openReadme} icon={Icon.Book} url={daw.readmeUrl} />
+              <Action.OpenInBrowser title={strings.openReadme} icon={Icon.QuestionMark} url={daw.readmeUrl} />
             </ActionPanel>
           }
         />

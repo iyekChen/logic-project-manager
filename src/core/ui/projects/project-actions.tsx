@@ -23,7 +23,7 @@ function RestorePreviousSettingsAction({ project, onRestored }: { project: Proje
   return (
     <Action
       title={strings.restorePreviousSettings}
-      icon={Icon.ArrowCounterClockwise}
+      icon={Icon.Undo}
       onAction={async () => {
         const confirmed = await confirmAlert({
           title: strings.restorePreviousSettingsConfirmTitle,

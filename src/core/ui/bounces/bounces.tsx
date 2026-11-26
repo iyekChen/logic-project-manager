@@ -88,7 +88,7 @@ function RenameBounceForm({
   }
   return (
     <Form
-      navigationTitle={strings.renameBounce}
+      navigationTitle={strings.rename}
       actions={
         <ActionPanel>
           <Action.SubmitForm title={strings.save} icon={Icon.Check} onSubmit={handleSubmit} />
@@ -308,7 +308,7 @@ export function Bounces(props: {
                         {renderManageAction()}
                         <ShowInFinderAction path={b.path} />
                         <Action.Push
-                          title={strings.renameBounce}
+                          title={strings.rename}
                           icon={Icon.Pencil}
                           shortcut={Keyboard.Shortcut.Common.Edit}
                           target={

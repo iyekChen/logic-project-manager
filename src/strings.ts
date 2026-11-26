@@ -227,8 +227,8 @@ type TranslationKeys = {
   resetToDefaults: string;
   resetToDefaultsHint: string;
   resetToFirstRun: string;
-  resetToFirstRunDev: string;
   resetToFirstRunHint: string;
+  dev: string;
   noChanges: string;
   removeCollectionsConfirmTitle: string;
   removeCollectionsConfirmHint: string;
@@ -264,7 +264,6 @@ type TranslationKeys = {
   notThisProject: string;
   movedToUnmatched: string;
   unavailable: string;
-  renameBounce: string;
   bounceRenamed: string;
   bounceNameExists: string;
   removeExternalSource: string;
@@ -575,8 +574,8 @@ export const strings: TranslationKeys = {
   resetToDefaultsHint:
     "Custom names, colors, and order will be lost. Projects tagged with an option that no longer exists will have that tag cleared.",
   resetToFirstRun: "Reset to First Run",
-  resetToFirstRunDev: "Reset to First Run (Dev)",
   resetToFirstRunHint: "Reopen Search Projects to start fresh.",
+  dev: "Dev",
   removeCollectionsConfirmTitle: "Remove from collection?",
   removeCollectionsConfirmHint:
     "This project will be removed from {names}, clearing its order and role there. The project itself won't be deleted.",
@@ -614,7 +613,6 @@ export const strings: TranslationKeys = {
   notThisProject: "Not This Project",
   movedToUnmatched: "Moved to Unmatched Bounces",
   unavailable: "Unavailable",
-  renameBounce: "Rename Bounce",
   bounceRenamed: "Bounce Renamed",
   bounceNameExists: "A file with that name already exists",
   removeExternalSource: "Remove External Source",
