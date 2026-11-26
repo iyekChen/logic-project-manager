@@ -449,7 +449,7 @@ export const strings: TranslationKeys = {
   restorePreviousSettings: "Restore Previous Settings",
   restorePreviousSettingsConfirmTitle: "Restore previous settings?",
   restorePreviousSettingsConfirmMessage:
-    "This brings back the previous project's tags, collections, track numbers, roles, notes and lyrics. Anything already set on this project is kept.",
+    "This brings back the previous project's tags, collections, track numbers, and roles, plus notes and lyrics stored in custom folders. Anything already set on this project is kept.",
   previousSettingsRestored: "Previous Settings Restored",
   docShared: "Shares a note file with another project",
   docSharedHint:
