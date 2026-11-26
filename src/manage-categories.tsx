@@ -432,7 +432,7 @@ export default function Command() {
     kind === "role" ? null : (
       <Action.Push
         title={strings.assignToProjects}
-        icon={Icon.Folder}
+        icon={Icon.PlusTopRightSquare}
         target={<AssignProjectsForm kind={kind} option={option} />}
       />
     );
