@@ -117,7 +117,7 @@ export function ProjectFileSection({
         shortcut={Keyboard.Shortcut.Common.Duplicate}
         onAction={() => {
           // 副本名要读磁盘，在这里算好再打开表单，表单里不读。
-          const initialName = uniqueCopyName(path.dirname(project.folderPath), project.title, project.kind);
+          const initialName = uniqueCopyName(path.dirname(project.folderPath), project.title);
           push(<DuplicateProject project={project} initialName={initialName} onDuplicated={onChanged} />);
         }}
       />
