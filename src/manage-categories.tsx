@@ -14,6 +14,7 @@ import {
   useNavigation,
 } from "@raycast/api";
 import { useEffect, useState } from "react";
+import { usePromise } from "@raycast/utils";
 import { slugify, Taxonomy, TaxonomyOption } from "@/core/metadata/taxonomy";
 import { stageTaxonomy, genreTaxonomy, roleTaxonomy } from "@/core/metadata/taxonomies";
 import { countRoleUsage, deleteRoleEverywhere, renameRoleEverywhere } from "@/core/metadata/collection-roles";
@@ -163,26 +164,32 @@ function CategoryForm(props: {
 // 从标签出发批量打标：已有这个标签的项目预先勾上；勾上就加，取消就去掉。
 function AssignProjectsForm({ kind, option }: { kind: ProjectTagKind; option: TaxonomyOption }) {
   const { pop } = useNavigation();
-  const [projects, setProjects] = useState<Project[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [initial, setInitial] = useState<string[]>([]);
-  // Stage 是单选：记下每个项目现在的 Stage，勾选后会被改掉的要在表单里写明。
-  const [currentStages, setCurrentStages] = useState<Record<string, string | null>>({});
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    async function load() {
+  // 项目列表和已打上这个标签的项目一次读完：用 usePromise 拿到加载状态和失败路径。
+  const { data, isLoading } = usePromise(
+    async (tagKind: ProjectTagKind, optionId: string) => {
       const list = loadProjectsSafely();
       const store = await getAllProjectMetadata();
-      const tagged = list.filter((p) => hasTag(store[p.id], kind, option.id)).map((p) => p.id);
-      setProjects(list);
-      setSelected(tagged);
-      setInitial(tagged);
-      setCurrentStages(Object.fromEntries(list.map((p) => [p.id, store[p.id]?.stageId ?? null])));
-      setIsLoading(false);
-    }
-    void load();
-  }, [kind, option.id]);
+      const tagged = list.filter((p) => hasTag(store[p.id], tagKind, optionId)).map((p) => p.id);
+      // Stage 是单选：记下每个项目现在的 Stage，勾选后会被改掉的要在表单里写明。
+      const stages = Object.fromEntries(list.map((p) => [p.id, store[p.id]?.stageId ?? null]));
+      return { list, tagged, stages };
+    },
+    [kind, option.id],
+    {
+      // 勾选状态之后由用户自己改，所以只在读到数据时写一次。
+      onData: (loaded) => {
+        setSelected(loaded.tagged);
+        setInitial(loaded.tagged);
+      },
+      onError: (error) => void showFailure(strings.loadProjectsFailed, error),
+    },
+  );
+
+  const projects = data?.list ?? [];
+  const currentStages = data?.stages ?? {};
 
   const movingStage =
     kind === "stage"
