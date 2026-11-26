@@ -306,7 +306,7 @@ export function AlternativesView({ project }: { project: Project }) {
       {listEmptyState(isLoading, alternatives.length, loadError) === "error" && (
         <List.EmptyView
           icon={{ source: Icon.ExclamationMark, tintColor: Color.Red }}
-          title={strings.loadProjectsFailed}
+          title={alternativesViewStrings.loadFailed}
           description={loadError ?? undefined}
           actions={
             <ActionPanel>

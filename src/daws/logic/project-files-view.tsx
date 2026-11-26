@@ -310,7 +310,7 @@ export function ProjectFilesView({ project }: { project: Project }) {
       {listEmptyState(isLoading, files.length, loadError) === "error" && (
         <List.EmptyView
           icon={{ source: Icon.ExclamationMark, tintColor: Color.Red }}
-          title={strings.loadProjectsFailed}
+          title={projectFilesViewStrings.loadFailed}
           description={loadError ?? undefined}
           actions={
             <ActionPanel>
