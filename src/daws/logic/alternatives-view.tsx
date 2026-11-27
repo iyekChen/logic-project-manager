@@ -34,7 +34,7 @@ import { LOG_PREFIX } from "@/core/log";
 import { alternativesViewStrings } from "./strings";
 import { openWithDaw } from "@/core/daw-app";
 import { useDawApp } from "@/core/ui/hooks/use-daw-app";
-import { showFailure, errorMessage } from "@/core/ui/shared/toast";
+import { copyWithHud, showFailure, errorMessage } from "@/core/ui/shared/toast";
 import { ShowInFinderAction } from "@/core/ui/actions/show-in-finder";
 import { labels } from "@/daws/labels";
 import { SortBySubmenu } from "@/core/ui/actions/sort-by-submenu";
@@ -403,17 +403,17 @@ export function AlternativesView({ project }: { project: Project }) {
                     />
                   </ActionPanel.Section>
                   <ActionPanel.Section title={strings.sectionCopy}>
-                    <Action.CopyToClipboard
-                      content={alternative.name}
+                    <Action
                       title={alternativesViewStrings.copyAlternativeName}
                       icon={Icon.CopyClipboard}
                       shortcut={Keyboard.Shortcut.Common.CopyName}
+                      onAction={() => void copyWithHud(alternative.name, alternativesViewStrings.alternativeNameCopied)}
                     />
-                    <Action.CopyToClipboard
-                      content={alternative.path}
+                    <Action
                       title={strings.copyProjectPath}
                       icon={Icon.CopyClipboard}
                       shortcut={Keyboard.Shortcut.Common.CopyPath}
+                      onAction={() => void copyWithHud(alternative.path, alternativesViewStrings.alternativePathCopied)}
                     />
                   </ActionPanel.Section>
                   <ActionPanel.Section title={strings.sectionArrange}>

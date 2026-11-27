@@ -24,6 +24,10 @@ type TranslationKeys = {
   copyBounce: string;
   copyBounceName: string;
   copyBouncePath: string;
+  projectNameCopied: string;
+  projectPathCopied: string;
+  bounceNameCopied: string;
+  bouncePathCopied: string;
   bounceCopied: string;
   openInFinder: string;
   showInFinder: string;
@@ -383,6 +387,10 @@ export const strings: TranslationKeys = {
   copyBounce: "Copy Bounce",
   copyBounceName: "Copy Bounce Name",
   copyBouncePath: "Copy Bounce Path",
+  projectNameCopied: "Project Name Copied",
+  projectPathCopied: "Project Path Copied",
+  bounceNameCopied: "Bounce Name Copied",
+  bouncePathCopied: "Bounce Path Copied",
   bounceCopied: "Bounce Copied",
   openInFinder: "Open in Finder",
   showInFinder: "Show in Finder",

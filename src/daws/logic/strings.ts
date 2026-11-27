@@ -4,6 +4,8 @@ type AlternativesViewStrings = {
   openInDaw: string;
   activeAlternative: string;
   copyAlternativeName: string;
+  alternativeNameCopied: string;
+  alternativePathCopied: string;
   setActive: string;
   activeChanged: string;
   renameAlternative: string;
@@ -28,6 +30,8 @@ export const alternativesViewStrings: AlternativesViewStrings = {
   openInDaw: "Open in Logic Pro",
   activeAlternative: "Active Alternative",
   copyAlternativeName: "Copy Alternative Name",
+  alternativeNameCopied: "Alternative Name Copied",
+  alternativePathCopied: "Alternative Path Copied",
   setActive: "Set as Active Alternative",
   activeChanged: "Active Alternative Changed",
   renameAlternative: "Rename Alternative",
@@ -56,6 +60,8 @@ type ProjectFilesViewStrings = {
   openLatestProjectFile: string;
   latestProjectFile: string;
   copyProjectFileName: string;
+  projectFileNameCopied: string;
+  projectFilePathCopied: string;
   renameProjectFile: string;
   duplicateProjectFile: string;
   projectFileRenamed: string;
@@ -78,6 +84,8 @@ export const projectFilesViewStrings: ProjectFilesViewStrings = {
   openLatestProjectFile: "Open Latest Project File",
   latestProjectFile: "Latest Project File",
   copyProjectFileName: "Copy Project File Name",
+  projectFileNameCopied: "Project File Name Copied",
+  projectFilePathCopied: "Project File Path Copied",
   renameProjectFile: "Rename Project File",
   duplicateProjectFile: "Duplicate Project File",
   projectFileRenamed: "Project File Renamed",

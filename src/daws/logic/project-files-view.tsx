@@ -42,7 +42,7 @@ import { LOG_PREFIX } from "@/core/log";
 import { alternativesViewStrings, projectFilesViewStrings } from "./strings";
 import { openWithDaw } from "@/core/daw-app";
 import { useDawApp } from "@/core/ui/hooks/use-daw-app";
-import { showFailure, errorMessage } from "@/core/ui/shared/toast";
+import { copyWithHud, showFailure, errorMessage } from "@/core/ui/shared/toast";
 import { ShowInFinderAction } from "@/core/ui/actions/show-in-finder";
 import { labels } from "@/daws/labels";
 import { AlternativesView, findWindowImage } from "./alternatives-view";
@@ -387,17 +387,19 @@ export function ProjectFilesView({ project }: { project: Project }) {
                     />
                   </ActionPanel.Section>
                   <ActionPanel.Section title={strings.sectionCopy}>
-                    <Action.CopyToClipboard
-                      content={path.basename(file.packagePath)}
+                    <Action
                       title={projectFilesViewStrings.copyProjectFileName}
                       icon={Icon.CopyClipboard}
                       shortcut={Keyboard.Shortcut.Common.CopyName}
+                      onAction={() =>
+                        void copyWithHud(path.basename(file.packagePath), projectFilesViewStrings.projectFileNameCopied)
+                      }
                     />
-                    <Action.CopyToClipboard
-                      content={file.packagePath}
+                    <Action
                       title={strings.copyProjectPath}
                       icon={Icon.CopyClipboard}
                       shortcut={Keyboard.Shortcut.Common.CopyPath}
+                      onAction={() => void copyWithHud(file.packagePath, projectFilesViewStrings.projectFilePathCopied)}
                     />
                   </ActionPanel.Section>
                   <ActionPanel.Section title={strings.sectionArrange}>

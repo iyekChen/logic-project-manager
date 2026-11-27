@@ -36,7 +36,7 @@ import {
 import type { BounceWithSource } from "@/core/projects/bounces";
 import { addExcludedSharedBounce, setExternalBounces } from "@/core/metadata/project-metadata";
 import { ManageExternalBounces } from "@/core/ui/components/manage-external-bounces";
-import { showFailure } from "@/core/ui/shared/toast";
+import { copyWithHud, showFailure } from "@/core/ui/shared/toast";
 
 const BOUNCES_SORT_STORAGE_KEY = "bounces-sort-option";
 const BOUNCES_GROUP_STORAGE_KEY = "bounces-group-option";
@@ -346,11 +346,11 @@ export function Bounces(props: {
                     ) : (
                       <ActionPanel.Section>
                         {renderManageAction()}
-                        <Action.CopyToClipboard
-                          content={b.path}
+                        <Action
                           title={strings.copyBouncePath}
                           icon={Icon.CopyClipboard}
                           shortcut={Keyboard.Shortcut.Common.CopyPath}
+                          onAction={() => void copyWithHud(b.path, strings.bouncePathCopied)}
                         />
                       </ActionPanel.Section>
                     )}
