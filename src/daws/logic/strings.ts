@@ -8,6 +8,7 @@ type AlternativesViewStrings = {
   activeChanged: string;
   renameAlternative: string;
   alternativeRenamed: string;
+  alternativeMovedToTrash: string;
   alternativeNameExists: string;
   duplicateAlternative: string;
   alternativeDuplicated: string;
@@ -28,6 +29,7 @@ export const alternativesViewStrings: AlternativesViewStrings = {
   activeChanged: "Active Alternative Changed",
   renameAlternative: "Rename Alternative",
   alternativeRenamed: "Alternative Renamed",
+  alternativeMovedToTrash: "Alternative Moved to Trash",
   alternativeNameExists: "An Alternative with that name already exists",
   duplicateAlternative: "Duplicate Alternative",
   alternativeDuplicated: "Alternative Duplicated",
@@ -51,6 +53,7 @@ type ProjectFilesViewStrings = {
   renameProjectFile: string;
   duplicateProjectFile: string;
   projectFileRenamed: string;
+  projectFileMovedToTrash: string;
   projectFileDuplicated: string;
   projectFileNameExists: string;
   trashProjectFileHint: string;
@@ -69,6 +72,7 @@ export const projectFilesViewStrings: ProjectFilesViewStrings = {
   renameProjectFile: "Rename Project File",
   duplicateProjectFile: "Duplicate Project File",
   projectFileRenamed: "Project File Renamed",
+  projectFileMovedToTrash: "Project File Moved to Trash",
   projectFileDuplicated: "Project File Duplicated",
   projectFileNameExists: "A project file with this name already exists",
   trashProjectFileHint: "This moves the project file to the Trash:",

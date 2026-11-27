@@ -187,7 +187,7 @@ export function AlternativesView({ project }: { project: Project }) {
 
   const reload = () => setReloadToken((n) => n + 1);
 
-  // 出错页面上的 Try Again：重读期间显示加载，读完再收起。
+  // 出错页面上的 Retry：重读期间显示加载，读完再收起。
   const retryLoad = () => {
     setIsLoading(true);
     reload();
@@ -284,7 +284,11 @@ export function AlternativesView({ project }: { project: Project }) {
         alternative.active === true,
       );
       reload();
-      await showToast({ style: Toast.Style.Success, title: strings.movedToTrash, message: alternative.name });
+      await showToast({
+        style: Toast.Style.Success,
+        title: alternativesViewStrings.alternativeMovedToTrash,
+        message: alternative.name,
+      });
     } catch (error) {
       await showFailure(strings.trashFailed, error);
     }
@@ -310,7 +314,7 @@ export function AlternativesView({ project }: { project: Project }) {
           description={loadError ?? undefined}
           actions={
             <ActionPanel>
-              <Action title={strings.tryAgain} icon={Icon.ArrowClockwise} onAction={retryLoad} />
+              <Action title={strings.retry} icon={Icon.ArrowClockwise} onAction={retryLoad} />
               <Action title={strings.openExtensionPreferences} icon={Icon.Gear} onAction={openExtensionPreferences} />
             </ActionPanel>
           }
