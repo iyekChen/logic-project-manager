@@ -399,7 +399,7 @@ export function ProjectFilesView({ project }: { project: Project }) {
                       title={strings.copyProjectPath}
                       icon={Icon.CopyClipboard}
                       shortcut={Keyboard.Shortcut.Common.CopyPath}
-                      onAction={() => void copyWithHud(file.packagePath, projectFilesViewStrings.projectFilePathCopied)}
+                      onAction={() => void copyWithHud(file.packagePath, strings.projectPathCopied)}
                     />
                   </ActionPanel.Section>
                   <ActionPanel.Section title={strings.sectionArrange}>

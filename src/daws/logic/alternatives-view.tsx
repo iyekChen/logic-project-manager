@@ -413,7 +413,7 @@ export function AlternativesView({ project }: { project: Project }) {
                       title={strings.copyProjectPath}
                       icon={Icon.CopyClipboard}
                       shortcut={Keyboard.Shortcut.Common.CopyPath}
-                      onAction={() => void copyWithHud(alternative.path, alternativesViewStrings.alternativePathCopied)}
+                      onAction={() => void copyWithHud(alternative.path, strings.projectPathCopied)}
                     />
                   </ActionPanel.Section>
                   <ActionPanel.Section title={strings.sectionArrange}>
