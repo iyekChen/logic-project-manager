@@ -16,7 +16,7 @@ export function playProjectBounce(project: Project, play: PlayBounce): void {
   }
   play(project.id, latestBouncePath, {
     onError: (message) => {
-      void showFailure(strings.playbackFailed, message);
+      void showFailure(strings.playBounceFailed, message);
     },
   });
 }

@@ -78,7 +78,8 @@ type TranslationKeys = {
   name: string;
   invalidName: string;
   nameExists: string;
-  renameFailed: string;
+  renameProjectFailed: string;
+  renameBounceFailed: string;
   docRenameSkipped: string;
   docNameHint: string;
   docConflictWarning: string;
@@ -97,6 +98,7 @@ type TranslationKeys = {
   docFolderMissing: string;
   docFolderMissingHint: string;
   docSaveFailed: string;
+  lyricsSaveFailed: string;
   useProjectFolders: string;
   manyProjectsMissing: string;
   manyProjectsMissingHint: string;
@@ -126,7 +128,7 @@ type TranslationKeys = {
   browseProjectBounces: string;
   playLatestBounce: string;
   playingLatestBounce: string;
-  playbackFailed: string;
+  playBounceFailed: string;
   stoppingPlayback: string;
   noBounces: string;
   manageExternalBounce: string;
@@ -175,7 +177,7 @@ type TranslationKeys = {
   tracklistDuration: string;
   queueCollection: string;
   collectionQueued: string;
-  queueFailed: string;
+  queueCollectionFailed: string;
   tracksWord: string;
   tracksCount: string;
   skippedNoBounce: string;
@@ -190,7 +192,7 @@ type TranslationKeys = {
   duplicateProject: string;
   duplicatingProject: string;
   projectDuplicated: string;
-  duplicateFailed: string;
+  duplicateProjectFailed: string;
   moveToTrash: string;
   trashProjectHint: string;
   trashBounceHint: string;
@@ -227,7 +229,8 @@ type TranslationKeys = {
   docUnreadable: string;
   lyricsUnreadable: string;
   docUnreadableHint: string;
-  trashFailed: string;
+  trashProjectFailed: string;
+  trashBounceFailed: string;
   sectionPlayback: string;
   sectionDetails: string;
   sectionFile: string;
@@ -434,7 +437,8 @@ export const strings: TranslationKeys = {
   name: "Name",
   invalidName: "Name can't contain / or :",
   nameExists: "A project with that name already exists",
-  renameFailed: "Rename failed",
+  renameProjectFailed: "Couldn't Rename Project",
+  renameBounceFailed: "Couldn't Rename Bounce",
   docRenameSkipped: "Renamed — but a doc wasn't moved",
   docNameHint: "Note & lyrics file: “{file}” ({chars} → full-width look-alikes)",
   docConflictWarning:
@@ -453,9 +457,10 @@ export const strings: TranslationKeys = {
     "These lyrics were edited outside Raycast (e.g. in Obsidian) after you opened them. Saving will replace those changes.",
   projectsRestored: "Restored put-back project",
   restoreDocConflict: "Restored — a note name was taken",
-  docFolderMissing: "Notes / lyrics folder not found",
+  docFolderMissing: "Couldn't Find Notes / Lyrics Folder",
   docFolderMissingHint: "Choose it again in Extension Preferences. Nothing will be written until then.",
-  docSaveFailed: "Couldn't save",
+  docSaveFailed: "Couldn't Save Notes",
+  lyricsSaveFailed: "Couldn't Save Lyrics",
   useProjectFolders: "Store in Project Folders Instead",
   manyProjectsMissing: "Projects missing — nothing changed",
   manyProjectsMissingHint:
@@ -488,7 +493,7 @@ export const strings: TranslationKeys = {
   browseProjectBounces: "Browse Project Bounces",
   playLatestBounce: "Play Latest Bounce",
   playingLatestBounce: "Playing Latest Bounce",
-  playbackFailed: "Playback Failed",
+  playBounceFailed: "Couldn't Play Bounce",
   stoppingPlayback: "Stopping Playback",
   noBounces: "No Bounces Found",
   manageExternalBounce: "Manage External Bounce",
@@ -538,7 +543,7 @@ export const strings: TranslationKeys = {
   tracklistDuration: "Tracklist Duration",
   queueCollection: "Queue Collection in Player",
   collectionQueued: "Collection Queued",
-  queueFailed: "Queue Failed",
+  queueCollectionFailed: "Couldn't Queue Collection",
   tracksWord: "tracks",
   tracksCount: "Track(s)",
   skippedNoBounce: "skipped (no bounce)",
@@ -553,7 +558,7 @@ export const strings: TranslationKeys = {
   duplicateProject: "Duplicate Project",
   duplicatingProject: "Duplicating Project…",
   projectDuplicated: "Project Duplicated",
-  duplicateFailed: "Duplicate Failed",
+  duplicateProjectFailed: "Couldn't Duplicate Project",
   moveToTrash: "Move to Trash",
   trashProjectHint: "This moves the entire project folder to the Trash:",
   trashBounceHint: "This moves the bounce to the Trash:",
@@ -588,11 +593,12 @@ export const strings: TranslationKeys = {
   lyricsPlaceholder: "Write your lyrics here…",
   storageUnreadable: "Saved data unreadable — nothing changed",
   renameDataPending: "Renamed — tags not moved yet",
-  docUnreadable: "Couldn't read this note",
-  lyricsUnreadable: "Couldn't read these lyrics",
+  docUnreadable: "Couldn't Read Notes",
+  lyricsUnreadable: "Couldn't Read Lyrics",
   docUnreadableHint:
     "The file exists but couldn't be opened (e.g. not downloaded from iCloud yet). Nothing was changed.",
-  trashFailed: "Couldn't move to Trash",
+  trashProjectFailed: "Couldn't Move Project to Trash",
+  trashBounceFailed: "Couldn't Move Bounce to Trash",
   sectionPlayback: "Playback",
   sectionDetails: "Details",
   sectionFile: "File",
@@ -662,7 +668,7 @@ export const strings: TranslationKeys = {
   removeExternalSourceConfirmTitle: "Remove external source?",
   removeExternalSourceConfirmHint: "This only removes it from this project's bounces. The file on disk is not deleted.",
   copyError: "Copy Error",
-  saveFailed: "Couldn't save",
+  saveFailed: "Couldn't Save Changes",
   storageUnreadableHint:
     "The extension's saved data couldn't be read, so this change was skipped to avoid overwriting it.",
   ambiguousFinderChangesHint: "They couldn't be matched to a project safely, so their tags weren't moved.",
@@ -692,7 +698,7 @@ export const strings: TranslationKeys = {
   exportFolderNotDirectory: "This is not a folder.",
   exportingData: "Exporting Data",
   dataExported: "Data Exported",
-  exportFailed: "Could Not Export Data",
+  exportFailed: "Couldn't Export Data",
   importData: "Import Data",
   importFile: "File",
   importFileRequired: "Choose a file to import.",
@@ -713,7 +719,7 @@ export const strings: TranslationKeys = {
   importResultUnmatched: "{count} unmatched",
   importResultDropped: "{count} track numbers dropped",
   importBackupSaved: "Backup: {file}",
-  importFailed: "Could Not Import Data",
+  importFailed: "Couldn't Import Data",
   importBadFormat: "This is not an exported data file.",
   importBadVersion: "This file was made by a newer version of the extension.",
   importOtherExtension: "This file was exported by {extension}.",

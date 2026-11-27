@@ -98,7 +98,7 @@ function RenameAlternativeForm({ alternative, onRenamed }: { alternative: Projec
     try {
       await renameAlternative(alternative.path, alternative, trimmed);
     } catch (error) {
-      await showFailure(strings.renameFailed, error);
+      await showFailure(alternativesViewStrings.renameAlternativeFailed, error);
       return;
     }
 
@@ -260,7 +260,7 @@ export function AlternativesView({ project }: { project: Project }) {
         message: name,
       });
     } catch (error) {
-      await showFailure(strings.duplicateFailed, error);
+      await showFailure(alternativesViewStrings.duplicateAlternativeFailed, error);
     }
   };
 
@@ -290,7 +290,7 @@ export function AlternativesView({ project }: { project: Project }) {
         message: alternative.name,
       });
     } catch (error) {
-      await showFailure(strings.trashFailed, error);
+      await showFailure(alternativesViewStrings.trashAlternativeFailed, error);
     }
   };
 

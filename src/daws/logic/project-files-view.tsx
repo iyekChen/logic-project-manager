@@ -130,7 +130,7 @@ function RenameProjectFileForm({ file, onRenamed }: { file: ProjectFile; onRenam
     try {
       fs.renameSync(file.packagePath, target);
     } catch (error) {
-      await showFailure(strings.renameFailed, error);
+      await showFailure(projectFilesViewStrings.renameProjectFileFailed, error);
       return;
     }
 
@@ -268,7 +268,7 @@ export function ProjectFilesView({ project }: { project: Project }) {
         message: path.basename(target),
       });
     } catch (error) {
-      await showFailure(strings.duplicateFailed, error);
+      await showFailure(projectFilesViewStrings.duplicateProjectFileFailed, error);
     }
   };
 
@@ -294,7 +294,7 @@ export function ProjectFilesView({ project }: { project: Project }) {
         message: file.name,
       });
     } catch (error) {
-      await showFailure(strings.trashFailed, error);
+      await showFailure(projectFilesViewStrings.trashProjectFileFailed, error);
     }
   };
 

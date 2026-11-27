@@ -12,6 +12,9 @@ type AlternativesViewStrings = {
   alternativeNameExists: string;
   duplicateAlternative: string;
   alternativeDuplicated: string;
+  renameAlternativeFailed: string;
+  duplicateAlternativeFailed: string;
+  trashAlternativeFailed: string;
   trashAlternativeHint: string;
   lastAlternative: string;
   changeConfirmTitle: string;
@@ -33,6 +36,9 @@ export const alternativesViewStrings: AlternativesViewStrings = {
   alternativeNameExists: "An Alternative with that name already exists",
   duplicateAlternative: "Duplicate Alternative",
   alternativeDuplicated: "Alternative Duplicated",
+  renameAlternativeFailed: "Couldn't Rename Alternative",
+  duplicateAlternativeFailed: "Couldn't Duplicate Alternative",
+  trashAlternativeFailed: "Couldn't Move Alternative to Trash",
   trashAlternativeHint: "This moves the Alternative to the Trash:",
   lastAlternative: "A project needs at least one Alternative",
   changeConfirmTitle: "Change Alternative?",
@@ -55,6 +61,9 @@ type ProjectFilesViewStrings = {
   projectFileRenamed: string;
   projectFileMovedToTrash: string;
   projectFileDuplicated: string;
+  renameProjectFileFailed: string;
+  duplicateProjectFileFailed: string;
+  trashProjectFileFailed: string;
   projectFileNameExists: string;
   trashProjectFileHint: string;
   lastProjectFile: string;
@@ -74,6 +83,9 @@ export const projectFilesViewStrings: ProjectFilesViewStrings = {
   projectFileRenamed: "Project File Renamed",
   projectFileMovedToTrash: "Project File Moved to Trash",
   projectFileDuplicated: "Project File Duplicated",
+  renameProjectFileFailed: "Couldn't Rename Project File",
+  duplicateProjectFileFailed: "Couldn't Duplicate Project File",
+  trashProjectFileFailed: "Couldn't Move Project File to Trash",
   projectFileNameExists: "A project file with this name already exists",
   trashProjectFileHint: "This moves the project file to the Trash:",
   lastProjectFile: "A project needs at least one project file",
