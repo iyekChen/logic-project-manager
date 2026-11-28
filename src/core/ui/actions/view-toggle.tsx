@@ -27,7 +27,7 @@ export function ViewToggleSection({
         <Action
           title={detailDoc === "notes" ? strings.showLyrics : strings.showNotes}
           icon={Icon.Paragraph}
-          shortcut={{ modifiers: ["cmd", "opt", "shift"], key: "t" }}
+          shortcut={{ modifiers: ["cmd", "ctrl", "shift"], key: "t" }}
           onAction={onToggleDetailDoc}
         />
       )}

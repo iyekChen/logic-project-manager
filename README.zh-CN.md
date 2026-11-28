@@ -100,7 +100,7 @@ Duplicate Project 和 Move to Trash 作用于整个 `.logicx` 或整个文件夹
 Search Projects 有两种视图。Overview 显示每个项目的阶段，以及它有多少个 Alternative 和 bounce；存成文件夹的项目显示工程文件的数量，而不是 Alternative 的数量。Detail 多一个侧边栏，显示项目的笔记、标签和合集、Active Alternative 的调性和 BPM（存成文件夹的项目还会显示最新的工程文件），以及创建和修改日期。
 
 - ⌘⇧T 在 Overview 和 Detail 之间切换。
-- 在 Detail 中，⌘⌥⇧T 在笔记和歌词之间切换侧边栏；见[笔记与歌词](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#-笔记与歌词)。
+- 在 Detail 中，⌘⌃⇧T 在笔记和歌词之间切换侧边栏；见[笔记与歌词](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#-笔记与歌词)。
 
 ### 播放
 
@@ -240,7 +240,7 @@ Search Bounces 命令在一个地方列出所有项目的 bounce。属于多个�
 - **Tracklist** 按顺序列出已编号的曲目，显示每首曲目的角色、编号、时长和能量，顶部显示总时长。**Unsorted** 按字母顺序列出其余曲目。
 - 用 Swap Up 和 Swap Down，或 Move to Top 和 Move to Bottom 调整顺序。Remove from Tracklist 把曲目退回 Unsorted，并清除它的角色。如果两首曲目编号相同，两者都会带上警告图标。
 - **角色：** 在合集里打开 Edit Info 给曲目分配角色，例如 Intro 或 Interlude。角色列表在 [Manage Tags](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#-标签) 中编辑。
-- 用下拉框可以只显示某个阶段或风格。⌘⇧T 切换到 Detail 视图，显示每首曲目的笔记、阶段、时长、角色、BPM、调性、拍号和能量；在 Detail 中，⌘⌥⇧T 在笔记和歌词之间切换。
+- 用下拉框可以只显示某个阶段或风格。⌘⇧T 切换到 Detail 视图，显示每首曲目的笔记、阶段、时长、角色、BPM、调性、拍号和能量；在 Detail 中，⌘⌃⇧T 在笔记和歌词之间切换。
 - **Remove from Collection** 把曲目移出合集，同时清除它在这个合集中的编号和角色。项目本身不受影响。
 - 在 Browse Collections 的任何位置，Back to Search Projects（⌃↵）都能回到项目列表。
 
@@ -274,7 +274,7 @@ Energy（能量）通过比较每首曲目和合集中其他曲目在密度、�
 每个项目可以有一份笔记和一份歌词，都存成普通的 Markdown 文件。
 
 - **保存位置：** 默认是项目文件夹中的 `Notes.md` 和 `Lyrics.md`（存成 Package 的项目则在 `.logicx` 内部）。设置 Notes Folder 或 Lyrics Folder 可以存到别处，比如 Obsidian 仓库；见[文件名](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#文件名)。
-- **查看：** 在 Search Projects 的 [Detail 视图](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#overview-与-detail)（⌘⇧T）中，侧边栏显示笔记，⌘⌥⇧T 切换到歌词。
+- **查看：** 在 Search Projects 的 [Detail 视图](https://github.com/iyekChen/logic-project-manager/blob/main/README.zh-CN.md#overview-与-detail)（⌘⇧T）中，侧边栏显示笔记，⌘⌃⇧T 切换到歌词。
 - **编辑：** 用 Edit Notes（⌘⌥N）和 Edit Lyrics（⌘⌥L）在 Raycast 中编辑，或用 Open Notes（⌘⇧N）和 Open Lyrics（⌘⇧L）在你的 Markdown App 中打开文件。这些操作在合集里的曲目上同样可用。
 - **在别处编辑：** 在其他 App 中的修改会立即显示。如果你在 Raycast 中编辑时，文件在别的 App 里被改了，保存前会先询问你，再覆盖那些修改。
 

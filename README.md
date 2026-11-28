@@ -100,7 +100,7 @@ When you use Save As in Logic Pro, the new `.logicx` is saved in the same projec
 Search Projects has two views. Overview shows each project's stage and how many Alternatives and bounces it has; for a project saved in a folder, it shows how many project files instead of Alternatives. Detail adds a side panel with the project's note, its tags and collections, the Active Alternative's key and BPM (plus the latest project file, for a project saved in a folder), and its created and modified dates.
 
 - ⌘⇧T switches between Overview and Detail.
-- In Detail, ⌘⌥⇧T switches the panel between notes and lyrics; see [Notes & lyrics](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#-notes--lyrics).
+- In Detail, ⌘⌃⇧T switches the panel between notes and lyrics; see [Notes & lyrics](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#-notes--lyrics).
 
 ### Playback
 
@@ -240,7 +240,7 @@ In Browse Collections, you can rename, pin, or delete collections. Deleting a co
 - **Tracklist** lists numbered tracks in order, with each track's role, number, duration, and energy. Its header shows the total duration. **Unsorted** lists the other tracks alphabetically.
 - Reorder with Swap Up and Swap Down, or Move to Top and Move to Bottom. Remove from Tracklist sends a track back to Unsorted and clears its role. If two tracks share a number, both are marked with a warning icon.
 - **Roles:** open Edit Info from inside a collection to give a track a role, such as Intro or Interlude. Edit the list of roles in [Manage Tags](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#-tags).
-- Use the dropdown to show only one stage or genre. ⌘⇧T switches to the Detail view, which shows each track's note, stage, duration, role, BPM, key, time signature, and energy; in Detail, ⌘⌥⇧T switches the panel between notes and lyrics.
+- Use the dropdown to show only one stage or genre. ⌘⇧T switches to the Detail view, which shows each track's note, stage, duration, role, BPM, key, time signature, and energy; in Detail, ⌘⌃⇧T switches the panel between notes and lyrics.
 - **Remove from Collection** removes a track from the collection, along with its number and role there. The project itself isn't affected.
 - Back to Search Projects (⌃↵) returns to your project list from anywhere in Browse Collections.
 
@@ -274,7 +274,7 @@ Each feature is then scaled from 0 to 1 across the tracks in the collection's Tr
 Each project can have a note and a lyrics file, saved as ordinary Markdown files.
 
 - **Where they're saved:** `Notes.md` and `Lyrics.md` in the project folder by default (inside the `.logicx` for a project saved as a package). Set a Notes Folder or Lyrics Folder to keep them elsewhere, such as an Obsidian vault; see [File names](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#file-names).
-- **Viewing:** in Search Projects' [Detail view](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#overview-and-detail) (⌘⇧T), the side panel shows the note, and ⌘⌥⇧T switches it to the lyrics.
+- **Viewing:** in Search Projects' [Detail view](https://github.com/iyekChen/logic-project-manager/blob/main/README.md#overview-and-detail) (⌘⇧T), the side panel shows the note, and ⌘⌃⇧T switches it to the lyrics.
 - **Editing:** use Edit Notes (⌘⌥N) and Edit Lyrics (⌘⌥L) to edit in Raycast, or Open Notes (⌘⇧N) and Open Lyrics (⌘⇧L) to open the file in your Markdown app. These actions also work on tracks inside a collection.
 - **Editing elsewhere:** changes made in other apps show up right away. If a file changes in another app while you're editing it in Raycast, you're asked before your save replaces those changes.
 
